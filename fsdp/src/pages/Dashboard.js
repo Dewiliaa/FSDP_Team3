@@ -3,8 +3,8 @@ import React from 'react';
 const Dashboard = () => {
     return (
         <div className="dashboard">
-            <h1>Dashboard</h1>
-            <p>Welcome to your dashboard!</p>
+            {/* No need to include Navbar here, as it's already included in App.js */}
+            <h2>Dashboard Content Here</h2>
         </div>
     );
 };

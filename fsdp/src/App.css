@@ -29,3 +29,107 @@
 .content {
   padding: 20px;
 }
+
+@font-face {
+  font-family: 'CNFont';
+  src: url('./fonts/companyName.ttf') format('truetype');
+  font-weight: normal; /* Adjust if necessary */
+  font-style: normal; /* Adjust if necessary */
+}
+
+
+.App {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0;
+}
+
+.Sidebar {
+  position: fixed;
+  height: 100%;
+  width: 200px;
+  background-color: #2f4050;
+  top: 0; 
+  left: 0;
+  z-index: 1000;
+}
+
+
+.SidebarHeader {
+  height: 80px; 
+  background-color: #1a1f27;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px;
+  border-bottom: 2px solid #293846;
+}
+
+.logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 10px;
+  margin-right: 10px;
+}
+
+.companyName {
+  color: #ffffff;
+  font-size: 2.0rem;
+  font-family: 'CNFont', sans-serif;
+  margin: 0;
+}
+
+.SidebarList {
+  height: auto;
+  padding: 0;
+  width: 100%;
+}
+
+.row {
+  width: 175px;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.SidebarList li:hover {
+  cursor: pointer;
+  background-color: #293846;
+  transform: translateX(3px);
+}
+
+#active {
+  background-color: #293846; /* The shaded color for the active item */
+  border-left: 4px solid #00a8ff;
+}
+
+.icon {
+  flex: 30%;
+  display: grid;
+  place-items: left;
+  color: aliceblue;
+}
+
+.title {
+  flex: 70%;
+  place-items: center;
+  color: aliceblue;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+
+
+
