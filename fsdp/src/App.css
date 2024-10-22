@@ -1,0 +1,31 @@
+.home-page {
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.login-button {
+  padding: 10px 20px;
+  background-color: #fff;
+  color: #4CAF50;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.login-button:hover {
+  background-color: #f1f1f1;
+}
+
+.content {
+  padding: 20px;
+}
