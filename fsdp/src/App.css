@@ -8,7 +8,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background-color: #4CAF50; /* Green */
+  background-color: #4CAF50;
   color: white;
 }
 
@@ -33,8 +33,8 @@
 @font-face {
   font-family: 'CNFont';
   src: url('./fonts/companyName.ttf') format('truetype');
-  font-weight: normal; /* Adjust if necessary */
-  font-style: normal; /* Adjust if necessary */
+  font-weight: normal; 
+  font-style: normal;
 }
 
 
@@ -111,7 +111,7 @@ body {
 }
 
 #active {
-  background-color: #293846; /* The shaded color for the active item */
+  background-color: #293846;
   border-left: 4px solid #00a8ff;
 }
 
@@ -196,6 +196,16 @@ body {
 
 .dropdown-item:hover {
   background-color: #f0f0f0;
+}
+
+.page-title {
+  display: flex;
+  justify-content: center; 
+  height: 100vh;           
+  text-align: center;
+  margin-right: 850px;  
+  font-weight: 300;    
+  font-size: 30px;
 }
 
 
