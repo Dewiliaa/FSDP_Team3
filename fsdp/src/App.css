@@ -131,5 +131,81 @@ body {
 }
 
 
+/* Container for the profile button */
+.profile-container {
+  display: flex; /* Flexbox for horizontal alignment */
+  align-items: center; /* Vertically center items */
+  width: auto; /* Fit content */
+  height: 50px;
+  background-color: aliceblue;
+  position: absolute;
+  top: 10px; /* Adjust top position as needed */
+  right: 10px; /* Adjust right position as needed */
+  padding: 0 10px; /* Padding for spacing */
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Profile icon styling */
+.profile-icon {
+  font-size: 24px; /* Adjust icon size */
+  color: #333; /* Change color if needed */
+  margin-right: 8px; /* Space between icon and name */
+}
+
+/* Profile name styling */
+.profile-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap; /* Prevent text from wrapping */
+  margin: 0; /* Reset any unwanted margins */
+}
+
+/* Profile button styling */
+.profile-button {
+  background-color: #2f4050;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.profile-container:hover {
+  background-color: #f0f0f0;
+}
+
+/* Dropdown menu styling */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  margin-top: 10px;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 5px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+/* Dropdown item styling */
+.dropdown-item {
+  padding: 10px 20px;
+  background-color: white;
+  color: #333;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+}
+
+
+
 
 

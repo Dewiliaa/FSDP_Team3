@@ -1,15 +1,25 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Home from './Home';
 import Dashboard from './pages/Dashboard';
-import Navbar from './components/Navbar'; // Adjust the import based on your folder structure
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import ProfileDropdown from './components/ProfileDropdown'; // Import ProfileDropdown component
+import './App.css';
 
 function App() {
-    const location = useLocation();
+    const location = useLocation(); // Get the current location for conditional rendering
 
     return (
         <div className="App">
-            {location.pathname !== '/' && <Navbar />}
+            {/* Show the Navbar and ProfileDropdown on all pages except the Home page */}
+            {location.pathname !== '/' && (
+                <>
+                    <Navbar />
+                    <ProfileDropdown />
+                </>
+            )}
+            
+            {/* Define the main Routes */}
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -18,6 +28,7 @@ function App() {
     );
 }
 
+// Wrapper for the App with Router
 const AppWrapper = () => (
     <Router>
         <App />
@@ -25,3 +36,4 @@ const AppWrapper = () => (
 );
 
 export default AppWrapper;
+
