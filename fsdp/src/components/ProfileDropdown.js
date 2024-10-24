@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CgProfile } from "react-icons/cg";
-import '../App.css'; // Ensure this includes the updated CSS
+import '../App.css';
 import { useNavigate } from 'react-router-dom';
 
 function ProfileDropdown() {
@@ -10,11 +10,10 @@ function ProfileDropdown() {
   // Function to handle opening/closing the dropdown
   const toggleDropdown = () => setIsOpen(!isOpen);
 
-  // Function to handle signout (example placeholder function)
+  // Function to handle signout
   const handleSignout = () => {
     alert("Signed Out!");
     navigate('/');
-    // Implement signout logic here, e.g., clearing user data or redirecting to Home page
   };
 
   return (
@@ -24,7 +23,7 @@ function ProfileDropdown() {
       {isOpen && (
         <div className="dropdown-menu">
           <button onClick={handleSignout} className="dropdown-item">
-            Signout
+            Logouts
           </button>
         </div>
       )}
