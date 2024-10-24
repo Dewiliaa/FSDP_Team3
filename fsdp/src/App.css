@@ -130,40 +130,35 @@ body {
   font-weight: 600;
 }
 
-
-/* Container for the profile button */
 .profile-container {
-  display: flex; /* Flexbox for horizontal alignment */
-  align-items: center; /* Vertically center items */
-  width: auto; /* Fit content */
+  display: flex; 
+  align-items: center; 
+  width: auto; 
   height: 50px;
   background-color: aliceblue;
   position: absolute;
-  top: 10px; /* Adjust top position as needed */
-  right: 10px; /* Adjust right position as needed */
-  padding: 0 10px; /* Padding for spacing */
+  top: 10px; 
+  right: 10px; 
+  padding: 0 10px; 
   border-radius: 5px;
   cursor: pointer;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Profile icon styling */
 .profile-icon {
-  font-size: 24px; /* Adjust icon size */
-  color: #333; /* Change color if needed */
-  margin-right: 8px; /* Space between icon and name */
+  font-size: 24px; 
+  color: #333; 
+  margin-right: 8px; 
 }
 
-/* Profile name styling */
 .profile-name {
   font-size: 14px;
   font-weight: 500;
   color: #333;
-  white-space: nowrap; /* Prevent text from wrapping */
-  margin: 0; /* Reset any unwanted margins */
+  white-space: nowrap;
+  margin: 0;
 }
 
-/* Profile button styling */
 .profile-button {
   background-color: #2f4050;
   color: white;
@@ -178,7 +173,6 @@ body {
   background-color: #f0f0f0;
 }
 
-/* Dropdown menu styling */
 .dropdown-menu {
   position: absolute;
   right: 0;
@@ -190,7 +184,6 @@ body {
   z-index: 100;
 }
 
-/* Dropdown item styling */
 .dropdown-item {
   padding: 10px 20px;
   background-color: white;

@@ -3,15 +3,14 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import Home from './Home';
 import Dashboard from './pages/Dashboard';
 import Navbar from './components/Navbar';
-import ProfileDropdown from './components/ProfileDropdown'; // Import ProfileDropdown component
+import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
 
 function App() {
-    const location = useLocation(); // Get the current location for conditional rendering
+    const location = useLocation(); 
 
     return (
         <div className="App">
-            {/* Show the Navbar and ProfileDropdown on all pages except the Home page */}
             {location.pathname !== '/' && (
                 <>
                     <Navbar />
@@ -28,7 +27,6 @@ function App() {
     );
 }
 
-// Wrapper for the App with Router
 const AppWrapper = () => (
     <Router>
         <App />
