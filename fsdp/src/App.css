@@ -37,6 +37,86 @@
   font-style: normal;
 }
 
+/* Carousel styles in App.css */
+.carousel-container {
+  width: 100%;
+  max-width: 800px; /* Adjust max-width to desired size */
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 15px; /* Rounded corners */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Shadow effect */
+}
+
+.carousel-slide {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+  touch-action: pan-y;
+  position: relative;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: auto;
+  max-height: 400px; /* Adjust max-height to desired size */
+  object-fit: cover;
+  border-radius: 15px; /* Rounded corners for images */
+}
+
+/* Slide Indicators Overlay */
+.carousel-indicators-overlay {
+  position: absolute;
+  bottom: 15px; /* Position the dots at the bottom of the image */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.indicator-dot {
+  height: 12px;
+  width: 12px;
+  margin: 0 5px;
+  background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white for default dots */
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.indicator-dot.active {
+  background-color: rgba(255, 255, 255, 1); /* Brighter white for the active dot */
+}
+
+
+/* Other existing styles */
+.App {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0;
+}
+
+.Sidebar {
+  position: fixed;
+  height: 100%;
+  width: 200px;
+  background-color: #2f4050;
+  top: 0; 
+  left: 0;
+  z-index: 1000;
+}
+
+
 
 .App {
   width: 100vw;
