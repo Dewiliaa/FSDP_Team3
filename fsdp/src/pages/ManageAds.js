@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ManageAds = () => {
-    const [ads, setAds] = useState([]); // Initialize with an empty array
+    const [ads, setAds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [dropdownOpen, setDropdownOpen] = useState(null); // Track which dropdown is open
+    const [dropdownOpen, setDropdownOpen] = useState(null);
+    const navigate = useNavigate();
 
-    // Function to delete an ad
     const deleteAd = (id) => {
         setAds(ads.filter(ad => ad.id !== id));
-        setDropdownOpen(null); // Close the dropdown after deletion
+        setDropdownOpen(null);
     };
 
-    // Function to handle image upload
     const handleImageUpload = (id, event) => {
         const file = event.target.files[0];
         if (file) {
@@ -21,28 +21,25 @@ const ManageAds = () => {
                     ad.id === id ? { ...ad, image: reader.result } : ad
                 ));
             };
-            reader.readAsDataURL(file); // Convert the file to a base64 URL
+            reader.readAsDataURL(file);
         }
     };
 
-    // Function to create a new ad placeholder
     const createAd = () => {
         const newAd = {
-            id: ads.length + 1, // Unique ID
+            id: ads.length + 1,
             name: `Ad Placeholder ${ads.length + 1}`,
-            image: null, // New ad starts with no image
+            image: null,
         };
         setAds([...ads, newAd]);
     };
 
-    // Filter ads based on the search term
     const filteredAds = ads.filter(ad => ad.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <div className="manageAds" style={{ padding: '10px', maxWidth: '400px', margin: '0 auto' }}>
             <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.2rem' }}>Manage Ads</h2>
 
-            {/* Search Bar */}
             <div style={{ display: 'flex', marginBottom: '15px' }}>
                 <input
                     type="text"
@@ -65,7 +62,6 @@ const ManageAds = () => {
                 </button>
             </div>
 
-            {/* List of Ads */}
             <div>
                 {filteredAds.map((ad) => (
                     <div
@@ -84,7 +80,6 @@ const ManageAds = () => {
                     >
                         <span>{ad.name}</span>
 
-                        {/* Dropdown Button */}
                         <div style={{ position: 'relative' }}>
                             <button
                                 onClick={() => setDropdownOpen(dropdownOpen === ad.id ? null : ad.id)}
@@ -114,13 +109,12 @@ const ManageAds = () => {
                                         minWidth: '150px',
                                     }}
                                 >
-                                    {/* Placeholder for Image */}
                                     <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                                         <div
                                             style={{
                                                 width: '100%',
-                                                height: '200px', // Increased height for the image placeholder
-                                                backgroundColor: '#f0f0f0', // Placeholder background color
+                                                height: '200px',
+                                                backgroundColor: '#f0f0f0',
                                                 border: '1px dashed #ccc',
                                                 borderRadius: '5px',
                                                 overflow: 'hidden',
@@ -134,11 +128,10 @@ const ManageAds = () => {
                                                     style={{
                                                         width: '100%',
                                                         height: '100%',
-                                                        objectFit: 'cover', // Cover the area
+                                                        objectFit: 'cover',
                                                     }}
                                                 />
                                             ) : (
-                                                // Ad Template Inside Placeholder
                                                 <span style={{ lineHeight: '200px', color: '#999', fontSize: '1.2rem', fontWeight: 'bold' }}>
                                                     {ad.name} Template
                                                 </span>
@@ -146,7 +139,6 @@ const ManageAds = () => {
                                         </div>
                                     </div>
 
-                                    {/* Upload Image Button */}
                                     <button
                                         onClick={() => document.getElementById(`file-input-${ad.id}`).click()}
                                         style={{
@@ -163,13 +155,12 @@ const ManageAds = () => {
                                         Upload Image
                                     </button>
 
-                                    {/* File Input for Image Upload */}
                                     <input
-                                        id={`file-input-${ad.id}`} // Unique ID for file input
+                                        id={`file-input-${ad.id}`}
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) => handleImageUpload(ad.id, e)} // Handle image upload
-                                        style={{ display: 'none' }} // Hide the input
+                                        onChange={(e) => handleImageUpload(ad.id, e)}
+                                        style={{ display: 'none' }}
                                     />
 
                                     <button
@@ -186,6 +177,22 @@ const ManageAds = () => {
                                     >
                                         Delete
                                     </button>
+
+                                    <button
+                                        onClick={() => navigate('/adTemplate')}
+                                        style={{
+                                            padding: '10px',
+                                            cursor: 'pointer',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#6a4fe7',
+                                            fontWeight: 'bold',
+                                        }}
+                                    >
+                                        Choose Template
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -193,7 +200,6 @@ const ManageAds = () => {
                 ))}
             </div>
 
-            {/* Create New Ad Button */}
             <button
                 onClick={createAd}
                 style={{

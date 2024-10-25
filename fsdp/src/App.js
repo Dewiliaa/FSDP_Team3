@@ -6,6 +6,7 @@ import ManageAds from './pages/ManageAds';
 import Library from './pages/Library';
 import Scheduling from './pages/Scheduling';
 import Devices from './pages/Devices';
+import ChooseTemplate from './pages/ChooseTemplate';
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
@@ -27,6 +28,7 @@ function App() {
                 <Route path="/" element={<Home />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/adManagement" element={<ManageAds />} />
+                <Route path="/adTemplate" element={<ChooseTemplate />} />
                 <Route path="/library" element={<Library />} />
                 <Route path="/scheduling" element={<Scheduling />} />
                 <Route path="/devices" element={<Devices />} />
