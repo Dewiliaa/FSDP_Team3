@@ -1,3 +1,4 @@
+/* Home Page */
 .home-page {
   font-family: Arial, sans-serif;
   text-align: center;
@@ -93,19 +94,7 @@
   background-color: rgba(255, 255, 255, 1); /* Brighter white for the active dot */
 }
 
-
-/* Other existing styles */
-.App {
-  width: 100vw;
-  height: 100vh;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f0f0f0;
-}
-
+/* Sidebar */
 .Sidebar {
   position: fixed;
   height: 100%;
@@ -115,8 +104,6 @@ body {
   left: 0;
   z-index: 1000;
 }
-
-
 
 .App {
   width: 100vw;
@@ -210,74 +197,108 @@ body {
   font-weight: 600;
 }
 
+
+/* Profile */
 .profile-container {
-  display: flex; 
-  align-items: center; 
-  width: auto; 
+  display: flex;
+  align-items: center;
+  width: auto;
   height: 50px;
-  background-color: aliceblue;
+  background-color: #f8f9fa;
   position: absolute;
-  top: 10px; 
-  right: 10px; 
-  padding: 0 10px; 
-  border-radius: 5px;
+  top: 10px;
+  right: 10px;
+  padding: 0 15px;
+  border-radius: 25px;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
 }
 
 .profile-icon {
-  font-size: 24px; 
-  color: #333; 
-  margin-right: 8px; 
+  font-size: 28px;
+  color: #555;
+  margin-right: 10px;
 }
 
 .profile-name {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   color: #333;
   white-space: nowrap;
   margin: 0;
 }
 
-.profile-button {
-  background-color: #2f4050;
-  color: white;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  border-radius: 5px;
-  font-size: 14px;
-}
-
 .profile-container:hover {
-  background-color: #f0f0f0;
+  background-color: #e9ecef;
 }
 
 .dropdown-menu {
   position: absolute;
+  top: 45px;
   right: 0;
-  margin-top: 90px;
+  margin-top: 10px;
   background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  border-radius: 5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
   overflow: hidden;
   z-index: 100;
+  width: 200px;
+  transform-origin: top right;
+  animation: fadeIn 0.3s ease;
+}
+
+.dropdown-menu.fade-out {
+  animation: fadeOut 0.3s ease forwards;
 }
 
 .dropdown-item {
-  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
   background-color: white;
   color: #333;
   border: none;
   width: 100%;
   text-align: left;
   cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .dropdown-item:hover {
-  background-color: #f0f0f0;
+  background-color: #f8f9fa;
 }
 
+.dropdown-icon {
+  margin-right: 10px;
+  font-size: 18px;
+  color: #555;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Dashboard */
 .dashboard {
   display: flex;
   flex-direction: column;
@@ -295,12 +316,95 @@ body {
 
 .map-container {
   width: 100%; 
-  max-width: 1200px; 
+  max-width: 1000px; 
   height: 500px; 
   border: 5px solid black; 
   border-radius: 8px; 
   margin: 20px auto 0; 
 }
+
+/* Card container */
+.card-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1000px; 
+}
+
+.card {
+  width: 425px; 
+  height: 350px; 
+  background-color: #f9f9f9; 
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px); 
+}
+
+/* Title */
+.card h1 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-top: 5px;
+  color: #333;
+}
+
+/* Statistics Sections */
+.display-times, .device-count {
+  display: flex;
+  width: 400px;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px; 
+  border: 2px solid #ddd;
+  border-radius: 8px; 
+  background-color: #f9f9f9; 
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease; 
+}
+
+.display-times:hover, .device-count:hover {
+  transform: scale(1.02); 
+}
+
+.clock-icon, .device-icon {
+  font-size: 36px; 
+  margin-bottom: 8px; 
+  color: #333; 
+}
+
+.time-stat {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 5px 0; 
+  color: #333;
+}
+
+.time-title {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+  margin-top: 4px;
+  font-weight: 400; 
+  text-align: center; 
+}
+
+.card:hover .display-times, 
+.card:hover .device-count {
+  border-color: #ddd; 
+}
+
 
 
 
