@@ -6,7 +6,7 @@ import ManageAds from './pages/ManageAds';
 import Library from './pages/Library';
 import Scheduling from './pages/Scheduling';
 import Devices from './pages/Devices';
-import ChooseTemplate from './pages/ChooseTemplate';
+import ChooseTemplate from './components/ChooseTemplate';
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
