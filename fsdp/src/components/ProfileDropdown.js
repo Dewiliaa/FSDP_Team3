@@ -23,7 +23,7 @@ function ProfileDropdown() {
       {isOpen && (
         <div className="dropdown-menu">
           <button onClick={handleSignout} className="dropdown-item">
-            Logouts
+            Logout
           </button>
         </div>
       )}
