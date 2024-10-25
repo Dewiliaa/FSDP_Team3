@@ -1,0 +1,15 @@
+.canvas-container {
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input[type="text"], input[type="file"] {
+    padding: 5px;
+    font-size: 16px;
+}
