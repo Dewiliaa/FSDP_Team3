@@ -1,4 +1,6 @@
 import React from 'react';
+import MapComponent from '../components/MapComponent';
+import '../App.css';
 
 const Dashboard = () => {
     return (
@@ -6,6 +8,7 @@ const Dashboard = () => {
             <h2 className="page-title">Dashboard</h2>
 
             {/* do your page content here */}
+            <MapComponent />
         </div>
     );
 };
