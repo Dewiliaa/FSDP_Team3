@@ -146,7 +146,7 @@ const ManageAds = () => {
                                         </div>
                                     </div>
 
-                                    {/* Edit Button */}
+                                    {/* Upload Image Button */}
                                     <button
                                         onClick={() => document.getElementById(`file-input-${ad.id}`).click()}
                                         style={{
@@ -160,7 +160,7 @@ const ManageAds = () => {
                                             marginBottom: '10px',
                                         }}
                                     >
-                                        Edit Image
+                                        Upload Image
                                     </button>
 
                                     {/* File Input for Image Upload */}
