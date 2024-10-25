@@ -6,25 +6,36 @@
 
 .header {
   display: flex;
+  height: 60px;
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background-color: #4CAF50;
+  background: linear-gradient(135deg, #f09c00, #ffbb00);
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
   color: white;
 }
 
+.company-title {
+  color: #ffffff;
+  font-size: 50px;
+  font-family: 'CNFont', sans-serif;
+  margin: 0;
+}
+
 .login-button {
-  padding: 10px 20px;
-  background-color: #fff;
-  color: #4CAF50;
+  padding: 12px 25px;
+  background-color: #ffffff;
+  color: #ffbb00;
   border: none;
-  border-radius: 5px;
+  border-radius: 25px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s;
 }
 
 .login-button:hover {
-  background-color: #f1f1f1;
+  background-color: #f0e68c;
+  transform: scale(1.05);
 }
 
 .content {

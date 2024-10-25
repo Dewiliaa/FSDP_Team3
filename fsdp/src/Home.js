@@ -56,7 +56,7 @@ const Home = () => {
     return (
         <div className="home-page">
             <header className="header">
-                <h1>My Website</h1>
+                <h1 className="company-title">DineAd Connect</h1>
                 <button className="login-button" onClick={handleLogin}>
                     Login
                 </button>
