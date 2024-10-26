@@ -1,0 +1,22 @@
+.calendar-container {
+    display: flex;
+    flex-direction: column; /* Align items vertically */
+    justify-content: center; /* Center vertically */
+    align-items: center; /* Center horizontally */
+    height: 100vh; /* Full viewport height */
+    background-color: #f0f0f0; /* Optional background color */
+}
+
+.react-calendar {
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Optional for visual styling */
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    max-width: 400px; /* Limit width for better appearance */
+    width: 100%; /* Make it responsive */
+}
+
+p {
+    margin-top: 20px; /* Space between calendar and date display */
+    font-size: 18px; /* Font size for selected date */
+}
