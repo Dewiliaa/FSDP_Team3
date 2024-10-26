@@ -1,9 +1,9 @@
 .calendar-container {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Prevents excessive centering that pushes content down */
+    justify-content: flex-start; 
     align-items: center;
-    padding-top: 20px; /* Add a bit of padding to avoid content being too close */
+    padding-top: 20px;
     background-color: #f0f0f0;
 }
 
@@ -19,12 +19,11 @@
 .time-selection {
     display: flex;
     justify-content: center;
-    gap: 10px; /* Spacing between start and end time fields */
-    margin-top: 10px; /* Reduced margin for time selection */
+    gap: 10px; 
+    margin-top: 10px; 
 }
 
 p {
-    margin-top: 5px; /* Reduced margin between the calendar and the text */
-    font-size: 16px;  /* Consistent font size */
+    margin-top: 5px; 
     text-align: center;
 }
