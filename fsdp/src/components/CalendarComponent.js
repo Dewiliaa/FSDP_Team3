@@ -1,20 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'; 
 import '../styles/CalendarComponent.css';
 
-const CalendarComponent = ({ onDateChange }) => {
-    const [date, setDate] = useState(new Date());
+const CalendarComponent = ({ onDateTimeRangeChange }) => {
+    const [dateRange, setDateRange] = useState([new Date(), new Date()]);
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState("23:59");
 
-    const onChange = (newDate) => {
-        setDate(newDate);
-        onDateChange(newDate);
+    // Get the current date and time
+    useEffect(() => {
+        const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        setStartTime(currentTime);
+    }, []);
+
+    // Handle calendar date range change
+    const onDateChange = (newDateRange) => {
+        if (newDateRange[0] >= new Date().setHours(0, 0, 0, 0)) { // Ensure no past dates can be selected except for today
+            setDateRange(newDateRange);
+            onDateTimeRangeChange(newDateRange, startTime, endTime);
+        }
+    };
+
+    // Handle time changes
+    const handleStartTimeChange = (e) => {
+        const selectedTime = e.target.value;
+        const now = new Date();
+        const selectedDate = dateRange[0];
+
+        // If the selected date is today, ensure the selected time is not in the past
+        if (selectedDate.toDateString() === now.toDateString()) {
+            if (selectedTime >= now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) {
+                setStartTime(selectedTime);
+                onDateTimeRangeChange(dateRange, selectedTime, endTime);
+            } else {
+                alert("Start time cannot be in the past for today's date.");
+            }
+        } else {
+            setStartTime(selectedTime);
+            onDateTimeRangeChange(dateRange, selectedTime, endTime);
+        }
+    };
+
+    const handleEndTimeChange = (e) => {
+        const selectedTime = e.target.value;
+        setEndTime(selectedTime);
+        onDateTimeRangeChange(dateRange, startTime, selectedTime);
+    };
+
+    // Disable past dates but allow current date
+    const tileDisabled = ({ date, view }) => {
+        return view === 'month' && date < new Date().setHours(0, 0, 0, 0); // Disable dates before today
     };
 
     return (
         <div className="calendar-container">
-            <Calendar showWeekNumbers onChange={onChange} value={date} />
-            <p>Selected date: {date.toDateString()}</p>
+            <Calendar
+                onChange={onDateChange}
+                value={dateRange}
+                selectRange={true} 
+                showWeekNumbers
+                tileDisabled={tileDisabled} // Disable past dates but allow today
+            />
+            <div className="time-selection">
+                <label>
+                    Start Time:
+                    <input 
+                        type="time" 
+                        value={startTime} 
+                        onChange={handleStartTimeChange} 
+                    />
+                </label>
+                <label>
+                    End Time:
+                    <input 
+                        type="time" 
+                        value={endTime} 
+                        onChange={handleEndTimeChange} 
+                    />
+                </label>
+            </div>
         </div>
     );
 };

@@ -1,0 +1,20 @@
+.button-container {
+    display: flex;
+    justify-content: center; /* Center the button horizontally */
+    margin-top: 20px; /* Space above the button */
+}
+
+.schedule-button {
+    padding: 10px 20px; /* Padding for better button size */
+    font-size: 16px; /* Font size */
+    color: white; /* Text color */
+    background-color: #4CAF50; /* Green background */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s; /* Smooth transition */
+}
+
+.schedule-button:hover {
+    background-color: #45a049; /* Darker green on hover */
+}

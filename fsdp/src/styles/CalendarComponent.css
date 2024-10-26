@@ -1,22 +1,30 @@
 .calendar-container {
     display: flex;
-    flex-direction: column; /* Align items vertically */
-    justify-content: center; /* Center vertically */
-    align-items: center; /* Center horizontally */
-    height: 100vh; /* Full viewport height */
-    background-color: #f0f0f0; /* Optional background color */
+    flex-direction: column;
+    justify-content: flex-start; /* Prevents excessive centering that pushes content down */
+    align-items: center;
+    padding-top: 20px; /* Add a bit of padding to avoid content being too close */
+    background-color: #f0f0f0;
 }
 
 .react-calendar {
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Optional for visual styling */
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     background-color: white;
     border-radius: 10px;
-    max-width: 400px; /* Limit width for better appearance */
-    width: 100%; /* Make it responsive */
+    max-width: 400px;
+    width: 100%;
+}
+
+.time-selection {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Spacing between start and end time fields */
+    margin-top: 10px; /* Reduced margin for time selection */
 }
 
 p {
-    margin-top: 20px; /* Space between calendar and date display */
-    font-size: 18px; /* Font size for selected date */
+    margin-top: 5px; /* Reduced margin between the calendar and the text */
+    font-size: 16px;  /* Consistent font size */
+    text-align: center;
 }
