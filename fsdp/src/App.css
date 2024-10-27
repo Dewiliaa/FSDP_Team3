@@ -166,6 +166,100 @@
 .indicator-dot.active {
   background-color: rgba(255, 255, 255, 1); /* Brighter white for the active dot */
 }
+/* Footer Styles */
+.footer {
+  background-color: #1A2C44; /* Darker background color for contrast */
+  color: white;
+  padding: 50px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Left Section of Footer */
+.footer-left {
+  flex: -5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 50px;
+  padding-left: 20%;
+}
+
+.footer-left h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.footer-left p {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Form Styling */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-field {
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.message-input {
+  height: 80px;
+  resize: vertical;
+}
+
+/* Submit button style */
+.submit-button {
+  padding: 12px;
+  background-color: #ffbb00;
+  color: #333;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #e0a800;
+}
+
+/* Adjust Footer Right Section for Balanced Right-Center Alignment */
+.footer-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally within the right section */
+  margin-top: 100px; /* Move the content further down */
+  padding: 0 20px; /* Add some padding to both sides for balance */
+  padding-right: 20%;
+  max-width: 300px; /* Limit the width to bring it closer to the center */
+  text-align: center; /* Center-align text for a balanced look */
+}
+/* Parent Container for Contact Us and Contact Info */
+.footer-sections {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1000px; /* Limit the width of the container */
+  margin: 0 auto; /* Center the container */
+}
 
 /* Sidebar */
 .Sidebar {
