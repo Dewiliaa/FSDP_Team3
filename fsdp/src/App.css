@@ -261,6 +261,35 @@
   margin: 0 auto; /* Center the container */
 }
 
+/* Each Contact Row */
+.contact-row {
+  display: flex;
+  justify-content: flex-start; /* Align labels and values to the start */
+  gap: 10px; /* Space between label and value */
+  margin-bottom: 15px; /* Add bottom margin to create vertical gaps */
+}
+
+
+/* Label Styling */
+.contact-label {
+  font-weight: bold;
+  min-width: 100px; /* Fixed width to align consistently */
+  color: white;
+  text-align: left;
+  margin-right: 10px; /* Reduce space between label and value */
+}
+
+/* Value Styling */
+.contact-value {
+  color: #69a6ff; /* Light blue color for content */
+  text-decoration: none;
+  text-align: left;
+}
+
+.contact-value:hover {
+  text-decoration: underline;
+}
+
 /* Sidebar */
 .Sidebar {
   position: fixed;
