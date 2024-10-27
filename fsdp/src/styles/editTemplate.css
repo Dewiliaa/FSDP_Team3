@@ -1,0 +1,12 @@
+.edit-template {
+    padding: 20px;
+}
+.canvas-container {
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
