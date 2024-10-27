@@ -78,6 +78,68 @@
   object-fit: cover;
   border-radius: 15px; /* Rounded corners for images */
 }
+/* General Section Styles */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 1200px; /* Center the content and control max width */
+  gap: 20px; /* Reduce the gap between the text and the image */
+}
+
+/* About Us Section: Image on the Right */
+.about-section {
+  flex-direction: row-reverse; /* Image on the right, text on the left */
+}
+
+/* What We Do Section: Image on the Left */
+.services-section {
+  flex-direction: row; /* Ensure image is on the left, text on the right */
+}
+
+/* Text Content - Ensure proper alignment */
+.text-content {
+  flex: 1;
+  padding: 10px; /* Reduce padding to bring text closer to the image */
+  text-align: left; /* Ensure text is left-aligned */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.section-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+  text-align: left; /* Ensure text content is also left-aligned */
+}
+
+/* Image Content */
+.image-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.about-image, .services-image {
+  width: 100%;
+  max-width: 400px; /* Control the size of the image */
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+}
 
 /* Slide Indicators Overlay */
 .carousel-indicators-overlay {

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import slide1 from './assets/ad1.jpg';
 import slide2 from './assets/ad2.jpg';
 import slide3 from './assets/ad3.jpg';
+import aboutImage from './assets/ad1.jpg'; // Import About Us image
+import servicesImage from './assets/ad1.jpg'; // Import What We Do image
 
 const Home = () => {
     const navigate = useNavigate();
@@ -83,15 +85,42 @@ const Home = () => {
                     </div>
                 </div>
                 {/* End of Carousel Component */}
-                
-                <section id="about">
-                    <h2>About Us</h2>
-                    <p>We are a dedicated team committed to providing the best services for our clients.</p>
-                </section>
-                <section id="services">
-                    <h2>What We Do</h2>
-                    <p>Our mission is to deliver top-notch solutions in web development, app development, and design.</p>
-                </section>
+
+<section id="about" className="section about-section">
+    <div className="text-content">
+        <h2 className="section-title">About Us</h2>
+        <p className="section-content">
+        We are a team of passionate Diploma in Information Technology students from Ngee Ann Polytechnic, 
+        collaborating with the Advanced Innovation and Development Centre 
+        (AIDC) to create a cutting-edge prototype. Our project focuses on building an innovative ad provider
+        service tailored specifically for the Food & Beverage (F&B) industry. 
+        This service is designed to help F&B companies effectively connect with their 
+        target audience through smart and engaging digital advertising solutions.
+        </p>
+    </div>
+    <div className="image-content">
+        <img src={aboutImage} alt="About Us" className="about-image" />
+    </div>
+</section>
+
+<section id="services" className="section services-section">
+    <div className="text-content">
+        <h2 className="section-title">What We Do</h2>
+        <p className="section-content">
+        At our core, we aim to revolutionize digital advertising for F&B companies.
+        Our service enables F&B businesses to showcase their products, promotions, 
+        and special offers to a wider audience, enhancing visibility and customer engagement. 
+        Utilizing modern technology and industry insights, we provide a seamless platform for targeted advertisements, 
+        ensuring that the right customers see the right promotions at the right time. 
+        Our mission is to empower F&B brands with tools to drive sales, build customer loyalty, 
+        and stay ahead in a competitive market.
+        </p>
+    </div>
+    <div className="image-content">
+        <img src={servicesImage} alt="What We Do" className="services-image" />
+    </div>
+</section>
+
             </main>
         </div>
     );
