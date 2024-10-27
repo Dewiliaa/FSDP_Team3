@@ -5,7 +5,7 @@ import slide1 from './assets/ad1.jpg';
 import slide2 from './assets/ad2.jpg';
 import slide3 from './assets/ad3.jpg';
 import aboutImage from './assets/dineadConnect.jpg'; 
-import servicesImage from './assets/ad1.jpg';
+import servicesImage from './assets/what we do.jpg';
 
 
 const Home = () => {
