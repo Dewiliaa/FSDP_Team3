@@ -122,24 +122,72 @@ const Home = () => {
                     </div>
                 </section>
 
-                {/* What We Do Section with image on the right */}
-                <section id="services" className="section services-section">
-                    <div className="text-content">
-                        <h2 className="section-title">What We Do</h2>
-                        <p className="section-content">
-                            At our core, we aim to revolutionize digital advertising for F&B companies.
-                            Our service enables F&B businesses to showcase their products, promotions, 
-                            and special offers to a wider audience, enhancing visibility and customer engagement. 
-                            Utilizing modern technology and industry insights, we provide a seamless platform for targeted advertisements, 
-                            ensuring that the right customers see the right promotions at the right time. 
-                            Our mission is to empower F&B brands with tools to drive sales, build customer loyalty, 
-                            and stay ahead in a competitive market.
-                        </p>
-                    </div>
-                    <div className="image-content">
-                        <img src={servicesImage} alt="What We Do" className="services-image" />
-                    </div>
-                </section>
+              {/* What We Do Section with image on the right */}
+<section id="services" className="section services-section">
+    <div className="text-content">
+        <h2 className="section-title">What We Do</h2>
+        <p className="section-content">
+            At our core, we aim to revolutionize digital advertising for F&B companies.
+            Our service enables F&B businesses to showcase their products, promotions, 
+            and special offers to a wider audience, enhancing visibility and customer engagement. 
+            Utilizing modern technology and industry insights, we provide a seamless platform for targeted advertisements, 
+            ensuring that the right customers see the right promotions at the right time. 
+            Our mission is to empower F&B brands with tools to drive sales, build customer loyalty, 
+            and stay ahead in a competitive market.
+        </p>
+    </div>
+    <div className="image-content">
+        <img src={servicesImage} alt="What We Do" className="services-image" />
+    </div>
+</section>
+{/* Case Studies Section with Flexbox */}
+<section id="case-studies" className="section case-studies-section">
+    <h2 className="section-title">Featured Case Studies</h2>
+    <div className="case-studies-container">
+        {/* Case Study 1 */}
+        <div className="case-study-card">
+            <h3>Case Study: Colombus Cafe</h3>
+            <p>Discover how our targeted ads increased foot traffic by 30% in just three months. A success story.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+
+        {/* Case Study 2 */}
+        <div className="case-study-card">
+            <h3>Case Study: Urban Bistro</h3>
+            <p>Our innovative solutions boosted their online orders by 45% during the promotion period.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+
+        {/* Case Study 3 */}
+        <div className="case-study-card">
+            <h3>Case Study: Whole Earth Cafe</h3>
+            <p>We helped this vegan deli reach a wider audience with a 25% increase in social media engagement.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+
+        {/* Case Study 4 */}
+        <div className="case-study-card">
+            <h3>Case Study: Gourmet Food Truck</h3>
+            <p>Our digital campaign increased sales by 50% and built a loyal following in just two months.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+
+        {/* Case Study 5 */}
+        <div className="case-study-card">
+            <h3>Case Study: Organic Juice Bar</h3>
+            <p>A successful social media ad strategy boosted their followers by 70% within one month.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+
+        {/* Case Study 6 */}
+        <div className="case-study-card">
+            <h3>Case Study: Coastal Seafood Restaurant</h3>
+            <p>Our localized ads drove a 40% increase in local reservations during the summer season.</p>
+            <button className="case-study-button">Read More</button>
+        </div>
+    </div>
+</section>
+
             </main>
             <footer className="footer">
     {/* Left Section: Question Form */}
@@ -200,7 +248,6 @@ const Home = () => {
         </div>
     </div>
 </div>
-
 
 </footer>
         </div>

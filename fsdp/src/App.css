@@ -289,6 +289,79 @@
 .contact-value:hover {
   text-decoration: underline;
 }
+/* Case Studies Section Styling */
+.case-studies-section {
+  padding: 50px 20px;
+  background-color: #f0f4f8; /* Light background color for contrast */
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: center; /* Center content horizontally */
+}
+
+/* Center the title above the case studies */
+.case-studies-section .section-title {
+  font-size: 2.5rem;
+  margin-bottom: 40px; /* Space between the title and the cards */
+  color: #333;
+  width: 100%;
+  text-align: center; /* Center the text of the title */
+}
+
+/* Container for Case Study Cards */
+.case-studies-container {
+  display: flex;
+  justify-content: flex-start; /* Start from the beginning */
+  gap: 20px; /* Space between cards */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  scroll-snap-type: x mandatory; /* Snap scrolling */
+  padding-bottom: 20px; /* Add padding at the bottom to give space */
+  scroll-padding-left: 20px; /* Prevent cutting off the first card */
+}
+
+/* Individual Case Study Card */
+.case-study-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  flex: 0 0 300px; /* Fixed width for each card */
+  max-width: 300px;
+  text-align: left;
+  transition: transform 0.3s ease;
+  margin-bottom: 20px; /* Ensure some space at the bottom of each card */
+  scroll-snap-align: start; /* Ensure card snaps to the start */
+}
+
+/* Add some hover effect for visual interest */
+.case-study-card:hover {
+  transform: translateY(-5px); /* Hover effect to lift the card */
+  background-color: #e6f7ff; /* Light blue on hover */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Case Study Titles */
+.case-study-card h3 {
+  font-size: 1.6rem;
+  color: #ffbb00; /* Highlighted color for emphasis */
+  margin-bottom: 15px;
+}
+
+/* Button Styling */
+.case-study-button {
+  padding: 10px 20px;
+  background-color: #ffbb00; /* Blue button color */
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.case-study-button:hover {
+  background-color: #ffbb00; /* Darker blue hover color */
+}
 
 /* Sidebar */
 .Sidebar {
