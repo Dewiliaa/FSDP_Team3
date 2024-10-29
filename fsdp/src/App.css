@@ -78,6 +78,68 @@
   object-fit: cover;
   border-radius: 15px; /* Rounded corners for images */
 }
+/* General Section Styles */
+.section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+  max-width: 1200px; /* Center the content and control max width */
+  gap: 20px; /* Reduce the gap between the text and the image */
+}
+
+/* About Us Section: Image on the Right */
+.about-section {
+  flex-direction: row-reverse; /* Image on the right, text on the left */
+}
+
+/* What We Do Section: Image on the Left */
+.services-section {
+  flex-direction: row; /* Ensure image is on the left, text on the right */
+}
+
+/* Text Content - Ensure proper alignment */
+.text-content {
+  flex: 1;
+  padding: 10px; /* Reduce padding to bring text closer to the image */
+  text-align: left; /* Ensure text is left-aligned */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.section-title {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.section-content {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+  text-align: left; /* Ensure text content is also left-aligned */
+}
+
+/* Image Content */
+.image-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.about-image, .services-image {
+  width: 100%;
+  max-width: 400px; /* Control the size of the image */
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+}
 
 /* Slide Indicators Overlay */
 .carousel-indicators-overlay {
@@ -103,6 +165,202 @@
 
 .indicator-dot.active {
   background-color: rgba(255, 255, 255, 1); /* Brighter white for the active dot */
+}
+/* Footer Styles */
+.footer {
+  background-color: #1A2C44; /* Darker background color for contrast */
+  color: white;
+  padding: 50px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Left Section of Footer */
+.footer-left {
+  flex: -5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-right: 50px;
+  padding-left: 20%;
+}
+
+.footer-left h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.footer-left p {
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* Form Styling */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-field {
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.message-input {
+  height: 80px;
+  resize: vertical;
+}
+
+/* Submit button style */
+.submit-button {
+  padding: 12px;
+  background-color: #ffbb00;
+  color: #333;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+  background-color: #e0a800;
+}
+
+/* Adjust Footer Right Section for Balanced Right-Center Alignment */
+.footer-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Center vertically */
+  align-items: center; /* Center horizontally within the right section */
+  margin-top: 100px; /* Move the content further down */
+  padding: 0 20px; /* Add some padding to both sides for balance */
+  padding-right: 20%;
+  max-width: 300px; /* Limit the width to bring it closer to the center */
+  text-align: center; /* Center-align text for a balanced look */
+}
+/* Parent Container for Contact Us and Contact Info */
+.footer-sections {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1000px; /* Limit the width of the container */
+  margin: 0 auto; /* Center the container */
+}
+
+/* Each Contact Row */
+.contact-row {
+  display: flex;
+  justify-content: flex-start; /* Align labels and values to the start */
+  gap: 10px; /* Space between label and value */
+  margin-bottom: 15px; /* Add bottom margin to create vertical gaps */
+}
+
+
+/* Label Styling */
+.contact-label {
+  font-weight: bold;
+  min-width: 100px; /* Fixed width to align consistently */
+  color: white;
+  text-align: left;
+  margin-right: 10px; /* Reduce space between label and value */
+}
+
+/* Value Styling */
+.contact-value {
+  color: #69a6ff; /* Light blue color for content */
+  text-decoration: none;
+  text-align: left;
+}
+
+.contact-value:hover {
+  text-decoration: underline;
+}
+/* Case Studies Section Styling */
+.case-studies-section {
+  padding: 50px 20px;
+  background-color: #f0f4f8; /* Light background color for contrast */
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  align-items: center; /* Center content horizontally */
+}
+
+/* Center the title above the case studies */
+.case-studies-section .section-title {
+  font-size: 2.5rem;
+  margin-bottom: 40px; /* Space between the title and the cards */
+  color: #333;
+  width: 100%;
+  text-align: center; /* Center the text of the title */
+}
+
+/* Container for Case Study Cards */
+.case-studies-container {
+  display: flex;
+  justify-content: flex-start; /* Start from the beginning */
+  gap: 20px; /* Space between cards */
+  overflow-x: auto; /* Enable horizontal scrolling */
+  scroll-snap-type: x mandatory; /* Snap scrolling */
+  padding-bottom: 20px; /* Add padding at the bottom to give space */
+  scroll-padding-left: 20px; /* Prevent cutting off the first card */
+}
+
+/* Individual Case Study Card */
+.case-study-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  flex: 0 0 300px; /* Fixed width for each card */
+  max-width: 300px;
+  text-align: left;
+  transition: transform 0.3s ease;
+  margin-bottom: 20px; /* Ensure some space at the bottom of each card */
+  scroll-snap-align: start; /* Ensure card snaps to the start */
+}
+
+/* Add some hover effect for visual interest */
+.case-study-card:hover {
+  transform: translateY(-5px); /* Hover effect to lift the card */
+  background-color: #e6f7ff; /* Light blue on hover */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Case Study Titles */
+.case-study-card h3 {
+  font-size: 1.6rem;
+  color: #ffbb00; /* Highlighted color for emphasis */
+  margin-bottom: 15px;
+}
+
+/* Button Styling */
+.case-study-button {
+  padding: 10px 20px;
+  background-color: #ffbb00; /* Blue button color */
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.case-study-button:hover {
+  background-color: #ffbb00; /* Darker blue hover color */
 }
 
 /* Sidebar */

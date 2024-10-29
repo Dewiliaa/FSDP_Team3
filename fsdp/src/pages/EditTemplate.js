@@ -1,73 +1,80 @@
-import React, { useState, useRef } from 'react';
-import { fabric } from 'fabric'; // For canvas manipulation
-import './ManageAds.css'; // Import your CSS
+import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Canvas, Image, Textbox } from 'fabric';
 
-const ManageAds = () => {
-    const canvasRef = useRef(null);
-    const [canvas, setCanvas] = useState(null);
+const EditTemplate = () => {
+    const { state } = useLocation();
+    const template = state?.template;
+    const canvasRef = useRef(null);  // Reference to the canvas element
+    const fabricCanvasRef = useRef(null);  // Reference to the Fabric.js canvas instance
     const [textInput, setTextInput] = useState('');
     const [selectedText, setSelectedText] = useState(null);
 
-    // Initialize the canvas and load the template
-    const initCanvas = () => {
-        const newCanvas = new fabric.Canvas('ad-canvas', {
-            height: 500,
-            width: 400,
-        });
-        setCanvas(newCanvas);
+    useEffect(() => {
+        // Initialize Fabric canvas only if it has not been initialized already
+        if (!fabricCanvasRef.current && canvasRef.current) {
+            const fabricCanvas = new Canvas(canvasRef.current, {
+                height: 500,
+                width: 400,
+            });
+            fabricCanvasRef.current = fabricCanvas;
 
-        // Load image template
-        fabric.Image.fromURL('/path/to/template-image.png', (img) => {
-            img.set({ selectable: false });
-            newCanvas.add(img);
-        });
-    };
+            // Load selected template image if available
+            if (template?.image) {
+                Image.fromURL(template.image, (img) => {
+                    img.set({ selectable: false });
+                    fabricCanvas.add(img);
+                    fabricCanvas.sendToBack(img);
+                });
+            }
+        }
 
-    // Add text to the canvas
+        // Cleanup function to dispose of the Fabric canvas on component unmount
+        return () => {
+            if (fabricCanvasRef.current) {
+                fabricCanvasRef.current.dispose();
+                fabricCanvasRef.current = null;  // Clear the reference
+            }
+        };
+    }, [template]);
+
     const addTextToCanvas = () => {
-        const text = new fabric.Textbox(textInput, {
+        const text = new Textbox(textInput, {
             left: 50,
             top: 50,
             fontSize: 20,
             fill: '#000000',
         });
-        canvas.add(text);
+        fabricCanvasRef.current.add(text);
         setSelectedText(text);
     };
 
-    // Update selected text
     const updateText = (e) => {
         if (selectedText) {
             selectedText.text = e.target.value;
-            canvas.renderAll();
+            fabricCanvasRef.current.renderAll();
         }
     };
 
-    // Handle image upload
     const handleImageUpload = (e) => {
         const reader = new FileReader();
         reader.onload = (f) => {
             const imgObj = new Image();
             imgObj.src = f.target.result;
             imgObj.onload = () => {
-                const img = new fabric.Image(imgObj);
+                const img = new Image(imgObj);
                 img.scaleToWidth(200);
-                canvas.add(img);
+                fabricCanvasRef.current.add(img);
             };
         };
         reader.readAsDataURL(e.target.files[0]);
     };
 
-    // Initialize the canvas on component mount
-    React.useEffect(() => {
-        initCanvas();
-    }, []);
-
     return (
-        <div className="manageAds">
-            <h2 className="page-title">Manage Ads</h2>
+        <div className="edit-template">
+            <h2>Edit {template?.name}</h2>
             <div className="canvas-container">
-                <canvas id="ad-canvas" ref={canvasRef}></canvas>
+                <canvas id="template-canvas" ref={canvasRef}></canvas>
             </div>
 
             <div className="controls">
@@ -88,11 +95,10 @@ const ManageAds = () => {
                         value={selectedText.text}
                         onChange={updateText}
                     />
-                    {/* Add color picker, font size, etc. */}
                 </div>
             )}
         </div>
     );
 };
 
-export default ManageAds;
+export default EditTemplate;

@@ -7,6 +7,9 @@ import Library from './pages/Library';
 import Scheduling from './pages/Scheduling';
 import Devices from './pages/Devices';
 import ChooseTemplate from './components/ChooseTemplate';
+import EditTemplate from './pages/EditTemplate';
+
+
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
@@ -32,6 +35,7 @@ function App() {
                 <Route path="/library" element={<Library />} />
                 <Route path="/scheduling" element={<Scheduling />} />
                 <Route path="/devices" element={<Devices />} />
+                <Route path="/edit-template" element={<EditTemplate />} />
             </Routes>
         </div>
     );

@@ -8,27 +8,23 @@ const CalendarComponent = ({ onDateTimeRangeChange }) => {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState("23:59");
 
-    // Get the current date and time
     useEffect(() => {
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         setStartTime(currentTime);
     }, []);
 
-    // Handle calendar date range change
     const onDateChange = (newDateRange) => {
-        if (newDateRange[0] >= new Date().setHours(0, 0, 0, 0)) { // Ensure no past dates can be selected except for today
+        if (newDateRange[0] >= new Date().setHours(0, 0, 0, 0)) { 
             setDateRange(newDateRange);
             onDateTimeRangeChange(newDateRange, startTime, endTime);
         }
     };
 
-    // Handle time changes
     const handleStartTimeChange = (e) => {
         const selectedTime = e.target.value;
         const now = new Date();
         const selectedDate = dateRange[0];
 
-        // If the selected date is today, ensure the selected time is not in the past
         if (selectedDate.toDateString() === now.toDateString()) {
             if (selectedTime >= now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })) {
                 setStartTime(selectedTime);
@@ -48,9 +44,8 @@ const CalendarComponent = ({ onDateTimeRangeChange }) => {
         onDateTimeRangeChange(dateRange, startTime, selectedTime);
     };
 
-    // Disable past dates but allow current date
     const tileDisabled = ({ date, view }) => {
-        return view === 'month' && date < new Date().setHours(0, 0, 0, 0); // Disable dates before today
+        return view === 'month' && date < new Date().setHours(0, 0, 0, 0); 
     };
 
     return (
@@ -60,7 +55,7 @@ const CalendarComponent = ({ onDateTimeRangeChange }) => {
                 value={dateRange}
                 selectRange={true} 
                 showWeekNumbers
-                tileDisabled={tileDisabled} // Disable past dates but allow today
+                tileDisabled={tileDisabled} 
             />
             <div className="time-selection">
                 <label>
