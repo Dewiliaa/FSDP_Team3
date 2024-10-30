@@ -959,15 +959,18 @@ input:checked + .slider {
 }
 
 .forgot-password-link {
+  background: none;
+  border: none;
   color: #ffbb00;
   text-decoration: none;
   font-size: 0.9em;
+  cursor: pointer;
+  padding: 0; /* Remove padding */
 }
 
 .forgot-password-link:hover {
   text-decoration: underline;
 }
-
 
 
 

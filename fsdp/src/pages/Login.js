@@ -47,6 +47,10 @@ const Login = ({ setIsAuthenticated }) => {
         }
     };
 
+    const handleForgotPassword = () => {
+        // Empty for now, as requested
+    };
+
     return (
         <div className="login-page standalone">
             {isLoading ? (
@@ -85,7 +89,13 @@ const Login = ({ setIsAuthenticated }) => {
                                 />
                                 Remember Me
                             </label>
-                            <a href="/forgot-password" className="forgot-password-link">Forgot Password?</a>
+                            <button 
+                                type="button" 
+                                onClick={handleForgotPassword} 
+                                className="forgot-password-link"
+                            >
+                                Forgot Password?
+                            </button>
                         </div>
 
                         <button type="submit" className="login-button">Login</button>
