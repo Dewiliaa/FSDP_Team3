@@ -912,50 +912,71 @@ input:checked + .slider {
     border-radius: 4px;
 }
 
-/* App.css */
-
+/* Background with gradient */
 .login-page {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background: linear-gradient(135deg, #356dcd, #ffbb00); 
 }
 
-.login-content {
+/* Login Container Styling */
+.login-container {
   width: 100%;
   max-width: 400px;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  background: rgba(255, 255, 255, 0.85); 
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
 
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+/* Title Styling */
+.login-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: 600;
 }
 
+/* Input Field Styling */
 .input-field {
-  padding: 10px;
+  padding: 12px;
+  font-size: 1rem;
   border: 1px solid #ddd;
-  border-radius: 5px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-/* Remember Me & Forgot Password Styling */
+/* Login Button Styling */
+.login-button {
+  padding: 12px;
+  font-size: 1rem;
+  color: #ffffff;
+  background: #ffbb00;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+  width: 100%;
+}
+
+.login-button:hover {
+  background-color: #e0a800;
+}
+
+/* Remember Me & Forgot Password */
 .remember-forgot {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin: 10px 0;
-}
-
-.remember-me {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  font-size: 0.9em;
+  color: #333;
 }
 
 .forgot-password-link {
@@ -965,16 +986,17 @@ input:checked + .slider {
   text-decoration: none;
   font-size: 0.9em;
   cursor: pointer;
-  padding: 0; /* Remove padding */
+  padding: 0;
 }
 
 .forgot-password-link:hover {
   text-decoration: underline;
 }
 
-
-
-
-
-
+/* Checkbox Styling */
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
 
