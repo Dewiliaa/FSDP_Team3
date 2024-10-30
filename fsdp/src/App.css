@@ -944,6 +944,29 @@ input:checked + .slider {
   border-radius: 5px;
 }
 
+/* Remember Me & Forgot Password Styling */
+.remember-forgot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.forgot-password-link {
+  color: #ffbb00;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
 
 
 

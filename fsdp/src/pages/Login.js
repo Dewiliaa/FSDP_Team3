@@ -1,31 +1,43 @@
 // Login.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lottie from 'react-lottie';
 import '../App.css';
-import loadingAnimation from '../assets/loading.json'; // Import the Lottie JSON file
+import loadingAnimation from '../assets/loading.json';
 
 const Login = ({ setIsAuthenticated }) => {
     const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false); // State to track loading
+    const [rememberMe, setRememberMe] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const savedUsername = localStorage.getItem('rememberedUsername');
+        if (savedUsername) {
+            setUsername(savedUsername);
+            setRememberMe(true);
+        }
+    }, []);
 
     const handleLogin = (e) => {
         e.preventDefault();
-        // Basic credential check
         if (username === 'admin' && password === 'password') {
-            setIsLoading(true); // Show loading animation
+            setIsLoading(true);
+            if (rememberMe) {
+                localStorage.setItem('rememberedUsername', username);
+            } else {
+                localStorage.removeItem('rememberedUsername');
+            }
             setTimeout(() => {
-                setIsAuthenticated(true); // Set authentication
-                navigate('/dashboard'); // Redirect to dashboard
-            }, 3000); // 3-second delay to simulate loading
+                setIsAuthenticated(true);
+                navigate('/dashboard');
+            }, 3000);
         } else {
             alert('Invalid username or password');
         }
     };
 
-    // Lottie animation options
     const defaultOptions = {
         loop: true,
         autoplay: true,
@@ -62,6 +74,20 @@ const Login = ({ setIsAuthenticated }) => {
                             required
                             className="input-field"
                         />
+
+                        {/* Remember Me and Forgot Password */}
+                        <div className="remember-forgot">
+                            <label className="remember-me">
+                                <input
+                                    type="checkbox"
+                                    checked={rememberMe}
+                                    onChange={() => setRememberMe(!rememberMe)}
+                                />
+                                Remember Me
+                            </label>
+                            <a href="/forgot-password" className="forgot-password-link">Forgot Password?</a>
+                        </div>
+
                         <button type="submit" className="login-button">Login</button>
                     </form>
                 </div>
