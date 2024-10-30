@@ -19,8 +19,9 @@ const Home = () => {
     const [message, setMessage] = useState('');
 
     const handleLogin = () => {
-        navigate('/dashboard');
+        navigate('/login'); // Updated to point to /login
     };
+    
 
     // Handle form submission
     const handleFormSubmit = (e) => {
