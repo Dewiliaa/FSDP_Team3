@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Home from './Home';
 import Dashboard from './pages/Dashboard';
@@ -15,8 +15,15 @@ import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false); // Track authentication
-    const location = useLocation(); 
+    const [isAuthenticated, setIsAuthenticated] = useState(
+        localStorage.getItem('isAuthenticated') === 'true'
+    );
+
+    const location = useLocation();
+
+    useEffect(() => {
+        localStorage.setItem('isAuthenticated', isAuthenticated);
+    }, [isAuthenticated]);
 
     return (
         <div className="App">
@@ -26,7 +33,7 @@ function App() {
                     <ProfileDropdown />
                 </>
             )}
-            
+
             <Routes>
                 <Route path="/" element={<Home />} />
                 <Route 

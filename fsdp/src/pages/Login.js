@@ -24,11 +24,15 @@ const Login = ({ setIsAuthenticated }) => {
         e.preventDefault();
         if (username === 'admin' && password === 'password') {
             setIsLoading(true);
+
             if (rememberMe) {
                 localStorage.setItem('rememberedUsername', username);
             } else {
                 localStorage.removeItem('rememberedUsername');
             }
+
+            // Set authenticated status in localStorage
+            localStorage.setItem('isAuthenticated', 'true');
             setTimeout(() => {
                 setIsAuthenticated(true);
                 navigate('/dashboard');
