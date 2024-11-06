@@ -1,7 +1,7 @@
-// Login.js
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Lottie from 'react-lottie';
+import AWS from '../aws-config';
 import '../App.css';
 import loadingAnimation from '../assets/loading.json';
 
@@ -12,6 +12,7 @@ const Login = ({ setIsAuthenticated }) => {
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    // Check for saved username in localStorage on page load
     useEffect(() => {
         const savedUsername = localStorage.getItem('rememberedUsername');
         if (savedUsername) {
@@ -20,25 +21,38 @@ const Login = ({ setIsAuthenticated }) => {
         }
     }, []);
 
-    const handleLogin = (e) => {
+    // Handle the login process
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (username === 'admin' && password === 'password') {
-            setIsLoading(true);
+        setIsLoading(true);
 
+        try {
+            // Use AWS STS to assume a role and get temporary credentials
+            const sts = new AWS.STS();
+            const params = {
+                RoleArn: 'arn:aws:iam::060795902170:role/LoginAccessRole',
+                RoleSessionName: 'sessionName',
+            };
+            const data = await sts.assumeRole(params).promise();
+            AWS.config.credentials = new AWS.Credentials(data.Credentials);
+
+            // Save username if "Remember Me" is checked
             if (rememberMe) {
                 localStorage.setItem('rememberedUsername', username);
             } else {
                 localStorage.removeItem('rememberedUsername');
             }
 
-            // Set authenticated status in localStorage
+            // Set authenticated status in localStorage and update app state
             localStorage.setItem('isAuthenticated', 'true');
-            setTimeout(() => {
-                setIsAuthenticated(true);
-                navigate('/dashboard');
-            }, 3000);
-        } else {
+            setIsAuthenticated(true);
+            navigate('/dashboard');
+
+        } catch (error) {
             alert('Invalid username or password');
+            console.error('AWS Authentication failed:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -46,13 +60,7 @@ const Login = ({ setIsAuthenticated }) => {
         loop: true,
         autoplay: true,
         animationData: loadingAnimation,
-        rendererSettings: {
-            preserveAspectRatio: 'xMidYMid slice'
-        }
-    };
-
-    const handleForgotPassword = () => {
-        // Empty for now, as requested
+        rendererSettings: { preserveAspectRatio: 'xMidYMid slice' }
     };
 
     return (
@@ -83,7 +91,6 @@ const Login = ({ setIsAuthenticated }) => {
                             className="input-field"
                         />
 
-                        {/* Remember Me and Forgot Password */}
                         <div className="remember-forgot">
                             <label className="remember-me">
                                 <input
@@ -95,7 +102,7 @@ const Login = ({ setIsAuthenticated }) => {
                             </label>
                             <button 
                                 type="button" 
-                                onClick={handleForgotPassword} 
+                                onClick={() => alert('Forgot Password functionality is currently unavailable.')} 
                                 className="forgot-password-link"
                             >
                                 Forgot Password?
