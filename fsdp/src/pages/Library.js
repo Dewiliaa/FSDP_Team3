@@ -1,28 +1,55 @@
+import AWS from '../aws-config'; // Import your AWS config
 import React, { useState } from 'react';
 import '../App.css';
 import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
+
+// Initialize S3 instance
+const s3 = new AWS.S3();
 
 const Library = () => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [previewMedia, setPreviewMedia] = useState(null); // For modal preview
     const [mediaType, setMediaType] = useState('All'); // Filter type
 
-    const handleFileUpload = (e) => {
+    const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
-        const updatedFiles = files.map(file => ({
-            id: Date.now() + file.name,
-            name: file.name,
-            type: file.type.split('/')[0],
-            url: URL.createObjectURL(file),
-        }));
-        setMediaFiles((prev) => [...prev, ...updatedFiles]);
+        const uploadedFiles = [];
+
+        for (const file of files) {
+            try {
+                // Configure parameters for S3 upload
+                const params = {
+                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME, // Define in .env
+                    Key: `media/${Date.now()}_${file.name}`, // Custom path and unique name
+                    Body: file,
+                    ACL: 'public-read', // Makes file publicly accessible
+                    ContentType: file.type, // Set file type
+                };
+
+                // Upload to S3
+                const data = await s3.upload(params).promise();
+
+                // Push file data with the S3 URL to mediaFiles state
+                uploadedFiles.push({
+                    id: data.Key,
+                    name: file.name,
+                    type: file.type.split('/')[0], // Image, video, audio
+                    url: data.Location, // S3 file URL
+                });
+            } catch (error) {
+                console.error('Error uploading file:', error);
+            }
+        }
+
+        // Update the state with uploaded files
+        setMediaFiles((prev) => [...prev, ...uploadedFiles]);
     };
 
     const handleDelete = (id) => {
         setMediaFiles((prev) => prev.filter(file => file.id !== id));
     };
 
-    const filteredFiles = mediaFiles.filter(file => 
+    const filteredFiles = mediaFiles.filter(file =>
         mediaType === 'All' || file.type === mediaType.toLowerCase()
     );
 
@@ -59,12 +86,15 @@ const Library = () => {
                 {filteredFiles.map((file) => (
                     <div key={file.id} className="media-card">
                         <div className="media-preview">
+                            {/* Display Image */}
                             {file.type === 'image' && (
-                                <img src={file.url} alt={file.name} onClick={() => setPreviewMedia(file)} />
+                                <img src={file.url} alt={file.name} />
                             )}
+                            {/* Display Video */}
                             {file.type === 'video' && (
-                                <video src={file.url} onClick={() => setPreviewMedia(file)} controls />
+                                <video src={file.url} controls />
                             )}
+                            {/* Display Audio */}
                             {file.type === 'audio' && (
                                 <audio src={file.url} controls />
                             )}
