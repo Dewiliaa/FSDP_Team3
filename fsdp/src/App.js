@@ -10,6 +10,7 @@ import ChooseTemplate from './components/ChooseTemplate';
 import EditTemplate from './pages/EditTemplate';
 import Login from './pages/Login';
 
+
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';

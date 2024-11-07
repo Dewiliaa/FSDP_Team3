@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "init": "^0.1.2",
     "react-calendar": "^5.1.0",
     "react-image-crop": "^11.0.7",
-    "sass": "^1.80.6"
+    "sass": "^1.80.6",
+    "ws": "^8.18.0"
   }
 }
