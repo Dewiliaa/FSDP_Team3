@@ -951,20 +951,6 @@ input:checked + .slider {
   width: 100%;
 }
 
-/* Login Button Styling */
-.login-button {
-  padding: 12px;
-  font-size: 1rem;
-  color: #ffffff;
-  background: #ffbb00;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-  width: 100%;
-}
-
 .login-button:hover {
   background-color: #e0a800;
 }
