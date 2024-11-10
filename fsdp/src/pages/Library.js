@@ -1,5 +1,5 @@
-import AWS from '../aws-config'; // Import your AWS config
-import React, { useState } from 'react';
+import AWS from '../aws-config';
+import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
 
@@ -8,8 +8,36 @@ const s3 = new AWS.S3();
 
 const Library = () => {
     const [mediaFiles, setMediaFiles] = useState([]);
-    const [previewMedia, setPreviewMedia] = useState(null); // For modal preview
-    const [mediaType, setMediaType] = useState('All'); // Filter type
+    const [previewMedia, setPreviewMedia] = useState(null);
+    const [mediaType, setMediaType] = useState('All');
+
+    useEffect(() => {
+        const fetchMediaFiles = async () => {
+            try {
+                const params = {
+                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+                    Prefix: 'media/', 
+                };
+                console.log('Fetching with params:', params);
+    
+                const data = await s3.listObjectsV2(params).promise();
+                console.log('Fetched data:', data);
+
+                const files = data.Contents.map((item) => ({
+                    id: item.Key,
+                    name: item.Key.split('/').pop(),
+                    type: item.Key.split('.').pop(),
+                    url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
+                }));
+                setMediaFiles(files);
+            } catch (error) {
+                console.error('Error fetching media files:', error);
+            }
+        };
+    
+        fetchMediaFiles();
+    }, []);
+    
 
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
@@ -17,36 +45,45 @@ const Library = () => {
 
         for (const file of files) {
             try {
-                // Configure parameters for S3 upload
                 const params = {
-                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME, // Define in .env
-                    Key: `media/${Date.now()}_${file.name}`, // Custom path and unique name
+                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+                    Key: `media/${Date.now()}_${file.name}`,
                     Body: file,
-                    ACL: 'public-read', // Makes file publicly accessible
-                    ContentType: file.type, // Set file type
+                    ACL: 'public-read',
+                    ContentType: file.type,
                 };
 
-                // Upload to S3
                 const data = await s3.upload(params).promise();
 
-                // Push file data with the S3 URL to mediaFiles state
                 uploadedFiles.push({
                     id: data.Key,
                     name: file.name,
-                    type: file.type.split('/')[0], // Image, video, audio
-                    url: data.Location, // S3 file URL
+                    type: file.type.split('/')[0],
+                    url: data.Location,
                 });
             } catch (error) {
                 console.error('Error uploading file:', error);
             }
         }
 
-        // Update the state with uploaded files
         setMediaFiles((prev) => [...prev, ...uploadedFiles]);
     };
 
-    const handleDelete = (id) => {
-        setMediaFiles((prev) => prev.filter(file => file.id !== id));
+    const handleDelete = async (id) => {
+        try {
+            const params = {
+                Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+                Key: id,
+            };
+
+            await s3.deleteObject(params).promise();
+            window.alert('File has been successfully deleted.');
+
+            setMediaFiles((prev) => prev.filter(file => file.id !== id));
+            console.log(`File ${id} deleted successfully from S3.`);
+        } catch (error) {
+            console.error('Error deleting file from S3:', error);
+        }
     };
 
     const filteredFiles = mediaFiles.filter(file =>
@@ -86,18 +123,9 @@ const Library = () => {
                 {filteredFiles.map((file) => (
                     <div key={file.id} className="media-card">
                         <div className="media-preview">
-                            {/* Display Image */}
-                            {file.type === 'image' && (
-                                <img src={file.url} alt={file.name} />
-                            )}
-                            {/* Display Video */}
-                            {file.type === 'video' && (
-                                <video src={file.url} controls />
-                            )}
-                            {/* Display Audio */}
-                            {file.type === 'audio' && (
-                                <audio src={file.url} controls />
-                            )}
+                            {file.type === 'image' && <img src={file.url} alt={file.name} />}
+                            {file.type === 'video' && <video src={file.url} controls />}
+                            {file.type === 'audio' && <audio src={file.url} controls />}
                         </div>
                         <div className="media-info">
                             <p>{file.name}</p>
