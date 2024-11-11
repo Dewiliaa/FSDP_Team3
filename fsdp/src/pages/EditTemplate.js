@@ -1,13 +1,16 @@
-import React, { useState } from 'react'
-import '../styles/edit.scss'
-import ReactCrop from 'react-image-crop'
-import 'react-image-crop/dist/ReactCrop.css'
-import { GrRotateLeft, GrRotateRight } from 'react-icons/gr'
-import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg'
-import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io'
-import storeData from '../components/LinkedList'
+import React, { useState } from 'react';
+import '../styles/edit.scss';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
+import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
+import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
+import storeData from '../components/LinkedList';
 
 const EditTemplate = () => {
+    const [showTextPopup, setShowTextPopup] = useState(false);
+    const [text, setText] = useState('');
+
     const filterElement = [
         {
             name: 'brightness',
@@ -53,6 +56,9 @@ const EditTemplate = () => {
         vartical: 1,
         horizental: 1
     })
+    const handleTextInput = (e) => {
+        setText(e.target.value);
+    };
     const inputHandle = (e) => {
         setState({
             ...state,
@@ -224,6 +230,20 @@ const EditTemplate = () => {
                                     <div onClick={horizentalFlip}><CgMergeHorizontal /></div>
                                 </div>
                             </div>
+                            <div className="text_button">
+                                <button onClick={() => setShowTextPopup(true)}>T</button>
+                            </div>
+                            {showTextPopup && (
+                                <div className="text-popup">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Enter text here" 
+                                        value={text} 
+                                        onChange={handleTextInput} 
+                                    />
+                                    <button onClick={() => setShowTextPopup(false)}>Close</button>
+                                </div>
+                            )}
                         </div>
                         <div className="reset">
                             <button>Reset</button>
@@ -241,6 +261,9 @@ const EditTemplate = () => {
                                         <span>Choose Image</span>
                                     </label>
                             }
+                            <div className="text-overlay" style={{ position: 'absolute', top: '10%', left: '10%', color: '#000' }}>
+                                {text}
+                            </div>
                         </div>
                         <div className="image_select">
                             <button onClick={undo} className='undo'><IoMdUndo /></button>

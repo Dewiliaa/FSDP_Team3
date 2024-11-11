@@ -42,6 +42,29 @@
                         font-size: 15px;
                     }
                 }
+
+                .text_button {
+                    margin-top: 20px;
+
+                    button {
+                        padding: 8px;
+                        background-color: #333;
+                        color: #fff;
+                        font-size: 16px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        width: 100%;
+                        transition: background-color 0.3s;
+
+                        &:hover {
+                            background-color: #555;
+                        }
+                    }
+                }
+                
                 span {
                     font-size: 15px;
                     color: #404040;
