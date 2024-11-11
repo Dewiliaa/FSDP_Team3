@@ -1,225 +1,284 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import '../styles/edit.scss';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
+import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
+import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
+import storeData from '../components/LinkedList';
 
-const ManageAds = () => {
-    const [ads, setAds] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [dropdownOpen, setDropdownOpen] = useState(null);
-    const navigate = useNavigate();
+const EditTemplate = () => {
+    const [showTextPopup, setShowTextPopup] = useState(false);
+    const [text, setText] = useState('');
 
-    const deleteAd = (id) => {
-        setAds(ads.filter(ad => ad.id !== id));
-        setDropdownOpen(null);
-    };
-
-    const handleImageUpload = (id, event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAds(ads.map(ad => 
-                    ad.id === id ? { ...ad, image: reader.result } : ad
-                ));
-            };
-            reader.readAsDataURL(file);
+    const filterElement = [
+        {
+            name: 'brightness',
+            maxValue: 200
+        },
+        {
+            name: 'grayscale',
+            maxValue: 200
+        },
+        {
+            name: 'sepia',
+            maxValue: 200
+        },
+        {
+            name: 'saturate',
+            maxValue: 200
+        },
+        {
+            name: 'contrast',
+            maxValue: 200
+        },
+        {
+            name: 'hueRotate'
         }
+    ]
+    const [property, setProperty] = useState(
+        {
+            name: 'brightness',
+            maxValue: 200
+        }
+    )
+    const [details, setDetails] = useState('')
+    const [crop, setCrop] = useState('')
+    const [state, setState] = useState({
+        image: '',
+        brightness: 100,
+        grayscale: 0,
+        sepia: 0,
+        saturate: 100,
+        contrast: 100,
+        hueRotate: 0,
+        rotate: 0,
+        vartical: 1,
+        horizental: 1
+    })
+    const handleTextInput = (e) => {
+        setText(e.target.value);
     };
+    const inputHandle = (e) => {
+        setState({
+            ...state,
+            [e.target.name]: e.target.value
+        })
+    }
+    const leftRotate = () => {
+        setState({
+            ...state,
+            rotate: state.rotate - 90
+        })
 
-    const createAd = () => {
-        const newAd = {
-            id: ads.length + 1,
-            name: `Ad Placeholder ${ads.length + 1}`,
-            image: null,
-        };
-        setAds([...ads, newAd]);
-    };
+        const stateData = state
+        stateData.rotate = state.rotate - 90
+        storeData.insert(stateData)
+    }
 
-    const filteredAds = ads.filter(ad => ad.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const rightRotate = () => {
+        setState({
+            ...state,
+            rotate: state.rotate + 90
+        })
+        const stateData = state
+        stateData.rotate = state.rotate + 90
+        storeData.insert(stateData)
+    }
+    const varticalFlip = () => {
+        setState({
+            ...state,
+            vartical: state.vartical === 1 ? -1 : 1
+        })
+        const stateData = state
+        stateData.vartical = state.vartical === 1 ? -1 : 1
+        storeData.insert(stateData)
+    }
 
+    const horizentalFlip = () => {
+        setState({
+            ...state,
+            horizental: state.horizental === 1 ? -1 : 1
+        })
+        const stateData = state
+        stateData.horizental = state.horizental === 1 ? -1 : 1
+        storeData.insert(stateData)
+    }
+
+    const redo = () => {
+        const data = storeData.redoEdit()
+        if (data) {
+            setState(data)
+        }
+    }
+    const undo = () => {
+        const data = storeData.undoEdit()
+        if (data) {
+            setState(data)
+        }
+    }
+    const imageHandle = (e) => {
+        if (e.target.files.length !== 0) {
+
+            const reader = new FileReader()
+
+            reader.onload = () => {
+                setState({
+                    ...state,
+                    image: reader.result
+                })
+
+                const stateData = {
+                    image: reader.result,
+                    brightness: 100,
+                    grayscale: 0,
+                    sepia: 0,
+                    saturate: 100,
+                    contrast: 100,
+                    hueRotate: 0,
+                    rotate: 0,
+                    vartical: 1,
+                    horizental: 1
+                }
+                storeData.insert(stateData)
+            }
+            reader.readAsDataURL(e.target.files[0])
+        }
+    }
+    const imageCrop = () => {
+        const canvas = document.createElement('canvas')
+        const scaleX = details.naturalWidth / details.width
+        const scaleY = details.naturalHeight / details.height
+        canvas.width = crop.width
+        canvas.height = crop.height
+        const ctx = canvas.getContext('2d')
+
+        ctx.drawImage(
+            details,
+            crop.x * scaleX,
+            crop.y * scaleY,
+            crop.width * scaleX,
+            crop.height * scaleY,
+            0,
+            0,
+            crop.width,
+            crop.height
+        )
+
+        const base64Url = canvas.toDataURL('image/jpg')
+
+        setState({
+            ...state,
+            image: base64Url
+        })
+    }
+    const saveImage = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = details.naturalHeight
+        canvas.height = details.naturalHeight
+        const ctx = canvas.getContext('2d')
+
+        ctx.filter = `brightness(${state.brightness}%) brightness(${state.brightness}%) sepia(${state.sepia}%) saturate(${state.saturate}%) contrast(${state.contrast}%) grayscale(${state.grayscale}%) hue-rotate(${state.hueRotate}deg)`
+
+        ctx.translate(canvas.width / 2, canvas.height / 2)
+        ctx.rotate(state.rotate * Math.PI / 180)
+        ctx.scale(state.vartical, state.horizental)
+
+        ctx.drawImage(
+            details,
+            -canvas.width / 2,
+            -canvas.height / 2,
+            canvas.width,
+            canvas.height
+        )
+
+        const link = document.createElement('a')
+        link.download = 'image_edit.jpg'
+        link.href = canvas.toDataURL()
+        link.click()
+    }
     return (
-        <div className="manageAds" style={{ padding: '10px', maxWidth: '400px', margin: '0 auto' }}>
-            <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.2rem' }}>Manage Ads</h2>
-
-            <div style={{ display: 'flex', marginBottom: '15px' }}>
-                <input
-                    type="text"
-                    placeholder="Search ads..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ padding: '8px', flex: 1, marginRight: '10px' }}
-                />
-                <button
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#6a4fe7',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                    }}
-                >
-                    Search
-                </button>
-            </div>
-
-            <div>
-                {filteredAds.map((ad) => (
-                    <div
-                        key={ad.id}
-                        className="ad-item"
-                        style={{
-                            border: '1px solid #ccc',
-                            borderRadius: '5px',
-                            marginBottom: '8px',
-                            padding: '8px',
-                            fontSize: '0.9rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <span>{ad.name}</span>
-
-                        <div style={{ position: 'relative' }}>
-                            <button
-                                onClick={() => setDropdownOpen(dropdownOpen === ad.id ? null : ad.id)}
-                                style={{
-                                    padding: '5px 10px',
-                                    backgroundColor: '#ccc',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer',
-                                    marginLeft: '10px',
-                                }}
-                            >
-                                ▼
-                            </button>
-                            {dropdownOpen === ad.id && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: '30px',
-                                        right: '0',
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '5px',
-                                        boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
-                                        zIndex: 1,
-                                        padding: '10px',
-                                        minWidth: '150px',
-                                    }}
-                                >
-                                    <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                                        <div
-                                            style={{
-                                                width: '100%',
-                                                height: '200px',
-                                                backgroundColor: '#f0f0f0',
-                                                border: '1px dashed #ccc',
-                                                borderRadius: '5px',
-                                                overflow: 'hidden',
-                                                position: 'relative',
-                                            }}
-                                        >
-                                            {ad.image ? (
-                                                <img
-                                                    src={ad.image}
-                                                    alt="Ad"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span style={{ lineHeight: '200px', color: '#999', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                                                    {ad.name} Template
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={() => document.getElementById(`file-input-${ad.id}`).click()}
-                                        style={{
-                                            padding: '5px 10px',
-                                            backgroundColor: '#6a4fe7',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            marginBottom: '10px',
-                                        }}
-                                    >
-                                        Upload Image
-                                    </button>
-
-                                    <input
-                                        id={`file-input-${ad.id}`}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(ad.id, e)}
-                                        style={{ display: 'none' }}
+        <div className='image_editor'>
+            <div className="card">
+                <div className="card_header">
+                    <h2>Edit Your Image</h2>
+                </div>
+                <div className="card_body">
+                    <div className="sidebar">
+                        <div className="side_body">
+                            <div className="filter_section">
+                                <span>Filters</span>
+                                <div className="filter_key">
+                                    {
+                                        filterElement.map((v, i) => <button className={property.name === v.name ? 'active' : ''} onClick={() => setProperty(v)} key={i} >{v.name}</button>)
+                                    }
+                                </div>
+                            </div>
+                            <div className="filter_slider">
+                                <div className="label_bar">
+                                    <label htmlFor="range">Rotate</label>
+                                    <span>100%</span>
+                                </div>
+                                <input name={property.name} onChange={inputHandle} value={state[property.name]} max={property.maxValue} type="range" />
+                            </div>
+                            <div className="rotate">
+                                <label htmlFor="">Rotate & Filp</label>
+                                <div className="icon">
+                                    <div onClick={leftRotate}><GrRotateLeft /></div>
+                                    <div onClick={rightRotate}><GrRotateRight /></div>
+                                    <div onClick={varticalFlip}><CgMergeVertical /></div>
+                                    <div onClick={horizentalFlip}><CgMergeHorizontal /></div>
+                                </div>
+                            </div>
+                            <div className="text_button">
+                                <button onClick={() => setShowTextPopup(true)}>T</button>
+                            </div>
+                            {showTextPopup && (
+                                <div className="text-popup">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Enter text here" 
+                                        value={text} 
+                                        onChange={handleTextInput} 
                                     />
-
-                                    <button
-                                        onClick={() => deleteAd(ad.id)}
-                                        style={{
-                                            padding: '10px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: 'red',
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-
-                                    <button
-                                        onClick={() => navigate('/adTemplate')}
-                                        style={{
-                                            padding: '10px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: '#6a4fe7',
-                                            fontWeight: 'bold',
-                                        }}
-                                    >
-                                        Choose Template
-                                    </button>
+                                    <button onClick={() => setShowTextPopup(false)}>Close</button>
                                 </div>
                             )}
                         </div>
+                        <div className="reset">
+                            <button>Reset</button>
+                            <button onClick={saveImage} className='save'>Save Image</button>
+                        </div>
                     </div>
-                ))}
+                    <div className="image_section">
+                        <div className="image">
+                            {
+                                state.image ? <ReactCrop crop={crop} onChange={c => setCrop(c)}>
+                                    <img onLoad={(e) => setDetails(e.currentTarget)} style={{ filter: `brightness(${state.brightness}%) brightness(${state.brightness}%) sepia(${state.sepia}%) saturate(${state.saturate}%) contrast(${state.contrast}%) grayscale(${state.grayscale}%) hue-rotate(${state.hueRotate}deg)`, transform: `rotate(${state.rotate}deg) scale(${state.vartical},${state.horizental})` }} src={state.image} alt="" />
+                                </ReactCrop> :
+                                    <label htmlFor="choose">
+                                        <IoIosImage />
+                                        <span>Choose Image</span>
+                                    </label>
+                            }
+                            <div className="text-overlay" style={{ position: 'absolute', top: '10%', left: '10%', color: '#000' }}>
+                                {text}
+                            </div>
+                        </div>
+                        <div className="image_select">
+                            <button onClick={undo} className='undo'><IoMdUndo /></button>
+                            <button onClick={redo} className='redo'><IoMdRedo /></button>
+                            {
+                                crop && <button onClick={imageCrop} className='crop'>Crop Image</button>
+                            }
+                            <label htmlFor="choose">Choose Image</label>
+                            <input onChange={imageHandle} type="file" id='choose' />
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <button
-                onClick={createAd}
-                style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#6a4fe7',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    marginTop: '15px',
-                    display: 'block',
-                    marginLeft: 'auto',
-                    marginRight: 'auto',
-                    fontSize: '0.9rem',
-                }}
-            >
-                + Create New Ad
-            </button>
         </div>
-    );
-};
+    )
+}
 
-export default ManageAds;
+export default EditTemplate
