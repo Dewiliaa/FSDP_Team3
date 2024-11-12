@@ -4,8 +4,14 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
 import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
 import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
+<<<<<<< HEAD
 import '../styles/edit.scss';
 import AWS from '../aws-config';
+=======
+import '../styles/edit.scss'
+import { useImage } from '../components/ImageContext';
+import { useNavigate } from 'react-router-dom';
+>>>>>>> ddee75d9ca5fd34385c80507ae42459764f9801f
 
 // LinkedList implementation for undo/redo functionality
 class Node {
@@ -78,6 +84,8 @@ const EditTemplate = () => {
     const [crop, setCrop] = useState(null);
     const [showTextPopup, setShowTextPopup] = useState(false);
     const [text, setText] = useState('');
+    const { setEditedImage } = useImage();
+    const navigate = useNavigate();
     const [textPosition, setTextPosition] = useState({ x: 50, y: 50 });
     const [textStyle, setTextStyle] = useState({
         fontSize: '20px',
@@ -262,6 +270,7 @@ const EditTemplate = () => {
             ctx.fillText(text, textX, textY);
         }
 
+<<<<<<< HEAD
         // Draw the draggable image layer (if any)
         if (draggedImage.image) {
             const img = new Image();
@@ -285,6 +294,20 @@ const EditTemplate = () => {
             link.href = canvas.toDataURL('image/jpeg', 0.8);
             link.click();
         }
+=======
+        const editedImageUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        setEditedImage(editedImageUrl);
+
+        const link = document.createElement('a');
+        link.download = 'edited_image.jpg';
+        link.href = editedImageUrl;
+        link.click();
+
+        setTimeout(() => {
+          navigate('/ManageAds');
+        }, 100);
+>>>>>>> ddee75d9ca5fd34385c80507ae42459764f9801f
     };
 
     const resetImage = () => {

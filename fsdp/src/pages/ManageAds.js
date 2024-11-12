@@ -1,11 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useImage } from '../components/ImageContext';
 
 const ManageAds = () => {
     const [ads, setAds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [dropdownOpen, setDropdownOpen] = useState(null);
     const navigate = useNavigate();
+    const { editedImage, setEditedImage } = useImage();
+
+    useEffect(() => {
+        if (editedImage) {
+            setAds(prevAds => {
+                if (prevAds.length === 0) {
+                    return [{
+                        id: 1,
+                        name: 'Ad Placeholder 1',
+                        image: editedImage
+                    }];
+                } else {
+                    return prevAds.map(ad =>
+                        ad.id === (dropdownOpen || 1)
+                        ? { ...ad, image: editedImage }
+                        : ad
+                    );
+                }
+            });
+            setEditedImage(null);
+        }
+    }, [editedImage, dropdownOpen, setEditedImage]);
 
     const deleteAd = (id) => {
         setAds(ads.filter(ad => ad.id !== id));
