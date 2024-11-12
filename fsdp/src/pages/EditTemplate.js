@@ -62,7 +62,7 @@ class LinkedList {
 
 const storeData = new LinkedList();
 
-const ImageEditor = () => {
+const EditTemplate = () => {
     const filterElement = [
         { name: 'brightness', maxValue: 200 },
         { name: 'grayscale', maxValue: 200 },
@@ -431,4 +431,4 @@ const ImageEditor = () => {
     );
 };
 
-export default ImageEditor;
+export default EditTemplate;
