@@ -9,18 +9,13 @@ import Devices from './pages/Devices';
 import ChooseTemplate from './components/ChooseTemplate';
 import EditTemplate from './pages/EditTemplate';
 import Login from './pages/Login';
-<<<<<<< HEAD
 import CanvaPage from './pages/CanvaPage'; // Import the CanvaPage component
-=======
-import { ImageProvider } from './components/ImageContext';
->>>>>>> ddee75d9ca5fd34385c80507ae42459764f9801f
 
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
 
-// Separate component for the main app content to use hooks
-function AppContent() {
+function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('isAuthenticated') === 'true'
     );
@@ -62,15 +57,10 @@ function AppContent() {
     );
 }
 
-// Main App component with providers
-function App() {
-    return (
-        <Router>
-            <ImageProvider>
-                <AppContent />
-            </ImageProvider>
-        </Router>
-    );
-}
+const AppWrapper = () => (
+    <Router>
+        <App />
+    </Router>
+);
 
-export default App;
+export default AppWrapper;
