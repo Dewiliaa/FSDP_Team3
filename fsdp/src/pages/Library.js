@@ -18,17 +18,17 @@ const Library = () => {
                     Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
                     Prefix: 'media/', 
                 };
-                console.log('Fetching with params:', params);
     
                 const data = await s3.listObjectsV2(params).promise();
                 console.log('Fetched data:', data);
-
+    
                 const files = data.Contents.map((item) => ({
                     id: item.Key,
                     name: item.Key.split('/').pop(),
                     type: item.Key.split('.').pop(),
-                    url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
+                    url: `https://mediastorage-bytefsdp.s3.amazonaws.com/media/${item.Key.split('/').pop()}`,  // Direct URL
                 }));
+                console.log(files);
                 setMediaFiles(files);
             } catch (error) {
                 console.error('Error fetching media files:', error);
@@ -38,37 +38,39 @@ const Library = () => {
         fetchMediaFiles();
     }, []);
     
-
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
         const uploadedFiles = [];
-
+    
         for (const file of files) {
             try {
+                // Log the file type to ensure it's set correctly
+                console.log(`Uploading file: ${file.name}, Type: ${file.type}`);
+    
                 const params = {
                     Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
                     Key: `media/${Date.now()}_${file.name}`,
                     Body: file,
-                    ACL: 'public-read',
-                    ContentType: file.type,
+                    ACL: 'public-read', // Ensure the file is publicly accessible
+                    ContentType: file.type, // Automatically handles image/png, image/jpeg, etc.
                 };
-
+    
                 const data = await s3.upload(params).promise();
-
+    
                 uploadedFiles.push({
                     id: data.Key,
                     name: file.name,
-                    type: file.type.split('/')[0],
-                    url: data.Location,
+                    type: file.type.split('/')[0], // Image, Audio, Video
+                    url: `${data.Location}?t=${new Date().getTime()}`, // Cache busting
                 });
             } catch (error) {
                 console.error('Error uploading file:', error);
             }
         }
-
+    
         setMediaFiles((prev) => [...prev, ...uploadedFiles]);
     };
-
+    
     const handleDelete = async (id) => {
         try {
             const params = {
