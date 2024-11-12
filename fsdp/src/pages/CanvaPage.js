@@ -9,23 +9,23 @@ const templates = [
         id: 1, 
         name: 'Template 1', 
         image: template1,
-        canvaLink: 'https://www.canva.com/design/DAGWP1dIgtU/ctrwtGFlXIg9b-HFc70NBQ/edit?utm_content=DAGWP1dIgtU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton'
+        canvaLink: 'https://www.canva.com/design/DAGWP1dIgtU/ctrwtGFlXIg9b-HFc70NBQ/edit?utm_content=DAGWP1dIgtU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton' // Replace with actual Canva link
     },
     { 
         id: 2, 
         name: 'Template 2', 
         image: template2,
-        canvaLink: 'https://www.canva.com/design/DAGUk9BT3IU/pI3voDU1u3_kzD-I8WqvoQ/edit?utm_content=DAGUk9BT3IU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton' 
+        canvaLink: 'https://www.canva.com/design/DAGUk9BT3IU/pI3voDU1u3_kzD-I8WqvoQ/edit?utm_content=DAGUk9BT3IU&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton' // Replace with actual Canva link
     },
     { 
         id: 3, 
         name: 'Template 3', 
         image: template3,
-        canvaLink: 'https://www.canva.com/design/DAGUkwPQWmQ/-rEPSwjpxsV_eSIYPSL5BQ/edit?utm_content=DAGUkwPQWmQ&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton'
+        canvaLink: 'https://www.canva.com/design/DAGUkwPQWmQ/-rEPSwjpxsV_eSIYPSL5BQ/edit?utm_content=DAGUkwPQWmQ&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton' // Replace with actual Canva link
     },
 ];
 
-const ChooseTemplate = () => {
+const CanvaPage = () => {
     const [selectedTemplate, setSelectedTemplate] = useState(null);
     const navigate = useNavigate(); // Hook to navigate between routes
 
@@ -38,12 +38,7 @@ const ChooseTemplate = () => {
     };
 
     const handleCustomizeClick = () => {
-        // Navigate to the edit template page with the selected template
-        navigate('/edit-template', { state: { template: selectedTemplate } });
-    };
-
-    const handleEditUsingCanvaClick = () => {
-        // Open the Canva link in a new tab (from the selected template)
+        // Navigate to the Canva template URL
         if (selectedTemplate && selectedTemplate.canvaLink) {
             window.open(selectedTemplate.canvaLink, '_blank'); // Open the Canva template link in a new tab
         }
@@ -105,16 +100,6 @@ const ChooseTemplate = () => {
             borderRadius: '5px',
             padding: '10px 15px',
             cursor: 'pointer',
-            marginBottom: '10px', // Space between buttons
-        },
-        canvaButton: {
-            backgroundColor: '#ff5c8f', // Optional: different color for Canva button
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            padding: '10px 15px',
-            cursor: 'pointer',
-            marginTop: '10px', // Ensures spacing below the "Customize this template" button
         },
         popupImage: {
             width: '150px', // Set a fixed width for the popup image
@@ -142,7 +127,6 @@ const ChooseTemplate = () => {
                 ))}
             </div>
 
-            {/* Only show the popup if a template is selected */}
             {selectedTemplate && (
                 <div style={styles.popup}>
                     <div style={styles.popupContent}>
@@ -152,9 +136,6 @@ const ChooseTemplate = () => {
                         <button style={styles.customizeButton} onClick={handleCustomizeClick}>
                             Customize this template
                         </button>
-                        <button style={styles.canvaButton} onClick={handleEditUsingCanvaClick}>
-                            Edit using Canva
-                        </button>
                     </div>
                 </div>
             )}
@@ -162,4 +143,4 @@ const ChooseTemplate = () => {
     );
 };
 
-export default ChooseTemplate;
+export default CanvaPage;

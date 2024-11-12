@@ -14,6 +14,7 @@ import { ImageProvider } from './components/ImageContext';
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
+import CanvaPage from './pages/CanvaPage';
 
 // Separate component for the main app content to use hooks
 function AppContent() {
@@ -52,6 +53,7 @@ function AppContent() {
                 <Route path="/scheduling" element={<Scheduling />} />
                 <Route path="/devices" element={<Devices />} />
                 <Route path="/edit-template" element={<EditTemplate />} />
+                <Route path="/canva" element={<CanvaPage />} />
             </Routes>
         </div>
     );
