@@ -7,37 +7,49 @@ import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
 const s3 = new AWS.S3();
 
 const Library = () => {
-    const [mediaFiles, setMediaFiles] = useState([]);
+    const [mediaFiles, setMediaFiles] = useState(() => {
+        // Check local storage for existing mediaFiles on component mount
+        const storedFiles = localStorage.getItem('mediaFiles');
+        return storedFiles ? JSON.parse(storedFiles) : [];
+    });
     const [previewMedia, setPreviewMedia] = useState(null);
     const [mediaType, setMediaType] = useState('All');
 
+    // Save mediaFiles to local storage whenever it changes
     useEffect(() => {
-        const fetchMediaFiles = async () => {
-            try {
-                const params = {
-                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
-                    Prefix: 'media/', 
-                };
-                console.log('Fetching with params:', params);
-    
-                const data = await s3.listObjectsV2(params).promise();
-                console.log('Fetched data:', data);
+        if (mediaFiles.length > 0) {
+            localStorage.setItem('mediaFiles', JSON.stringify(mediaFiles));
+        }
+    }, [mediaFiles]);
 
-                const files = data.Contents.map((item) => ({
-                    id: item.Key,
-                    name: item.Key.split('/').pop(),
-                    type: item.Key.split('.').pop(),
-                    url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
-                }));
-                setMediaFiles(files);
-            } catch (error) {
-                console.error('Error fetching media files:', error);
-            }
-        };
-    
-        fetchMediaFiles();
-    }, []);
-    
+    // Fetch media files from S3 if not available in local storage
+    useEffect(() => {
+        if (mediaFiles.length === 0) {
+            const fetchMediaFiles = async () => {
+                try {
+                    const params = {
+                        Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+                        Prefix: 'media/',
+                    };
+                    console.log('Fetching with params:', params);
+
+                    const data = await s3.listObjectsV2(params).promise();
+                    console.log('Fetched data:', data);
+
+                    const files = data.Contents.map((item) => ({
+                        id: item.Key,
+                        name: item.Key.split('/').pop(),
+                        type: item.Key.split('.').pop(),
+                        url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
+                    }));
+                    setMediaFiles(files);
+                } catch (error) {
+                    console.error('Error fetching media files:', error);
+                }
+            };
+            fetchMediaFiles();
+        }
+    }, [mediaFiles.length]);
 
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
