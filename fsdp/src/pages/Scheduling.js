@@ -22,13 +22,29 @@ const Scheduling = () => {
             <h2 className="page-title">Scheduling</h2>
             <div className="scheduling-calendar">
                 <CalendarComponent onDateTimeRangeChange={handleDateTimeRangeChange} />
-                <p>
-                    Selected date range: {selectedRange[0].toDateString()} - {selectedRange[1].toDateString()}
-                </p>
-                <p>Selected time range: {startTime} - {endTime}</p>
+                <div className="selection-container">
+                    <label>
+                        Select Ad
+                        <select>
+                            <option>Ad 1</option>
+                            <option>Ad 2</option>
+                        </select>
+                    </label>
+                    <label>
+                        Select Device
+                        <select>
+                            <option>Device 1</option>
+                            <option>Device 2</option>
+                        </select>
+                    </label>
+                </div>
                 <div className="button-container">
                     <button onClick={handleScheduleClick} className="schedule-button">Schedule</button>
                 </div>
+            </div>
+            <div className="time-display">
+                <p>Selected date range: {selectedRange[0].toDateString()} - {selectedRange[1].toDateString()}</p>
+                <p>Selected time range: {startTime} - {endTime}</p>
             </div>
         </div>
     );

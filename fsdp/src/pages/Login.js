@@ -11,6 +11,7 @@ const Login = ({ setIsAuthenticated }) => {
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
 
     // Check for saved username in localStorage on page load
     useEffect(() => {
@@ -27,7 +28,6 @@ const Login = ({ setIsAuthenticated }) => {
         setIsLoading(true);
 
         try {
-            // Use AWS STS to assume a role and get temporary credentials
             const sts = new AWS.STS();
             const params = {
                 RoleArn: 'arn:aws:iam::060795902170:role/LoginAccessRole',
@@ -82,15 +82,27 @@ const Login = ({ setIsAuthenticated }) => {
                             required
                             className="input-field"
                         />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            className="input-field"
-                        />
-
+                        <div className="password-input-container">
+                            <input
+                                type={showPassword ? "text" : "password"} // Toggle password visibility
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                className="input-field"
+                            />
+                            <span
+                                className="password-toggle-icon"
+                                onClick={() => setShowPassword(!showPassword)} // Toggle visibility on click
+                            >
+                                {showPassword ? (
+                                    <i className="fas fa-eye"></i> // Open eye
+                                ) : (
+                                    <i className="fas fa-eye-slash"></i> // Closed eye
+                                )}
+                            </span>
+                        </div>
+                        
                         <div className="remember-forgot">
                             <label className="remember-me">
                                 <input
