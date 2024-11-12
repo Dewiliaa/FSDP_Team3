@@ -7,4 +7,16 @@ AWS.config.update({
     region: process.env.REACT_APP_AWS_REGION
 });
 
-export default AWS;
+const s3 = new AWS.S3(s3Config);   
+
+
+// template bucket
+const s3Bucket2Config = {
+  accessKeyId: process.env.AWS_BUCKET_2_ACCESS_KEY,
+  secretAccessKey: process.env.AWS_BUCKET_2_SECRET_KEY,
+  region: process.env.AWS_BUCKET_2_REGION
+};
+
+const s3Bucket2 = new AWS.S3(s3Bucket2Config);
+
+export { s3, s3Bucket2 };

@@ -9,7 +9,7 @@ import Devices from './pages/Devices';
 import ChooseTemplate from './components/ChooseTemplate';
 import EditTemplate from './pages/EditTemplate';
 import Login from './pages/Login';
-
+import CanvaPage from './pages/CanvaPage'; // Import the CanvaPage component
 
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
@@ -51,6 +51,7 @@ function App() {
                 <Route path="/scheduling" element={<Scheduling />} />
                 <Route path="/devices" element={<Devices />} />
                 <Route path="/edit-template" element={<EditTemplate />} />
+                <Route path="/canva" element={<CanvaPage />} /> {/* Add route for CanvaPage */}
             </Routes>
         </div>
     );

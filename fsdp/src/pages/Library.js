@@ -1,4 +1,5 @@
-import AWS from '../aws-config';
+
+import { s3, s3Bucket2 } from '../aws-config';
 import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
