@@ -11,52 +11,55 @@ const Library = () => {
     const [previewMedia, setPreviewMedia] = useState(null);
     const [mediaType, setMediaType] = useState('All');
 
+    // Fetch media files and load from localStorage if available
     useEffect(() => {
         const fetchMediaFiles = async () => {
-            try {
-                const params = {
-                    Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
-                    Prefix: 'media/', 
-                };
-    
-                const data = await s3.listObjectsV2(params).promise();
-                console.log('Fetched data:', data);
-    
-                const files = data.Contents.map((item) => ({
-                    id: item.Key,
-                    name: item.Key.split('/').pop(),
-                    type: item.Key.split('.').pop(),
-                    url: `https://mediastorage-bytefsdp.s3.amazonaws.com/media/${item.Key.split('/').pop()}`,  // Direct URL
-                }));
-                console.log(files);
-                setMediaFiles(files);
-            } catch (error) {
-                console.error('Error fetching media files:', error);
+            const storedFiles = localStorage.getItem('mediaFiles');
+            if (storedFiles) {
+                setMediaFiles(JSON.parse(storedFiles));
+            } else {
+                try {
+                    const params = {
+                        Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+                        Prefix: 'media/',
+                    };
+
+                    const data = await s3.listObjectsV2(params).promise();
+                    const files = data.Contents.map((item) => ({
+                        id: item.Key,
+                        name: item.Key.split('/').pop(),
+                        type: item.Key.split('.').pop(),
+                        url: `https://mediastorage-bytefsdp.s3.amazonaws.com/media/${item.Key.split('/').pop()}?t=${new Date().getTime()}`, // Cache busting
+                    }));
+
+                    setMediaFiles(files);
+                    localStorage.setItem('mediaFiles', JSON.stringify(files)); // Store in localStorage
+                } catch (error) {
+                    console.error('Error fetching media files:', error);
+                }
             }
         };
-    
+
         fetchMediaFiles();
     }, []);
-    
+
+    // Handle file upload
     const handleFileUpload = async (e) => {
         const files = Array.from(e.target.files);
         const uploadedFiles = [];
-    
+
         for (const file of files) {
             try {
-                // Log the file type to ensure it's set correctly
-                console.log(`Uploading file: ${file.name}, Type: ${file.type}`);
-    
                 const params = {
                     Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
                     Key: `media/${Date.now()}_${file.name}`,
                     Body: file,
                     ACL: 'public-read', // Ensure the file is publicly accessible
-                    ContentType: file.type, // Automatically handles image/png, image/jpeg, etc.
+                    ContentType: file.type,
                 };
-    
+
                 const data = await s3.upload(params).promise();
-    
+
                 uploadedFiles.push({
                     id: data.Key,
                     name: file.name,
@@ -67,10 +70,15 @@ const Library = () => {
                 console.error('Error uploading file:', error);
             }
         }
-    
-        setMediaFiles((prev) => [...prev, ...uploadedFiles]);
+
+        setMediaFiles((prev) => {
+            const updatedFiles = [...prev, ...uploadedFiles];
+            localStorage.setItem('mediaFiles', JSON.stringify(updatedFiles)); // Store updated files in localStorage
+            return updatedFiles;
+        });
     };
-    
+
+    // Handle file deletion
     const handleDelete = async (id) => {
         try {
             const params = {
@@ -81,13 +89,16 @@ const Library = () => {
             await s3.deleteObject(params).promise();
             window.alert('File has been successfully deleted.');
 
-            setMediaFiles((prev) => prev.filter(file => file.id !== id));
+            const updatedFiles = mediaFiles.filter(file => file.id !== id);
+            setMediaFiles(updatedFiles);
+            localStorage.setItem('mediaFiles', JSON.stringify(updatedFiles)); // Update localStorage
             console.log(`File ${id} deleted successfully from S3.`);
         } catch (error) {
             console.error('Error deleting file from S3:', error);
         }
     };
 
+    // Filter files based on selected media type
     const filteredFiles = mediaFiles.filter(file =>
         mediaType === 'All' || file.type === mediaType.toLowerCase()
     );
