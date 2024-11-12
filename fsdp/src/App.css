@@ -1156,6 +1156,32 @@ input:checked + .slider {
   cursor: pointer;
   border-radius: 5px;
 }
+.password-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.password-toggle-icon {
+  position: absolute;
+  right: 10px;
+  top: 40%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 20px;
+  color: #ffbb00; /* Adjust icon color as needed */
+}
+
+/* Adjust input styles for password visibility */
+.input-field {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
 
 
 
