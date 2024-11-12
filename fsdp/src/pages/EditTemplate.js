@@ -4,9 +4,8 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
 import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
 import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
-import '../styles/edit.scss'
-import { useImage } from '../components/ImageContext';
-import { useNavigate } from 'react-router-dom';
+import '../styles/edit.scss';
+import AWS from '../aws-config';
 
 // LinkedList implementation for undo/redo functionality
 class Node {
@@ -32,7 +31,7 @@ class LinkedList {
             this.current = node;
             return;
         }
-        
+
         if (this.current.next) {
             this.current.next = node;
             node.prev = this.current;
@@ -79,15 +78,12 @@ const EditTemplate = () => {
     const [crop, setCrop] = useState(null);
     const [showTextPopup, setShowTextPopup] = useState(false);
     const [text, setText] = useState('');
-    const { setEditedImage } = useImage();
-    const navigate = useNavigate();
     const [textPosition, setTextPosition] = useState({ x: 50, y: 50 });
     const [textStyle, setTextStyle] = useState({
         fontSize: '20px',
         color: '#ffffff',
         fontWeight: 'bold'
     });
-    
     const [state, setState] = useState({
         image: '',
         brightness: 100,
@@ -99,6 +95,13 @@ const EditTemplate = () => {
         rotate: 0,
         vertical: 1,
         horizontal: 1
+    });
+
+    // New state for managing draggable image layer
+    const [draggedImage, setDraggedImage] = useState({
+        image: '', // image data
+        position: { x: 100, y: 100 }, // initial position of the image
+        dragging: false // drag state
     });
 
     const handleTextInput = (e) => setText(e.target.value);
@@ -114,7 +117,7 @@ const EditTemplate = () => {
     const handleMouseDown = (e) => {
         const imageContainer = e.currentTarget.parentElement;
         const rect = imageContainer.getBoundingClientRect();
-        
+
         const handleMouseMove = (moveEvent) => {
             const x = ((moveEvent.clientX - rect.left) / rect.width) * 100;
             const y = ((moveEvent.clientY - rect.top) / rect.height) * 100;
@@ -259,18 +262,29 @@ const EditTemplate = () => {
             ctx.fillText(text, textX, textY);
         }
 
-        const editedImageUrl = canvas.toDataURL('image/jpeg', 0.8);
-        
-        setEditedImage(editedImageUrl);
-
-        const link = document.createElement('a');
-        link.download = 'edited_image.jpg';
-        link.href = editedImageUrl;
-        link.click();
-
-        setTimeout(() => {
-          navigate('/ManageAds');
-        }, 100);
+        // Draw the draggable image layer (if any)
+        if (draggedImage.image) {
+            const img = new Image();
+            img.src = draggedImage.image;
+            img.onload = () => {
+                ctx.drawImage(
+                    img,
+                    draggedImage.position.x,
+                    draggedImage.position.y,
+                    img.width,
+                    img.height
+                );
+                const link = document.createElement('a');
+                link.download = 'edited_image.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.8);
+                link.click();
+            };
+        } else {
+            const link = document.createElement('a');
+            link.download = 'edited_image.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.8);
+            link.click();
+        }
     };
 
     const resetImage = () => {
@@ -293,6 +307,40 @@ const EditTemplate = () => {
             color: '#ffffff',
             fontWeight: 'bold'
         });
+        setDraggedImage({ image: '', position: { x: 100, y: 100 }, dragging: false });
+    };
+
+    const handleDragStart = (e) => {
+        setDraggedImage(prev => ({ ...prev, dragging: true }));
+    };
+
+    const handleDragEnd = (e) => {
+        setDraggedImage(prev => ({ ...prev, dragging: false }));
+    };
+
+    const handleDrag = (e) => {
+        if (draggedImage.dragging) {
+            setDraggedImage(prev => ({
+                ...prev,
+                position: {
+                    x: e.clientX - e.target.offsetWidth / 2,
+                    y: e.clientY - e.target.offsetHeight / 2
+                }
+            }));
+        }
+    };
+
+    const handleImageLayerChange = (e) => {
+        if (e.target.files.length !== 0) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setDraggedImage(prev => ({
+                    ...prev,
+                    image: reader.result
+                }));
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
     };
 
     return (
@@ -388,6 +436,7 @@ const EditTemplate = () => {
                             <button onClick={saveImage} className="save">Save Image</button>
                         </div>
                     </div>
+
                     <div className="image_section">
                         <div className="image">
                             {state.image ? (
@@ -421,6 +470,24 @@ const EditTemplate = () => {
                                             {text}
                                         </div>
                                     )}
+                                    {draggedImage.image && (
+                                        <div
+                                            className="draggable-layer"
+                                            style={{
+                                                position: 'absolute',
+                                                top: draggedImage.position.y,
+                                                left: draggedImage.position.x,
+                                                cursor: 'move',
+                                                userSelect: 'none'
+                                            }}
+                                            draggable
+                                            onDragStart={handleDragStart}
+                                            onDrag={handleDrag}
+                                            onDragEnd={handleDragEnd}
+                                        >
+                                            <img src={draggedImage.image} alt="Layer" />
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <label htmlFor="choose">
@@ -429,12 +496,14 @@ const EditTemplate = () => {
                                 </label>
                             )}
                         </div>
+
                         <div className="image_select">
                             <button onClick={undo} className="undo"><IoMdUndo /></button>
                             <button onClick={redo} className="redo"><IoMdRedo /></button>
                             {crop && <button onClick={imageCrop} className="crop">Crop Image</button>}
                             <label htmlFor="choose">Choose Image</label>
                             <input onChange={imageHandle} type="file" id="choose" accept="image/*" />
+                            <input onChange={handleImageLayerChange} type="file" accept="image/*" />
                         </div>
                     </div>
                 </div>

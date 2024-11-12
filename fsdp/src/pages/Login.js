@@ -4,6 +4,7 @@ import Lottie from 'react-lottie';
 import AWS from '../aws-config';
 import '../App.css';
 import loadingAnimation from '../assets/loading.json';
+import { s3, s3Bucket2 } from '../aws-config';
 
 const Login = ({ setIsAuthenticated }) => {
     const navigate = useNavigate();
