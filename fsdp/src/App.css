@@ -912,6 +912,61 @@ input:checked + .slider {
     border-radius: 4px;
 }
 
+
+/* New Device Code */
+/* Style for "Set to Connected" button */
+/* Styling for the device name and status */
+.device-container span {
+  margin-bottom: 10px; /* Add space between device name/status and buttons */
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Styling for the buttons */
+.device-container button {
+  margin-top: 8px; /* Add space between buttons */
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%; /* Make buttons fill the width of the container */
+}
+
+/* Style for "Set to Connected" button */
+.device-container button:first-child {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+.device-container button:first-child:hover {
+  background-color: #45a049;
+  transform: translateY(-2px); /* Subtle hover effect */
+}
+
+/* Style for "Set to Disconnected" button */
+.device-container button:last-child {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+
+.device-container button:last-child:hover {
+  background-color: #e53935;
+  transform: translateY(-2px); /* Subtle hover effect */
+}
+
+/* Style when the button is disabled */
+.device-container button:disabled {
+  background-color: #bbb;
+  color: #fff;
+  cursor: not-allowed;
+  transform: none;
+}
+
+
+
+
 /* Background with gradient */
 .login-page {
   display: flex;
