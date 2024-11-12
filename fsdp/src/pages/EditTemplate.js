@@ -5,6 +5,8 @@ import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
 import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
 import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss'
+import { useImage } from '../components/ImageContext';
+import { useNavigate } from 'react-router-dom';
 
 // LinkedList implementation for undo/redo functionality
 class Node {
@@ -77,6 +79,8 @@ const EditTemplate = () => {
     const [crop, setCrop] = useState(null);
     const [showTextPopup, setShowTextPopup] = useState(false);
     const [text, setText] = useState('');
+    const { setEditedImage } = useImage();
+    const navigate = useNavigate();
     const [textPosition, setTextPosition] = useState({ x: 50, y: 50 });
     const [textStyle, setTextStyle] = useState({
         fontSize: '20px',
@@ -255,10 +259,18 @@ const EditTemplate = () => {
             ctx.fillText(text, textX, textY);
         }
 
+        const editedImageUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        setEditedImage(editedImageUrl);
+
         const link = document.createElement('a');
         link.download = 'edited_image.jpg';
-        link.href = canvas.toDataURL('image/jpeg', 0.8);
+        link.href = editedImageUrl;
         link.click();
+
+        setTimeout(() => {
+          navigate('/ManageAds');
+        }, 100);
     };
 
     const resetImage = () => {

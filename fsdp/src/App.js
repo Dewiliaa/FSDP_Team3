@@ -9,13 +9,14 @@ import Devices from './pages/Devices';
 import ChooseTemplate from './components/ChooseTemplate';
 import EditTemplate from './pages/EditTemplate';
 import Login from './pages/Login';
-
+import { ImageProvider } from './components/ImageContext';
 
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
 
-function App() {
+// Separate component for the main app content to use hooks
+function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('isAuthenticated') === 'true'
     );
@@ -56,10 +57,15 @@ function App() {
     );
 }
 
-const AppWrapper = () => (
-    <Router>
-        <App />
-    </Router>
-);
+// Main App component with providers
+function App() {
+    return (
+        <Router>
+            <ImageProvider>
+                <AppContent />
+            </ImageProvider>
+        </Router>
+    );
+}
 
-export default AppWrapper;
+export default App;
