@@ -5,7 +5,9 @@ import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
 import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
 import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
+import { useNavigate } from 'react-router-dom';
 import AWS from '../aws-config';
+import { useImage } from '../components/ImageContext';
 
 // LinkedList implementation for undo/redo functionality
 class Node {
@@ -233,6 +235,20 @@ const EditTemplate = () => {
     };
 
     const saveImage = () => {
+        const getNextEditNumber = () => {
+            let maxNumber = 0;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('edited')) {
+                    const number = parseInt(key.replace('edited', ''));
+                    if (!isNaN(number) && number > maxNumber) {
+                        maxNumber = number;
+                    }
+                }
+            }
+            return maxNumber + 1;
+        }
         const canvas = document.createElement('canvas');
         canvas.width = details.naturalWidth;
         canvas.height = details.naturalHeight;
@@ -274,16 +290,31 @@ const EditTemplate = () => {
                     img.width,
                     img.height
                 );
+                
+                const finalImage = canvas.toDataURL('image/jpeg', 0,8);
+                const editNumber = getNextEditNumber();
+
                 const link = document.createElement('a');
-                link.download = 'edited_image.jpg';
-                link.href = canvas.toDataURL('image/jpeg', 0.8);
+                link.download = `edited${editNumber}.jpg`;
+                link.href = finalImage;
                 link.click();
+
+                localStorage.setItem(`edited${editNumber}`, finalImage);
+
+                navigate('/adManagement');
             };
         } else {
+            const finalImage = canvas.toDataURL('image/jpeg', 0,8);
+            const editNumber = getNextEditNumber();
+
             const link = document.createElement('a');
-            link.download = 'edited_image.jpg';
-            link.href = canvas.toDataURL('image/jpeg', 0.8);
+            link.download = `edited${editNumber}.jpg`;
+            link.href = finalImage;
             link.click();
+
+            localStorage.setItem(`edited${editNumber}`, finalImage);
+
+            navigate('/adManagement');
         }
     };
 
@@ -342,6 +373,14 @@ const EditTemplate = () => {
             reader.readAsDataURL(e.target.files[0]);
         }
     };
+
+    const navigate = useNavigate();
+
+    const handleSaveImage = () => {
+    // Save the image data to local storage
+    localStorage.setItem('editedImage', useImage);
+    navigate('/adManagement'); // Use the navigate function to redirect
+};
 
     return (
         <div className="image_editor">
