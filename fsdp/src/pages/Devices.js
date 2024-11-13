@@ -1,18 +1,19 @@
-// Frontend: Devices.js
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import '../App.css';
 import DeviceSwitch from '../components/DeviceSwitch';
-import { FaTabletAlt, FaPlus } from 'react-icons/fa';
+import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
-const socket = io.connect('http://172.20.10.2:3001'); // Replace with your server's IP address and port
+const socket = io.connect('http://192.168.1.233:3001'); // Replace with your server's IP address and port
 
 const Devices = () => {
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false); // New state for ad confirmation modal
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [deviceName, setDeviceName] = useState('');
   const [connectedDevices, setConnectedDevices] = useState([]);
+  const [adImage, setAdImage] = useState(null);  // State for ad image path
 
   // When the component mounts, listen for device list updates
   useEffect(() => {
@@ -20,8 +21,14 @@ const Devices = () => {
       setConnectedDevices(devices);
     });
 
+    // Listen for ad display event
+    socket.on('display_ad', (adImagePath) => {
+      setAdImage(adImagePath); // Set ad image
+    });
+
     return () => {
-      socket.off('device_list'); // Cleanup the listener when the component unmounts
+      socket.off('device_list');
+      socket.off('display_ad');  // Cleanup the listener when the component unmounts
     };
   }, []);
 
@@ -38,15 +45,25 @@ const Devices = () => {
 
   const confirmDevice = () => {
     if (deviceName) {
-      // Emit an event to the server to add a device
       socket.emit('add_device', deviceName);
       closeModal();
     }
   };
 
   const handleDeviceStatusUpdate = (deviceName, status) => {
-    // Emit an event to update device status
     socket.emit('update_device_status', deviceName, status);
+  };
+
+  // Open the ad confirmation modal
+  const handleShowAdClick = () => {
+    setIsAdConfirmModalOpen(true);
+  };
+
+  // Confirm and trigger ad
+  const confirmShowAd = () => {
+    const adImagePath = 'https://rare-gallery.com/uploads/posts/191349-rin-tohsaka-1920x1152.jpg'; // Provide the path to your ad image
+    socket.emit('trigger_ad', adImagePath); // Notify the server to broadcast the ad
+    setIsAdConfirmModalOpen(false);
   };
 
   return (
@@ -65,6 +82,10 @@ const Devices = () => {
         <button className="add-button" onClick={openModal}>
           <FaPlus className="icon" />
           {isDevicesSelected ? 'Add Device' : 'Add Group'}
+        </button>
+        <button className="ad-button" onClick={handleShowAdClick}> {/* Modified onClick */}
+          <FaBullhorn className="icon" />
+          Show Ad
         </button>
       </div>
 
@@ -86,6 +107,13 @@ const Devices = () => {
         </div>
       )}
 
+      {/* Display ad if there is an ad image */}
+      {adImage && (
+        <div className="ad-overlay">
+          <img src={adImage} alt="Ad" />
+        </div>
+      )}
+
       {isModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -95,8 +123,7 @@ const Devices = () => {
                 <li 
                   key={index} 
                   onClick={() => setSelectedDevice(device)}
-                  className={selectedDevice === device ? 'selected' : ''}
-                >
+                  className={selectedDevice === device ? 'selected' : ''}>
                   {device}
                 </li>
               ))}
@@ -113,6 +140,20 @@ const Devices = () => {
             <div className="modal-buttons">
               <button onClick={confirmDevice}>Confirm</button>
               <button onClick={closeModal}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation modal for displaying the ad */}
+      {isAdConfirmModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Display Ad to All Screens?</h3>
+            <p>Are you sure you want to display the ad to all connected devices?</p>
+            <div className="modal-buttons">
+              <button onClick={confirmShowAd}>Yes</button>
+              <button onClick={() => setIsAdConfirmModalOpen(false)}>No</button>
             </div>
           </div>
         </div>

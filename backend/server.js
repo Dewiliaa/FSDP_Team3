@@ -17,16 +17,22 @@ const io = new Server(server, {
 
 let devices = []; // Keep track of connected devices
 
+// Backend: server.js
+
 io.on('connection', (socket) => {
   console.log(`User Connected: ${socket.id}`);
 
-  // Listen for device status updates
+  // Listen for advertisement trigger
+  socket.on('trigger_ad', (adImagePath) => {
+    // Broadcast to all clients except the one triggering the event
+    socket.broadcast.emit('display_ad', adImagePath);
+  });
+
   socket.on('add_device', (deviceName) => {
     devices.push({ name: deviceName, status: 'Not connected', socketId: socket.id });
     io.emit('device_list', devices); // Broadcast updated list to all clients
   });
 
-  // Listen for status updates
   socket.on('update_device_status', (deviceName, status) => {
     const device = devices.find((d) => d.name === deviceName);
     if (device) {
@@ -45,3 +51,4 @@ io.on('connection', (socket) => {
 server.listen(3001, () => {
   console.log('SERVER IS RUNNING');
 });
+

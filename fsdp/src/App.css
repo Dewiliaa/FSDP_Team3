@@ -1240,4 +1240,128 @@ input:checked + .slider {
 
 
 
+/* Ad Button */
+.ad-overlay {
+  position: fixed;       /* Make it fixed so it stays on top of the page */
+  top: 0;
+  left: 0;
+  width: 100vw;          /* Full width of the viewport */
+  height: 100vh;         /* Full height of the viewport */
+  background-color: rgba(0, 0, 0, 0.5);  /* Optional: semi-transparent background */
+  display: flex;
+  justify-content: center;  /* Center the image horizontally */
+  align-items: center;      /* Center the image vertically */
+  z-index: 9999;           /* Make sure it's on top of other content */
+}
+
+.ad-overlay img {
+  width: 100%;  /* Make the image take up the full width of the container */
+  height: 100%; /* Make the image take up the full height of the container */
+  object-fit: cover; /* Ensure the image covers the area without distortion */
+}
+
+.ad-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ff6b6b, #f06595);
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.ad-button .icon {
+  margin-right: 8px;
+}
+
+.ad-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.ad-button:active {
+  transform: scale(0.98);
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Modal Overlay */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6); /* Dark overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Modal Content Box */
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease; /* Animation effect */
+}
+
+/* Heading */
+.modal-content h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+/* Modal Text */
+.modal-content p {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Modal Buttons */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.modal-buttons button {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
+}
+
+/* Yes Button Styling */
+.modal-buttons button:first-child {
+  background: #28a745;
+  color: #fff;
+}
+
+.modal-buttons button:first-child:hover {
+  background: #218838;
+}
+
+/* No Button Styling */
+.modal-buttons button:last-child {
+  background: #dc3545;
+  color: #fff;
+}
+
+.modal-buttons button:last-child:hover {
+  background: #c82333;
+}
 
