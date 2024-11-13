@@ -3,12 +3,12 @@ import React, { useState, useEffect } from 'react';
 import '../App.css';
 import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
 
-// Initialize S3 instance
+// Initialize S3 and DynamoDB Document Client
 const s3 = new AWS.S3();
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Library = () => {
     const [mediaFiles, setMediaFiles] = useState(() => {
-        // Check local storage for existing mediaFiles on component mount
         const storedFiles = localStorage.getItem('mediaFiles');
         return storedFiles ? JSON.parse(storedFiles) : [];
     });
@@ -31,11 +31,7 @@ const Library = () => {
                         Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
                         Prefix: 'media/',
                     };
-                    console.log('Fetching with params:', params);
-
                     const data = await s3.listObjectsV2(params).promise();
-                    console.log('Fetched data:', data);
-
                     const files = data.Contents.map((item) => ({
                         id: item.Key,
                         name: item.Key.split('/').pop(),
@@ -67,6 +63,21 @@ const Library = () => {
 
                 const data = await s3.upload(params).promise();
 
+                // Save metadata to DynamoDB
+                const dynamoParams = {
+                    TableName: "Media",
+                    Item: {
+                        img_id: data.Key,
+                        name: file.name,
+                        type: file.type.split('/')[0],
+                        url: data.Location,
+                        uploadDate: new Date().toISOString(),
+                    },
+                };
+
+                await dynamoDb.put(dynamoParams).promise();
+                console.log("Metadata saved to DynamoDB successfully.");
+
                 uploadedFiles.push({
                     id: data.Key,
                     name: file.name,
@@ -74,7 +85,7 @@ const Library = () => {
                     url: data.Location,
                 });
             } catch (error) {
-                console.error('Error uploading file:', error);
+                console.error("Error in file upload or saving metadata:", error);
             }
         }
 
@@ -83,18 +94,28 @@ const Library = () => {
 
     const handleDelete = async (id) => {
         try {
-            const params = {
+            const s3Params = {
                 Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
                 Key: id,
             };
 
-            await s3.deleteObject(params).promise();
-            window.alert('File has been successfully deleted.');
-
-            setMediaFiles((prev) => prev.filter(file => file.id !== id));
+            // Delete file from S3
+            await s3.deleteObject(s3Params).promise();
             console.log(`File ${id} deleted successfully from S3.`);
+
+            // Delete metadata from DynamoDB
+            const dynamoDeleteParams = {
+                TableName: "Media",
+                Key: { img_id: id },
+            };
+            await dynamoDb.delete(dynamoDeleteParams).promise();
+            console.log(`Metadata for ${id} deleted successfully from DynamoDB.`);
+
+            // Remove the deleted file from the local state
+            setMediaFiles((prev) => prev.filter(file => file.id !== id));
+            window.alert('File has been successfully deleted.');
         } catch (error) {
-            console.error('Error deleting file from S3:', error);
+            console.error('Error deleting file:', error);
         }
     };
 
