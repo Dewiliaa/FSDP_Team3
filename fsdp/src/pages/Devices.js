@@ -5,7 +5,7 @@ import '../App.css';
 import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus } from 'react-icons/fa';
 
-const socket = io.connect('http://localhost:3001');
+const socket = io.connect('http://172.20.10.2:3001'); // Replace with your server's IP address and port
 
 const Devices = () => {
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
