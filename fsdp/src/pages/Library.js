@@ -8,10 +8,7 @@ const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Library = () => {
-    const [mediaFiles, setMediaFiles] = useState(() => {
-        const storedFiles = localStorage.getItem('mediaFiles');
-        return storedFiles ? JSON.parse(storedFiles) : [];
-    });
+    const [mediaFiles, setMediaFiles] = useState([]);
     const [previewMedia, setPreviewMedia] = useState(null);
     const [mediaType, setMediaType] = useState('All');
     const [filterCategory, setFilterCategory] = useState('All');
@@ -19,37 +16,47 @@ const Library = () => {
     const [selectedFile, setSelectedFile] = useState(null); // To store the selected file temporarily
     const [fileName, setFileName] = useState(''); // State to store user-defined file name
 
+    // Fetch media files from DynamoDB upon component mount
     useEffect(() => {
-        if (mediaFiles.length > 0) {
-            localStorage.setItem('mediaFiles', JSON.stringify(mediaFiles));
-        }
-    }, [mediaFiles]);
+        const fetchMediaFiles = async () => {
+            try {
+                const mediaParams = {
+                    TableName: 'Media'
+                };
+                const adsParams = {
+                    TableName: 'Ads'
+                };
+                // Fetch media files from both tables
+                const [mediaData, adsData] = await Promise.all([
+                    dynamoDb.scan(mediaParams).promise(),
+                    dynamoDb.scan(adsParams).promise()
+                ]);
 
-    // Fetch media files from S3 if not available in local storage
-    useEffect(() => {
-        if (mediaFiles.length === 0) {
-            const fetchMediaFiles = async () => {
-                try {
-                    const params = {
-                        Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
-                        Prefix: 'media/',
-                    };
-                    const data = await s3.listObjectsV2(params).promise();
-                    const files = data.Contents.map((item) => ({
-                        id: item.Key,
-                        name: item.Key.split('/').pop(),
-                        type: item.Key.split('.').pop(),
-                        url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
-                        category: item.Key.includes('ads') ? 'ads' : 'file',
-                    }));
-                    setMediaFiles(files);
-                } catch (error) {
-                    console.error('Error fetching media files:', error);
-                }
-            };
-            fetchMediaFiles();
-        }
-    }, [mediaFiles.length]);
+                // Map through both media and ads, then combine
+                const mediaFilesFromDB = [
+                    ...mediaData.Items.map(item => ({
+                        id: item.img_id,
+                        name: item.name,
+                        type: item.type,
+                        url: item.url,
+                        category: 'file'
+                    })),
+                    ...adsData.Items.map(item => ({
+                        id: item.ad_id,
+                        name: item.name,
+                        type: item.type,
+                        url: item.url,
+                        category: 'ads'
+                    }))
+                ];
+
+                setMediaFiles(mediaFilesFromDB);
+            } catch (error) {
+                console.error('Error fetching media files from DynamoDB:', error);
+            }
+        };
+        fetchMediaFiles();
+    }, []);
 
     // Handle file selection and reset states for category and file name
     const handleFileUpload = (e) => {
