@@ -40,7 +40,7 @@ const Library = () => {
                         name: item.Key.split('/').pop(),
                         type: item.Key.split('.').pop(),
                         url: s3.getSignedUrl('getObject', { Bucket: params.Bucket, Key: item.Key }),
-                        category: item.Key.includes('ads') ? 'ads' : 'file', // Assume 'ads' if path includes 'ads'
+                        category: item.Key.includes('ads') ? 'ads' : 'file',
                     }));
                     setMediaFiles(files);
                 } catch (error) {
