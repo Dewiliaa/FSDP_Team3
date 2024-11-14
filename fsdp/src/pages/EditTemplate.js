@@ -337,12 +337,19 @@ const EditTemplate = () => {
                     const editNumber = getNextEditNumber();
                     const blobData = dataUrlToBlob(finalImage);
     
+                    // Ask user for name before upload
+                    const imageName = prompt('Please enter a name for the edited image:');
+                    if (!imageName) {
+                        alert('Image name is required.');
+                        return reject('Image name is required.');
+                    }
+
                     // Log the bucket name and region being used
                     console.log('Using bucket:', process.env.REACT_APP_TEMPLATE_BUCKET);
 
                     const params = {
                         Bucket: 'mediastorage-bytefsdp',
-                        Key: `edited${editNumber}.jpg`,
+                        Key: `media/${imageName}.jpg`,
                         Body: blobData,
                         ContentType: 'image/jpeg',
                     };
@@ -356,6 +363,26 @@ const EditTemplate = () => {
                             console.log('Upload successful:', data);
                             // Save to localStorage
                             localStorage.setItem(`edited${editNumber}`, finalImage);
+
+                            // Save metadata to DynamoDB Ads table
+                            const adsTableParams = {
+                                TableName: 'Ads',
+                                Item: {
+                                    ad_id: newImage ? `media/${Date.now()}_${newImage.name}` : 'default_name',
+                                    name: imageName,
+                                    type: 'image',
+                                    uploadDate: new Date().toISOString(),
+                                    url: data.Location,
+                                }
+                            };
+                            new AWS.DynamoDB.DocumentClient().put(adsTableParams, (err) => {
+                                if (err) {
+                                    console.error('Failed to save metadata to DynamoDB:', err);
+                                } else {
+                                    console.log('Successfully saved metadata to DynamoDB Ads table.');
+                                }
+                            });
+
                             resolve(data);
                         }
                     });
