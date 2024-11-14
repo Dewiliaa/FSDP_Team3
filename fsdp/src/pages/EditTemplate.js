@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+//EditTemplate.js
+import React, { useEffect, useState } from 'react';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { GrRotateLeft, GrRotateRight } from 'react-icons/gr';
 import { CgMergeVertical, CgMergeHorizontal } from 'react-icons/cg';
 import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AWS from '../aws-config';
 
 const s3 = new AWS.S3();
@@ -67,6 +68,30 @@ class LinkedList {
 const storeData = new LinkedList();
 
 const EditTemplate = () => {
+    const location = useLocation();
+    const [imageUrl, setImageUrl] = useState('');
+    const [imageName, setImageName] = useState('');
+    const [imageId, setImageId] = useState('');
+
+    useEffect(() => {
+        if (location.state) {
+            setImageUrl(location.state.imageUrl);
+            setImageName(location.state.imageName);
+            setImageId(location.state.imageId);
+
+            const img = new Image();
+            img.src = location.state.imageUrl;
+            img.onload = () => {
+                setState(prev => ({
+                    ...prev,
+                    image: location.state.imageUrl
+                }));
+                setDetails(img);
+            }
+        }
+    }, [location]);
+
+    const [newImage, setNewImage] = useState(null);
     const filterElement = [
         { name: 'brightness', maxValue: 200 },
         { name: 'grayscale', maxValue: 200 },
@@ -205,7 +230,7 @@ const EditTemplate = () => {
         }
     };
 
-    const imageCrop = () => {
+    const imageCrop = async () => {
         if (!crop || !details) return;
 
         const canvas = document.createElement('canvas');
@@ -214,6 +239,14 @@ const EditTemplate = () => {
         canvas.width = crop.width;
         canvas.height = crop.height;
         const ctx = canvas.getContext('2d');
+
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+        const dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+        })
 
         ctx.drawImage(
             details,
@@ -308,7 +341,7 @@ const EditTemplate = () => {
                     console.log('Using bucket:', process.env.REACT_APP_TEMPLATE_BUCKET);
 
                     const params = {
-                        Bucket: 'templatestorage-byteme',
+                        Bucket: 'mediastorage-bytefsdp',
                         Key: `edited${editNumber}.jpg`,
                         Body: blobData,
                         ContentType: 'image/jpeg',
@@ -398,6 +431,17 @@ const EditTemplate = () => {
                     y: e.clientY - e.target.offsetHeight / 2
                 }
             }));
+        }
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        setNewImage(file);
+    };
+
+    const handleSaveChanges = () => {
+        if (newImage) {
+            console.log("New image selected:", newImage);
         }
     };
 

@@ -1,3 +1,4 @@
+//ManageAds.js
 import AWS from '../aws-config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -127,6 +128,16 @@ const ManageAds = () => {
         ad.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const handleEdit = (ad) => {
+        navigate('/edit-Template', {
+            state: {
+                imageUrl: ad.url,
+                imageName: ad.name,
+                imageId: ad.id
+            }
+        });
+    };
+
     return (
         <div className="manageAds" style={{ padding: '10px', maxWidth: '600px', margin: '0 auto' }}>
             <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.5rem' }}>Manage Ads</h2>
@@ -194,7 +205,16 @@ const ManageAds = () => {
                         <h4>Or, Upload an Image</h4>
                         {previewUrl && (
                             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                                <img src={previewUrl} alt="Preview" style={{ width: '100%', maxHeight: '200px' }} />
+                                <img src={previewUrl} 
+                                alt="Preview"
+                                style={{ 
+                                    width: '100%',
+                                    maxHeight: '200px',
+                                    objectFit: 'cover',
+                                    borderRadius: '5px',
+                                    marginBottom: '5px',
+                                    cursor: 'pointer',
+                                    }} />
                             </div>
                         )}
                         <input
@@ -264,6 +284,19 @@ const ManageAds = () => {
                             }}
                         >
                             Delete
+                        </button>
+                        <button
+                            onClick={() => handleEdit(ad)}
+                            style={{
+                                padding: '5px 10px',
+                                backgroundColor: '#4CAF50',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursoer: 'pointer',
+                            }}
+                        >
+                            Edit
                         </button>
                     </div>
                 ))}
