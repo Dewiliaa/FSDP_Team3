@@ -1,7 +1,7 @@
 // Devices.js (Frontend)
 import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
-import '../App.css';
+import '../styles/devices.css';
 import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
@@ -179,9 +179,9 @@ const Devices = () => {
       )}
 
       {isAdShowingModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>An Ad is Currently Displaying</h3>
+        <div className="ad-container">
+          <div className="ad-content">
+            <h3>An Ad is currently displaying</h3>
             <button className="stop-ad-button" onClick={handleStopAdClick}>Stop Showing Ad</button>
           </div>
         </div>
