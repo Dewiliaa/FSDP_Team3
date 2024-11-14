@@ -122,6 +122,11 @@ const ManageAds = () => {
         }
     };
 
+    // Navigate to /edit-template route with ad data
+    const handleEditAd = (ad) => {
+        navigate('/edit-template', { state: { ad } }); // Pass the ad data to the /edit-template route
+    };
+
     // Filter ads based on search term
     const filteredAds = ads.filter(ad =>
         ad.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -252,19 +257,35 @@ const ManageAds = () => {
                             }}
                         />
                         <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{ad.name}</p>
-                        <button
-                            onClick={() => deleteAd(ad.id)}
-                            style={{
-                                padding: '5px 10px',
-                                backgroundColor: '#ff5f5f',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            Delete
-                        </button>
+                        <div>
+                            <button
+                                onClick={() => handleEditAd(ad)}
+                                style={{
+                                    padding: '5px 10px',
+                                    backgroundColor: '#4CAF50',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                    marginRight: '5px',
+                                }}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                onClick={() => deleteAd(ad.id)}
+                                style={{
+                                    padding: '5px 10px',
+                                    backgroundColor: '#ff5f5f',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>
