@@ -2,8 +2,8 @@
 import AWS from '../aws-config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import '../styles/ManageAds.css';
 
-// Initialize S3 and DynamoDB Document Client
 const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
@@ -16,13 +16,9 @@ const ManageAds = () => {
     const [previewUrl, setPreviewUrl] = useState(null);
     const navigate = useNavigate();
 
-    // Fetch ads from DynamoDB
     useEffect(() => {
         const fetchAdsFromDynamoDB = async () => {
-            const params = {
-                TableName: 'Ads',
-            };
-
+            const params = { TableName: 'Ads' };
             try {
                 const data = await dynamoDb.scan(params).promise();
                 const retrievedAds = data.Items.map(ad => ({
@@ -36,24 +32,20 @@ const ManageAds = () => {
                 console.error("Error fetching ads from DynamoDB:", error);
             }
         };
-
         fetchAdsFromDynamoDB();
     }, []);
 
-    // Handle file selection for preview
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         setSelectedFile(file);
         setPreviewUrl(URL.createObjectURL(file));
     };
 
-    // Upload image to S3 and save metadata to DynamoDB
     const uploadAdToS3 = async () => {
         if (!selectedFile || !fileName) {
             alert("Please select a file and enter a name.");
             return;
         }
-
         const s3Params = {
             Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
             Key: `media/${Date.now()}_${selectedFile.name}`,
@@ -65,15 +57,12 @@ const ManageAds = () => {
         try {
             const data = await s3.upload(s3Params).promise();
             const s3Url = data.Location;
-
             const newAd = {
                 id: data.Key,
                 name: fileName,
                 type: selectedFile.type.split('/')[0],
                 url: s3Url,
             };
-
-            // Save to DynamoDB
             const dynamoParams = {
                 TableName: 'Ads',
                 Item: {
@@ -85,8 +74,6 @@ const ManageAds = () => {
                 },
             };
             await dynamoDb.put(dynamoParams).promise();
-
-            // Update state with the new ad
             setAds([...ads, newAd]);
             alert('Ad uploaded successfully!');
             setSelectedFile(null);
@@ -99,13 +86,11 @@ const ManageAds = () => {
         }
     };
 
-    // Delete ad from S3 and DynamoDB
     const deleteAd = async (adId) => {
         const s3Params = {
             Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
             Key: adId,
         };
-
         const dynamoParams = {
             TableName: 'Ads',
             Key: { ad_id: adId },
@@ -114,7 +99,6 @@ const ManageAds = () => {
         try {
             await s3.deleteObject(s3Params).promise();
             await dynamoDb.delete(dynamoParams).promise();
-
             setAds(ads.filter(ad => ad.id !== adId));
             alert('Ad deleted successfully!');
         } catch (error) {
@@ -123,7 +107,10 @@ const ManageAds = () => {
         }
     };
 
-    // Filter ads based on search term
+    const handleEditAd = (ad) => {
+        navigate('/edit-template', { state: { ad } });
+    };
+
     const filteredAds = ads.filter(ad =>
         ad.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -139,64 +126,32 @@ const ManageAds = () => {
     };
 
     return (
-        <div className="manageAds" style={{ padding: '10px', maxWidth: '600px', margin: '0 auto' }}>
-            <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.5rem' }}>Manage Ads</h2>
+        <div className="manage-ads">
+            <h2 className="page-title">Manage Ads</h2>
 
-            {/* Search bar */}
-            <div style={{ display: 'flex', marginBottom: '15px' }}>
+            <div className="search-container">
                 <input
                     type="text"
                     placeholder="Search ads..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ padding: '8px', flex: 1, marginRight: '10px' }}
+                    className="search-input"
                 />
-                <button
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#6a4fe7',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                    }}
-                >
-                    Search
-                </button>
+                <button className="search-button">Search</button>
             </div>
 
-            {/* Create New Ad Button */}
             <button
                 onClick={() => setShowCreateOptions(!showCreateOptions)}
-                style={{
-                    marginBottom: '20px',
-                    padding: '8px 16px',
-                    backgroundColor: '#6a4fe7',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                    width: '100%',
-                }}
+                className="create-ad-button"
             >
                 Create New Ad
             </button>
 
-            {/* Create Ad Options */}
             {showCreateOptions && (
-                <div style={{ marginBottom: '20px' }}>
+                <div className="create-options">
                     <button
                         onClick={() => navigate('/adTemplate')}
-                        style={{
-                            padding: '10px',
-                            marginBottom: '10px',
-                            backgroundColor: '#6a4fe7',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '5px',
-                            cursor: 'pointer',
-                            width: '100%',
-                        }}
+                        className="template-button"
                     >
                         Choose Template
                     </button>
@@ -207,6 +162,7 @@ const ManageAds = () => {
                             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
                                 <img src={previewUrl} 
                                 alt="Preview"
+                                className ="preview-image"
                                 style={{ 
                                     width: '100%',
                                     maxHeight: '200px',
@@ -222,30 +178,17 @@ const ManageAds = () => {
                             placeholder="Ad name"
                             value={fileName}
                             onChange={(e) => setFileName(e.target.value)}
-                            style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
+                            className="file-name-input"
                         />
                         <input type="file" accept="image/*" onChange={handleFileChange} />
-                        <button
-                            onClick={uploadAdToS3}
-                            style={{
-                                marginTop: '10px',
-                                padding: '8px 16px',
-                                backgroundColor: '#6a4fe7',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                width: '100%',
-                            }}
-                        >
+                        <button onClick={uploadAdToS3} className="upload-button">
                             Upload Ad
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Gallery of Ads */}
-            <div className="ad-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+            <div className="ad-gallery">
                 {filteredAds.map((ad) => (
                     <div
                         key={ad.id}

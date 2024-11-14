@@ -1,6 +1,6 @@
 import AWS from '../aws-config';
 import React, { useState, useEffect } from 'react';
-import '../App.css';
+import '../styles/library.css';
 import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
 
 // Initialize S3 and DynamoDB Document Client
@@ -9,30 +9,25 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Library = () => {
     const [mediaFiles, setMediaFiles] = useState([]);
-    const [previewMedia, setPreviewMedia] = useState(null);
+    const [previewMedia, setPreviewMedia] = useState(null);  // Used for preview
     const [mediaType, setMediaType] = useState('All');
     const [filterCategory, setFilterCategory] = useState('All');
-    const [category, setCategory] = useState(''); // State for category selection (File or Ad)
-    const [selectedFile, setSelectedFile] = useState(null); // To store the selected file temporarily
-    const [fileName, setFileName] = useState(''); // State to store user-defined file name
+    const [category, setCategory] = useState('');
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [fileName, setFileName] = useState('');
+    const [filePreview, setFilePreview] = useState(null); // New state to store file preview
 
     // Fetch media files from DynamoDB upon component mount
     useEffect(() => {
         const fetchMediaFiles = async () => {
             try {
-                const mediaParams = {
-                    TableName: 'Media'
-                };
-                const adsParams = {
-                    TableName: 'Ads'
-                };
-                // Fetch media files from both tables
-                const [mediaData, adsData] = await Promise.all([
+                const mediaParams = { TableName: 'Media' };
+                const adsParams = { TableName: 'Ads' };
+                const [mediaData, adsData] = await Promise.all([ 
                     dynamoDb.scan(mediaParams).promise(),
                     dynamoDb.scan(adsParams).promise()
                 ]);
 
-                // Map through both media and ads, then combine
                 const mediaFilesFromDB = [
                     ...mediaData.Items.map(item => ({
                         id: item.img_id,
@@ -62,8 +57,9 @@ const Library = () => {
     const handleFileUpload = (e) => {
         const file = e.target.files[0];
         setSelectedFile(file);
-        setFileName(''); // Reset file name
-        setCategory(''); // Reset category selection
+        setFileName('');
+        setCategory('');
+        setFilePreview(URL.createObjectURL(file)); // Set the file preview URL for images
     };
 
     // Upload file to S3 and save metadata in DynamoDB
@@ -79,7 +75,6 @@ const Library = () => {
 
             const data = await s3.upload(params).promise();
 
-            // Save metadata to DynamoDB based on category
             const dynamoParams = {
                 TableName: category === 'ads' ? 'Ads' : 'Media',
                 Item: {
@@ -104,9 +99,10 @@ const Library = () => {
 
             setMediaFiles((prev) => [...prev, newFile]);
             window.alert('File uploaded successfully!');
-            setSelectedFile(null); // Clear selected file
-            setFileName(''); // Clear file name input
-            setCategory(''); // Reset category
+            setSelectedFile(null);
+            setFileName('');
+            setCategory('');
+            setFilePreview(null); // Reset file preview after upload
 
         } catch (error) {
             console.error("Error uploading file:", error);
@@ -125,7 +121,6 @@ const Library = () => {
 
     const handleDelete = async (id, category) => {
         try {
-            // Immediately remove the item from the frontend
             setMediaFiles((prev) => prev.filter(file => file.id !== id));
 
             const s3Params = {
@@ -133,7 +128,6 @@ const Library = () => {
                 Key: id,
             };
 
-            // Delete file from S3
             await s3.deleteObject(s3Params).promise();
             console.log(`File ${id} deleted successfully from S3.`);
 
@@ -142,9 +136,8 @@ const Library = () => {
                 Key: { [category === 'ads' ? 'ad_id' : 'img_id']: id },
             };
 
-            // Delete metadata from DynamoDB
             await dynamoDb.delete(dynamoDeleteParams).promise();
-            console.log(`Metadata for ${id} deleted successfully from DynamoDB ${category === 'ads' ? 'Ads' : 'Media'} table.`);
+            console.log(`Metadata for ${id} deleted successfully from DynamoDB.`);
 
             window.alert('File has been successfully deleted.');
         } catch (error) {
@@ -188,15 +181,32 @@ const Library = () => {
                         className="file-name-input"
                     />
                     <p>Choose a category for your file:</p>
-                    <select 
-                        value={category} 
-                        onChange={(e) => setCategory(e.target.value)} 
+                    <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
                         className="category-dropdown"
                     >
                         <option value="" disabled>Select Category</option>
                         <option value="file">Save as File</option>
                         <option value="ads">Save as Ad</option>
                     </select>
+
+                    {/* File preview below the Select Category */}
+                    {filePreview && (
+                        <div className="file-preview">
+                            <p>File Preview:</p>
+                            {selectedFile.type.startsWith('image') && (
+                                <img src={filePreview} alt="Preview" className="preview-image" />
+                            )}
+                            {selectedFile.type.startsWith('video') && (
+                                <video src={filePreview} controls className="preview-video" />
+                            )}
+                            {selectedFile.type.startsWith('audio') && (
+                                <audio src={filePreview} controls className="preview-audio" />
+                            )}
+                        </div>
+                    )}
+
                     <button className="upload-confirm-button" onClick={handleCategorySelection}>Upload</button>
                 </div>
             )}
@@ -241,14 +251,18 @@ const Library = () => {
 
             {/* Preview Modal */}
             {previewMedia && (
-                <div className="preview-modal" onClick={() => setPreviewMedia(null)}>
-                    <div className="preview-content" onClick={(e) => e.stopPropagation()}>
-                        {previewMedia.type === 'image' && <img src={previewMedia.url} alt={previewMedia.name} />}
-                        {previewMedia.type === 'video' && <video src={previewMedia.url} controls />}
-                        {previewMedia.type === 'audio' && <audio src={previewMedia.url} controls />}
-                        <p className="preview-name">{previewMedia.name}</p>
-                        <button className="close-button" onClick={() => setPreviewMedia(null)}>Close</button>
-                    </div>
+                <div className="preview-modal">
+                    <p>Preview:</p>
+                    {previewMedia.type.startsWith('image') && (
+                        <img src={previewMedia.url} alt="Preview" className="preview-image" />
+                    )}
+                    {previewMedia.type.startsWith('video') && (
+                        <video src={previewMedia.url} controls className="preview-video" />
+                    )}
+                    {previewMedia.type.startsWith('audio') && (
+                        <audio src={previewMedia.url} controls className="preview-audio" />
+                    )}
+                    <button onClick={() => setPreviewMedia(null)}>Close Preview</button>
                 </div>
             )}
         </div>
