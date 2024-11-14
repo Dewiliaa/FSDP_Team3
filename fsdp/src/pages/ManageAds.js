@@ -1,93 +1,135 @@
+import AWS from '../aws-config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useImage } from '../components/ImageContext';
+
+// Initialize S3 and DynamoDB Document Client
+const s3 = new AWS.S3();
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const ManageAds = () => {
     const [ads, setAds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [dropdownOpen, setDropdownOpen] = useState(null);
-    const [galleryImages, setGalleryImages] = useState([]); // State to store gallery images
+    const [showCreateOptions, setShowCreateOptions] = useState(false);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [fileName, setFileName] = useState('');
+    const [previewUrl, setPreviewUrl] = useState(null);
     const navigate = useNavigate();
-    const { editedImage, setEditedImage } = useImage();
 
-    // Load the edited images from localStorage when component mounts
+    // Fetch ads from DynamoDB
     useEffect(() => {
-        const allEditedImages = [];
-        // Loop through localStorage and find all keys that start with "edited"
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('edited')) {
-                allEditedImages.push(localStorage.getItem(key));
-            }
-        }
-        setGalleryImages(allEditedImages); // Set the gallery images in state
-
-        // Map over the ads to assign images from localStorage if available
-        setAds(prevAds => {
-            return prevAds.map((ad, index) => ({
-                ...ad,
-                image: allEditedImages[index] || ad.image
-            }));
-        });
-    }, []); // Empty dependency array ensures this effect runs only once
-
-    // Function to delete an ad
-    const deleteAd = (id) => {
-        setAds(ads.filter(ad => ad.id !== id));
-        setDropdownOpen(null);
-    };
-
-    // Function to delete an image from the gallery and localStorage
-    const deleteImageFromGallery = (imageUrl) => {
-        // Remove the image from the galleryImages array
-        setGalleryImages(galleryImages.filter(img => img !== imageUrl));
-
-        // Find the index of the image in localStorage and remove it
-        let i = 1;
-        while (localStorage.getItem(`edited${i}`)) {
-            if (localStorage.getItem(`edited${i}`) === imageUrl) {
-                localStorage.removeItem(`edited${i}`);
-                break;
-            }
-            i++;
-        }
-    };
-
-    // Handle image upload for an ad
-    const handleImageUpload = (id, event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setAds(ads.map(ad =>
-                    ad.id === id ? { ...ad, image: reader.result } : ad
-                ));
-
-                // Store the uploaded image in localStorage
-                const uploadedImageCount = localStorage.length + 1;
-                localStorage.setItem(`edited${uploadedImageCount}`, reader.result);
-                setGalleryImages([...galleryImages, reader.result]); // Update the gallery state
+        const fetchAdsFromDynamoDB = async () => {
+            const params = {
+                TableName: 'Ads',
             };
-            reader.readAsDataURL(file);
+
+            try {
+                const data = await dynamoDb.scan(params).promise();
+                const retrievedAds = data.Items.map(ad => ({
+                    id: ad.ad_id,
+                    name: ad.name,
+                    type: ad.type,
+                    url: ad.url,
+                }));
+                setAds(retrievedAds);
+            } catch (error) {
+                console.error("Error fetching ads from DynamoDB:", error);
+            }
+        };
+
+        fetchAdsFromDynamoDB();
+    }, []);
+
+    // Handle file selection for preview
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        setSelectedFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+    };
+
+    // Upload image to S3 and save metadata to DynamoDB
+    const uploadAdToS3 = async () => {
+        if (!selectedFile || !fileName) {
+            alert("Please select a file and enter a name.");
+            return;
+        }
+
+        const s3Params = {
+            Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+            Key: `media/${Date.now()}_${selectedFile.name}`,
+            Body: selectedFile,
+            ACL: 'public-read',
+            ContentType: selectedFile.type,
+        };
+
+        try {
+            const data = await s3.upload(s3Params).promise();
+            const s3Url = data.Location;
+
+            const newAd = {
+                id: data.Key,
+                name: fileName,
+                type: selectedFile.type.split('/')[0],
+                url: s3Url,
+            };
+
+            // Save to DynamoDB
+            const dynamoParams = {
+                TableName: 'Ads',
+                Item: {
+                    ad_id: newAd.id,
+                    name: newAd.name,
+                    type: newAd.type,
+                    url: newAd.url,
+                    uploadDate: new Date().toISOString(),
+                },
+            };
+            await dynamoDb.put(dynamoParams).promise();
+
+            // Update state with the new ad
+            setAds([...ads, newAd]);
+            alert('Ad uploaded successfully!');
+            setSelectedFile(null);
+            setFileName('');
+            setPreviewUrl(null);
+            setShowCreateOptions(false);
+        } catch (error) {
+            console.error("Error uploading ad:", error);
+            alert("Failed to upload ad.");
         }
     };
 
-    // Function to create a new ad
-    const createAd = () => {
-        const newAd = {
-            id: ads.length + 1,
-            name: `Ad Placeholder ${ads.length + 1}`,
-            image: null,
+    // Delete ad from S3 and DynamoDB
+    const deleteAd = async (adId) => {
+        const s3Params = {
+            Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+            Key: adId,
         };
-        setAds([...ads, newAd]);
+
+        const dynamoParams = {
+            TableName: 'Ads',
+            Key: { ad_id: adId },
+        };
+
+        try {
+            await s3.deleteObject(s3Params).promise();
+            await dynamoDb.delete(dynamoParams).promise();
+
+            setAds(ads.filter(ad => ad.id !== adId));
+            alert('Ad deleted successfully!');
+        } catch (error) {
+            console.error('Error deleting ad:', error);
+            alert("Failed to delete ad.");
+        }
     };
 
     // Filter ads based on search term
-    const filteredAds = ads.filter(ad => ad.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredAds = ads.filter(ad =>
+        ad.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
-        <div className="manageAds" style={{ padding: '10px', maxWidth: '400px', margin: '0 auto' }}>
-            <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.2rem' }}>Manage Ads</h2>
+        <div className="manageAds" style={{ padding: '10px', maxWidth: '600px', margin: '0 auto' }}>
+            <h2 className="page-title" style={{ marginBottom: '15px', fontSize: '1.5rem' }}>Manage Ads</h2>
 
             {/* Search bar */}
             <div style={{ display: 'flex', marginBottom: '15px' }}>
@@ -112,8 +154,78 @@ const ManageAds = () => {
                 </button>
             </div>
 
-            {/* List of ads */}
-            <div>
+            {/* Create New Ad Button */}
+            <button
+                onClick={() => setShowCreateOptions(!showCreateOptions)}
+                style={{
+                    marginBottom: '20px',
+                    padding: '8px 16px',
+                    backgroundColor: '#6a4fe7',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    width: '100%',
+                }}
+            >
+                Create New Ad
+            </button>
+
+            {/* Create Ad Options */}
+            {showCreateOptions && (
+                <div style={{ marginBottom: '20px' }}>
+                    <button
+                        onClick={() => navigate('/adTemplate')}
+                        style={{
+                            padding: '10px',
+                            marginBottom: '10px',
+                            backgroundColor: '#6a4fe7',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            width: '100%',
+                        }}
+                    >
+                        Choose Template
+                    </button>
+
+                    <div>
+                        <h4>Or, Upload an Image</h4>
+                        {previewUrl && (
+                            <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+                                <img src={previewUrl} alt="Preview" style={{ width: '100%', maxHeight: '200px' }} />
+                            </div>
+                        )}
+                        <input
+                            type="text"
+                            placeholder="Ad name"
+                            value={fileName}
+                            onChange={(e) => setFileName(e.target.value)}
+                            style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
+                        />
+                        <input type="file" accept="image/*" onChange={handleFileChange} />
+                        <button
+                            onClick={uploadAdToS3}
+                            style={{
+                                marginTop: '10px',
+                                padding: '8px 16px',
+                                backgroundColor: '#6a4fe7',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                width: '100%',
+                            }}
+                        >
+                            Upload Ad
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Gallery of Ads */}
+            <div className="ad-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
                 {filteredAds.map((ad) => (
                     <div
                         key={ad.id}
@@ -121,200 +233,41 @@ const ManageAds = () => {
                         style={{
                             border: '1px solid #ccc',
                             borderRadius: '5px',
-                            marginBottom: '8px',
                             padding: '8px',
                             fontSize: '0.9rem',
                             display: 'flex',
-                            justifyContent: 'space-between',
+                            flexDirection: 'column',
                             alignItems: 'center',
                         }}
                     >
-                        <span>{ad.name}</span>
-
-                        <div style={{ position: 'relative' }}>
-                            <button
-                                onClick={() => setDropdownOpen(dropdownOpen === ad.id ? null : ad.id)}
-                                style={{
-                                    padding: '5px 10px',
-                                    backgroundColor: '#ccc',
-                                    border: 'none',
-                                    borderRadius: '5px',
-                                    cursor: 'pointer',
-                                    marginLeft: '10px',
-                                }}
-                            >
-                                ▼
-                            </button>
-                            {dropdownOpen === ad.id && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        top: '30px',
-                                        right: '0',
-                                        backgroundColor: '#fff',
-                                        border: '1px solid #ccc',
-                                        borderRadius: '5px',
-                                        boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
-                                        zIndex: 1,
-                                        padding: '10px',
-                                        minWidth: '150px',
-                                    }}
-                                >
-                                    {/* Ad Image Display */}
-                                    <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                                        <div
-                                            style={{
-                                                width: '100%',
-                                                height: '200px',
-                                                backgroundColor: '#f0f0f0',
-                                                border: '1px dashed #ccc',
-                                                borderRadius: '5px',
-                                                overflow: 'hidden',
-                                                position: 'relative',
-                                            }}
-                                        >
-                                            {ad.image ? (
-                                                <img
-                                                    src={ad.image}
-                                                    alt="Ad"
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'cover',
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span style={{ lineHeight: '200px', color: '#999', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                                                    {ad.name} Template
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Image Upload */}
-                                    <button
-                                        onClick={() => document.getElementById(`file-input-${ad.id}`).click()}
-                                        style={{
-                                            padding: '5px 10px',
-                                            backgroundColor: '#6a4fe7',
-                                            color: '#fff',
-                                            border: 'none',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            marginBottom: '10px',
-                                        }}
-                                    >
-                                        Upload Image
-                                    </button>
-
-                                    <input
-                                        id={`file-input-${ad.id}`}
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => handleImageUpload(ad.id, e)}
-                                        style={{ display: 'none' }}
-                                    />
-
-                                    {/* Delete and Choose Template buttons */}
-                                    <button
-                                        onClick={() => deleteAd(ad.id)}
-                                        style={{
-                                            padding: '10px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: 'red',
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-
-                                    <button
-                                        onClick={() => navigate('/adTemplate')}
-                                        style={{
-                                            padding: '10px',
-                                            cursor: 'pointer',
-                                            width: '100%',
-                                            textAlign: 'left',
-                                            background: 'none',
-                                            border: 'none',
-                                            color: '#6a4fe7',
-                                            fontWeight: 'bold',
-                                        }}
-                                    >
-                                        Choose Template
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        <img
+                            src={ad.url}
+                            alt={ad.name}
+                            style={{
+                                width: '100%',
+                                height: '100px',
+                                objectFit: 'cover',
+                                borderRadius: '5px',
+                                marginBottom: '5px'
+                            }}
+                        />
+                        <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{ad.name}</p>
+                        <button
+                            onClick={() => deleteAd(ad.id)}
+                            style={{
+                                padding: '5px 10px',
+                                backgroundColor: '#ff5f5f',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Delete
+                        </button>
                     </div>
                 ))}
             </div>
-
-            {/* Gallery Section */}
-            <div style={{ marginTop: '20px' }}>
-                <h3>Recently Edited Images</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap' }}>
-                    {galleryImages.map((imageUrl, index) => (
-                        <div
-                            key={index}
-                            style={{
-                                position: 'relative',
-                                margin: '10px',
-                                width: '100px',
-                                height: '100px',
-                                overflow: 'hidden',
-                                borderRadius: '5px',
-                            }}
-                        >
-                            <img
-                                src={imageUrl}
-                                alt="Edited"
-                                style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    borderRadius: '5px',
-                                }}
-                            />
-                            <button
-                                onClick={() => deleteImageFromGallery(imageUrl)}
-                                style={{
-                                    position: 'absolute',
-                                    top: '5px',
-                                    right: '5px',
-                                    padding: '5px',
-                                    backgroundColor: '#ff5f5f',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                ×
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            <button
-                onClick={createAd}
-                style={{
-                    marginTop: '20px',
-                    padding: '8px 16px',
-                    backgroundColor: '#6a4fe7',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                }}
-            >
-                Create New Ad
-            </button>
         </div>
     );
 };
