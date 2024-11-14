@@ -1365,33 +1365,34 @@ input:checked + .slider {
   background: #c82333;
 }
 
-/* Styling for the "Stop Showing Ad" button */
-.stop-ad-button {
-  background-color: #d9534f;  /* Red background for 'Stop' action */
+/* Styling for the "Stop Showing Ad" button inside the modal */
+.modal .stop-ad-button {
+  background-color: #d9534f; /* Red background for 'Stop' action */
   color: white;
   font-weight: bold;
   margin-top: 10px;
-  margin-left: 10px;
   padding: 12px 20px;
   border-radius: 5px;
   display: inline-block;
+  cursor: pointer;
+  text-align: center;
 }
 
-.stop-ad-button:hover {
-  background-color: #c9302c;  /* Darker red on hover */
+.modal .stop-ad-button:hover {
+  background-color: #c9302c; /* Darker red on hover */
 }
 
-.stop-ad-button:active {
-  background-color: #ac2925;  /* Even darker red when clicked */
+.modal .stop-ad-button:active {
+  background-color: #ac2925; /* Even darker red when clicked */
 }
 
-/* Optional: Add some padding or positioning if needed */
-.button-container {
+/* Optional: Add padding or positioning if needed */
+.modal .button-container {
   display: flex;
   gap: 10px;
   align-items: center;
 }
 
-.icon {
+.modal .icon {
   margin-right: 8px;
 }

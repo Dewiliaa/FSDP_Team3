@@ -6,85 +6,85 @@ import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
 // Connect to the backend server via socket.io
-const socket = io.connect('http://192.168.86.32:3001'); // Replace with your server's IP address and port
+const socket = io.connect('http://192.168.1.233:3001'); // Replace with your server's IP address and port
 
 const Devices = () => {
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false);
+  const [isAdShowingModalOpen, setIsAdShowingModalOpen] = useState(false); // NEW STATE for ad showing modal
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [deviceName, setDeviceName] = useState('');
   const [connectedDevices, setConnectedDevices] = useState([]);
   const [adImage, setAdImage] = useState(null);  // State for ad image path
 
-  // When the component mounts, listen for device list updates
   useEffect(() => {
-    // Listen for updates to the list of connected devices
     socket.on('device_list', (devices) => {
       setConnectedDevices(devices);
     });
 
-    // Listen for ad display event
+    socket.on('display_ad', (adImagePath) => {
+      setAdImage(adImagePath);
+    });
+
+    socket.on('ad_confirmed', () => {
+      setIsAdShowingModalOpen(true); // Only show to triggering user
+    });
+
     socket.on('display_ad', (adImagePath) => {
       if (adImagePath === null) {
-        setAdImage(null); // If adImagePath is null, stop the ad
+        setAdImage(null);
+        setIsAdShowingModalOpen(false); // Close modal if ad stops
       } else {
-        setAdImage(adImagePath); // Set the ad image
+        setAdImage(adImagePath);
       }
     });
 
-    // Cleanup event listeners when the component unmounts
     return () => {
       socket.off('device_list');
       socket.off('display_ad');
+      socket.off('ad_confirmed');
     };
   }, []);
 
-  // Toggle between "Devices" and "Groups" view
   const handleToggle = () => {
     setIsDevicesSelected(!isDevicesSelected);
   };
 
-  // Open modal to add a new device
   const openModal = () => setIsModalOpen(true);
 
-  // Close modal and reset form
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedDevice(null);
     setDeviceName('');
   };
 
-  // Confirm device addition
   const confirmDevice = () => {
     if (deviceName) {
-      socket.emit('add_device', deviceName); // Send device name to the server
+      socket.emit('add_device', deviceName);
       closeModal();
     }
   };
 
-  // Update device status
   const handleDeviceStatusUpdate = (deviceName, status) => {
     socket.emit('update_device_status', deviceName, status);
   };
 
-  // Open the ad confirmation modal
   const handleShowAdClick = () => {
     setIsAdConfirmModalOpen(true);
   };
 
-  // Confirm and trigger ad
   const confirmShowAd = () => {
-    const adImagePath = 'https://rare-gallery.com/uploads/posts/191349-rin-tohsaka-1920x1152.jpg'; // Example ad image
-    socket.emit('trigger_ad', adImagePath); // Send ad image to the server
+    const adImagePath = 'https://rare-gallery.com/uploads/posts/191349-rin-tohsaka-1920x1152.jpg';
+    socket.emit('trigger_ad', adImagePath);
     setIsAdConfirmModalOpen(false);
+    socket.emit('show_ad_confirm'); // Inform server to show modal only to this user
   };
 
-  // Stop showing the ad
   const handleStopAdClick = () => {
-    console.log('Stopping ad...');
-    setAdImage(null);  // Clear the ad image locally
-    socket.emit('stop_ad');  // Notify the server to stop showing the ad
+    setAdImage(null);
+    socket.emit('stop_ad');
+    alert('The ad has stopped showing.');
   };
 
   return (
@@ -108,11 +108,6 @@ const Devices = () => {
           <FaBullhorn className="icon" />
           Show Ad
         </button>
-
-        {/* Stop Ad Button always visible */}
-        <button className="stop-ad-button" onClick={handleStopAdClick}>
-          Stop Showing Ad
-        </button>
       </div>
 
       {connectedDevices.length === 0 ? (
@@ -133,7 +128,6 @@ const Devices = () => {
         </div>
       )}
 
-      {/* Display ad if there is an ad image */}
       {adImage && (
         <div className="ad-overlay">
           <img src={adImage} alt="Ad" />
@@ -146,8 +140,8 @@ const Devices = () => {
             <h3>Select a Device</h3>
             <ul className="device-list">
               {['Device 1', 'Device 2', 'Device 3'].map((device, index) => (
-                <li 
-                  key={index} 
+                <li
+                  key={index}
                   onClick={() => setSelectedDevice(device)}
                   className={selectedDevice === device ? 'selected' : ''}>
                   {device}
@@ -171,7 +165,6 @@ const Devices = () => {
         </div>
       )}
 
-      {/* Confirmation modal for displaying the ad */}
       {isAdConfirmModalOpen && (
         <div className="modal">
           <div className="modal-content">
@@ -181,6 +174,15 @@ const Devices = () => {
               <button onClick={confirmShowAd}>Yes</button>
               <button onClick={() => setIsAdConfirmModalOpen(false)}>No</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {isAdShowingModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>An Ad is Currently Displaying</h3>
+            <button className="stop-ad-button" onClick={handleStopAdClick}>Stop Showing Ad</button>
           </div>
         </div>
       )}

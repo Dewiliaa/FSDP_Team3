@@ -23,8 +23,8 @@ io.on('connection', (socket) => {
 
   // Listen for advertisement trigger event
   socket.on('trigger_ad', (adImagePath) => {
-    // Broadcast the ad image to all other clients except the one that triggered it
     socket.broadcast.emit('display_ad', adImagePath);
+    socket.emit('ad_confirmed'); // Inform triggering client to show confirmation modal
   });
 
   // Listen for stop ad event to stop showing ads to all clients
