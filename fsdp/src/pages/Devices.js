@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import AWS from '../aws-config';
 import '../styles/devices.css';
 import DeviceSwitch from '../components/DeviceSwitch';
-import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
+import { FaTabletAlt, FaPlus, FaBullhorn, FaPlay } from 'react-icons/fa';
 
 const socket = io.connect('http://192.168.86.32:3001'); // Replace with your server's IP address and port
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
@@ -11,21 +11,30 @@ const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const Devices = () => {
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
   const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false);
-  const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false); // State for Add Device modal
-  const [deviceName, setDeviceName] = useState(''); // State to store the device name input
+  const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
+  const [deviceName, setDeviceName] = useState('');
   const [connectedDevices, setConnectedDevices] = useState([]);
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
-  const [adImage, setAdImage] = useState(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [liveAd, setLiveAd] = useState(''); // State for currently live ad
   const isServerSite = window.location.hostname === 'localhost';
 
   useEffect(() => {
     socket.on('device_list', (devices) => setConnectedDevices(devices));
 
     // Display ad only on non-localhost clients
-    socket.on('display_ad', (adImagePath) => {
+    socket.on('display_ad', (adMediaPath) => {
       if (!isServerSite) {
-        setAdImage(adImagePath);
+        const ad = ads.find(ad => ad.url === adMediaPath);
+        setSelectedAd(ad || null);
+        if (ad?.type === 'image') {
+          setIsImageModalOpen(true);
+        } else if (ad?.type === 'video') {
+          setIsVideoModalOpen(true);
+        }
+        setLiveAd(ad ? ad.name : ''); // Update live ad name
       }
     });
 
@@ -37,7 +46,7 @@ const Devices = () => {
       socket.off('display_ad');
       socket.off('ad_confirmed');
     };
-  }, []);
+  }, [ads]);
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
@@ -49,6 +58,7 @@ const Devices = () => {
           id: ad.ad_id,
           name: ad.name,
           url: ad.url,
+          type: ad.type,
         })));
       } catch (error) {
         console.error("Error fetching ads from DynamoDB:", error);
@@ -63,6 +73,8 @@ const Devices = () => {
   const confirmShowAd = () => {
     if (selectedAd && selectedAd.url) {
       socket.emit('trigger_ad', selectedAd.url);
+      socket.emit('show_ad_message', `Now playing: ${selectedAd.name}`);
+      setLiveAd(selectedAd.name); // Set live ad name in the banner
       setIsAdConfirmModalOpen(false);
     } else {
       alert("Please select an ad to display.");
@@ -70,8 +82,11 @@ const Devices = () => {
   };
 
   const handleStopAdClick = () => {
-    setAdImage(null);
+    setIsImageModalOpen(false);
+    setIsVideoModalOpen(false);
     socket.emit('stop_ad');
+    socket.emit('show_ad_message', "No ad is currently playing.");
+    setLiveAd(''); // Clear live ad banner when stopped
     alert('The ad has stopped showing.');
   };
 
@@ -84,8 +99,8 @@ const Devices = () => {
 
   const confirmAddDevice = () => {
     if (deviceName) {
-      socket.emit('add_device', deviceName); // Emit device name to the server
-      closeAddDeviceModal(); // Close modal and reset input
+      socket.emit('add_device', deviceName);
+      closeAddDeviceModal();
     } else {
       alert("Please enter a device name.");
     }
@@ -93,6 +108,21 @@ const Devices = () => {
 
   return (
     <div className="devices">
+      {/* Live Ad Banner - Display only on localhost, above media section */}
+      {isServerSite && liveAd && (
+        <div className="live-ad-banner" style={{
+          width: '100%',
+          backgroundColor: '#333',
+          color: 'white',
+          textAlign: 'center',
+          padding: '10px',
+          fontWeight: 'bold',
+          marginBottom: '10px', // Adds space below the banner
+        }}>
+          Currently Live: {liveAd}
+        </div>
+      )}
+
       <h2 className="page-title">{isDevicesSelected ? 'Devices' : 'Groups'}</h2>
 
       <div className="switch-container">
@@ -142,32 +172,77 @@ const Devices = () => {
               boxShadow: selectedAd && selectedAd.id === ad.id ? '0px 0px 8px rgba(106, 79, 231, 0.5)' : 'none',
             }}
           >
-            <img
-              src={ad.url}
-              alt={ad.name}
-              style={{
-                width: '100%',
-                height: '100px',
-                objectFit: 'cover',
-                borderRadius: '5px',
-              }}
-            />
+            {ad.type === 'image' ? (
+              <img
+                src={ad.url}
+                alt={ad.name}
+                style={{
+                  width: '100%',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '5px',
+                }}
+                onClick={() => { setIsImageModalOpen(true); setSelectedAd(ad); }}
+              />
+            ) : (
+              <video
+                src={ad.url}
+                controls
+                style={{
+                  width: '100%',
+                  height: '100px',
+                  objectFit: 'cover',
+                  borderRadius: '5px',
+                }}
+                onClick={() => { setIsVideoModalOpen(true); setSelectedAd(ad); }}
+              />
+            )}
             <p style={{ textAlign: 'center', fontWeight: 'bold', color: selectedAd && selectedAd.id === ad.id ? '#6a4fe7' : 'black' }}>{ad.name}</p>
           </div>
         ))}
       </div>
 
-      {/* Full-Screen Ad Display for Clients */}
-    {adImage && (
-      <div className="full-screen-ad" style={{
-      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-      backgroundColor: '#000', // Opaque black background
-      display: 'flex', justifyContent: 'center',
-      alignItems: 'center', zIndex: 1000
+      {/* Full-Screen Image Modal */}
+      {isImageModalOpen && selectedAd && selectedAd.type === 'image' && (
+        <div className="full-screen-ad" style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: '#000', display: 'flex', justifyContent: 'center',
+          alignItems: 'center', zIndex: 1000
         }}>
-      <img src={adImage} alt="Advertisement" style={{ maxWidth: '100%', maxHeight: '95%', borderRadius: '10px' }} />
-    </div>
-    )}
+          <img
+            src={selectedAd.url}
+            alt={selectedAd.name}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '95%',
+              borderRadius: '10px',
+            }}
+            onClick={() => setIsImageModalOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* Full-Screen Video Modal */}
+      {isVideoModalOpen && selectedAd && selectedAd.type === 'video' && (
+        <div className="full-screen-ad" style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: '#000', display: 'flex', justifyContent: 'center',
+          alignItems: 'center', zIndex: 1000
+        }}>
+          <video
+            src={selectedAd.url}
+            controls
+            autoPlay
+            loop
+            style={{
+              maxWidth: '100%',
+              maxHeight: '95%',
+              borderRadius: '10px',
+            }}
+            onClick={() => setIsVideoModalOpen(false)}
+          />
+        </div>
+      )}
 
       {/* Ad Confirmation Modal */}
       {isAdConfirmModalOpen && (
