@@ -1,4 +1,3 @@
-// server.js (Backend)
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -23,8 +22,12 @@ io.on('connection', (socket) => {
 
   // Listen for advertisement trigger event
   socket.on('trigger_ad', (adImagePath) => {
-    socket.broadcast.emit('display_ad', adImagePath);
-    socket.emit('ad_confirmed'); // Inform triggering client to show confirmation modal
+    if (adImagePath) {
+      socket.broadcast.emit('display_ad', adImagePath); // Broadcast the ad image URL to all other clients
+      socket.emit('ad_confirmed'); // Inform the client that the ad has been triggered
+    } else {
+      console.error("Ad image path is missing");
+    }
   });
 
   // Listen for stop ad event to stop showing ads to all clients
