@@ -5,35 +5,32 @@ import '../styles/devices.css';
 import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
-// Connect to the backend server via socket.io
 const socket = io.connect('http://192.168.86.32:3001'); // Replace with your server's IP address and port
-// Initialize DynamoDB Document Client
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Devices = () => {
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false);
-  const [isAdShowingModalOpen, setIsAdShowingModalOpen] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState(null);
-  const [deviceName, setDeviceName] = useState('');
+  const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false); // State for Add Device modal
+  const [deviceName, setDeviceName] = useState(''); // State to store the device name input
   const [connectedDevices, setConnectedDevices] = useState([]);
-  const [ads, setAds] = useState([]); // State to store ads from DynamoDB
-  const [selectedAd, setSelectedAd] = useState(null); // State for selected ad in gallery
+  const [ads, setAds] = useState([]);
+  const [selectedAd, setSelectedAd] = useState(null);
+  const [adImage, setAdImage] = useState(null);
+  const isServerSite = window.location.hostname === 'localhost';
 
   useEffect(() => {
-    socket.on('device_list', (devices) => {
-      setConnectedDevices(devices);
-    });
+    socket.on('device_list', (devices) => setConnectedDevices(devices));
 
+    // Display ad only on non-localhost clients
     socket.on('display_ad', (adImagePath) => {
-      console.log("Received adImagePath:", adImagePath);
-      setSelectedAd({ url: adImagePath }); // Expecting adImagePath to be a string URL
+      if (!isServerSite) {
+        setAdImage(adImagePath);
+      }
     });
 
-    socket.on('ad_confirmed', () => {
-      setIsAdShowingModalOpen(true);
-    });
+    // Confirm ad is showing for localhost
+    socket.on('ad_confirmed', () => setIsAdConfirmModalOpen(false));
 
     return () => {
       socket.off('device_list');
@@ -42,23 +39,17 @@ const Devices = () => {
     };
   }, []);
 
-  // Fetch ads from DynamoDB Ads table
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
-      const params = {
-        TableName: 'Ads',
-      };
+      const params = { TableName: 'Ads' };
 
       try {
         const data = await dynamoDb.scan(params).promise();
-        const retrievedAds = data.Items.map(ad => ({
+        setAds(data.Items.map(ad => ({
           id: ad.ad_id,
           name: ad.name,
-          type: ad.type,
           url: ad.url,
-        }));
-        console.log("Retrieved ads from DynamoDB:", retrievedAds);
-        setAds(retrievedAds);
+        })));
       } catch (error) {
         console.error("Error fetching ads from DynamoDB:", error);
       }
@@ -67,49 +58,37 @@ const Devices = () => {
     fetchAdsFromDynamoDB();
   }, []);
 
-  const handleToggle = () => {
-    setIsDevicesSelected(!isDevicesSelected);
-  };
-
-  const openModal = () => setIsModalOpen(true);
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedDevice(null);
-    setDeviceName('');
-  };
-
-  const confirmDevice = () => {
-    if (deviceName) {
-      socket.emit('add_device', deviceName);
-      closeModal();
-    }
-  };
-
-  const handleDeviceStatusUpdate = (deviceName, status) => {
-    socket.emit('update_device_status', deviceName, status);
-  };
-
-  const handleShowAdClick = () => {
-    setIsAdConfirmModalOpen(true);
-  };
+  const handleShowAdClick = () => setIsAdConfirmModalOpen(true);
 
   const confirmShowAd = () => {
-    if (selectedAd && selectedAd.url) { // Ensure selectedAd and its URL are defined
-      console.log("Emitting ad URL:", selectedAd.url);
-      socket.emit('trigger_ad', selectedAd.url); // Use the selected ad's URL from DynamoDB
+    if (selectedAd && selectedAd.url) {
+      socket.emit('trigger_ad', selectedAd.url);
       setIsAdConfirmModalOpen(false);
-      setIsAdShowingModalOpen(true); // Set state for showing ad confirmation modal
     } else {
       alert("Please select an ad to display.");
     }
   };
-  
+
   const handleStopAdClick = () => {
-    setSelectedAd(null); // Clear selected ad
+    setAdImage(null);
     socket.emit('stop_ad');
-    setIsAdShowingModalOpen(false); // Close ad showing modal
     alert('The ad has stopped showing.');
+  };
+
+  const openAddDeviceModal = () => setIsAddDeviceModalOpen(true);
+
+  const closeAddDeviceModal = () => {
+    setIsAddDeviceModalOpen(false);
+    setDeviceName('');
+  };
+
+  const confirmAddDevice = () => {
+    if (deviceName) {
+      socket.emit('add_device', deviceName); // Emit device name to the server
+      closeAddDeviceModal(); // Close modal and reset input
+    } else {
+      alert("Please enter a device name.");
+    }
   };
 
   return (
@@ -117,7 +96,7 @@ const Devices = () => {
       <h2 className="page-title">{isDevicesSelected ? 'Devices' : 'Groups'}</h2>
 
       <div className="switch-container">
-        <DeviceSwitch isDevicesSelected={isDevicesSelected} onToggle={handleToggle} />
+        <DeviceSwitch isDevicesSelected={isDevicesSelected} onToggle={() => setIsDevicesSelected(!isDevicesSelected)} />
       </div>
 
       <div className="button-container">
@@ -125,7 +104,7 @@ const Devices = () => {
           <FaTabletAlt className="icon" />
           {isDevicesSelected ? 'Select Devices' : 'Select Groups'}
         </button>
-        <button className="add-button" onClick={openModal}>
+        <button className="add-button" onClick={openAddDeviceModal}>
           <FaPlus className="icon" />
           {isDevicesSelected ? 'Add Device' : 'Add Group'}
         </button>
@@ -142,12 +121,6 @@ const Devices = () => {
           {connectedDevices.map((device, index) => (
             <div key={index} className="device-container">
               {device.name} - {device.status}
-              <button onClick={() => handleDeviceStatusUpdate(device.name, 'Connected')}>
-                Set to Connected
-              </button>
-              <button onClick={() => handleDeviceStatusUpdate(device.name, 'Disconnected')}>
-                Set to Disconnected
-              </button>
             </div>
           ))}
         </div>
@@ -165,9 +138,6 @@ const Devices = () => {
               borderRadius: '5px',
               padding: '8px',
               cursor: 'pointer',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
               backgroundColor: selectedAd && selectedAd.id === ad.id ? '#f0f4ff' : 'white',
               boxShadow: selectedAd && selectedAd.id === ad.id ? '0px 0px 8px rgba(106, 79, 231, 0.5)' : 'none',
             }}
@@ -180,66 +150,75 @@ const Devices = () => {
                 height: '100px',
                 objectFit: 'cover',
                 borderRadius: '5px',
-                marginBottom: '5px'
               }}
             />
-            <p style={{ fontWeight: 'bold', textAlign: 'center', color: selectedAd && selectedAd.id === ad.id ? '#6a4fe7' : 'black' }}>{ad.name}</p>
+            <p style={{ textAlign: 'center', fontWeight: 'bold', color: selectedAd && selectedAd.id === ad.id ? '#6a4fe7' : 'black' }}>{ad.name}</p>
           </div>
         ))}
       </div>
 
-      {/* Ad Modals */}
-      {isModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Select a Device</h3>
-            <ul className="device-list">
-              {['Device 1', 'Device 2', 'Device 3'].map((device, index) => (
-                <li
-                  key={index}
-                  onClick={() => setSelectedDevice(device)}
-                  className={selectedDevice === device ? 'selected' : ''}>
-                  {device}
-                </li>
-              ))}
-            </ul>
-            {selectedDevice && (
-              <input
-                className="device-name-input"
-                type="text"
-                placeholder="Enter device name"
-                value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
-              />
-            )}
-            <div className="modal-buttons">
-              <button onClick={confirmDevice}>Confirm</button>
-              <button onClick={closeModal}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Full-Screen Ad Display for Clients */}
+    {adImage && (
+      <div className="full-screen-ad" style={{
+      position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+      backgroundColor: '#000', // Opaque black background
+      display: 'flex', justifyContent: 'center',
+      alignItems: 'center', zIndex: 1000
+        }}>
+      <img src={adImage} alt="Advertisement" style={{ maxWidth: '100%', maxHeight: '95%', borderRadius: '10px' }} />
+    </div>
+    )}
 
+      {/* Ad Confirmation Modal */}
       {isAdConfirmModalOpen && (
         <div className="modal">
           <div className="modal-content">
-            <h3>Display Selected Ad?</h3>
-            <p>Are you sure you want to display the selected ad to all connected devices?</p>
-            <div className="modal-buttons">
-              <button onClick={confirmShowAd}>Yes</button>
-              <button onClick={() => setIsAdConfirmModalOpen(false)}>No</button>
-            </div>
+            <h3>Confirm Ad Display</h3>
+            <p>Do you want to display the selected ad?</p>
+            <button onClick={confirmShowAd}>Confirm</button>
+            <button onClick={() => setIsAdConfirmModalOpen(false)}>Cancel</button>
           </div>
         </div>
       )}
 
-      {isAdShowingModalOpen && (
-        <div className="ad-container">
-          <div className="ad-content">
-            <h3>An Ad is currently displaying</h3>
-            <button className="stop-ad-button" onClick={handleStopAdClick}>Stop Showing Ad</button>
+      {/* Add Device Modal */}
+      {isAddDeviceModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Add Device</h3>
+            <input
+              type="text"
+              placeholder="Enter device name"
+              value={deviceName}
+              onChange={(e) => setDeviceName(e.target.value)}
+              style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+            />
+            <button onClick={confirmAddDevice}>Confirm</button>
+            <button onClick={closeAddDeviceModal}>Cancel</button>
           </div>
         </div>
+      )}
+
+      {/* Always-Visible Stop Ad Button for Localhost Only */}
+      {isServerSite && (
+        <button
+          onClick={handleStopAdClick}
+          style={{
+            position: 'fixed',
+            bottom: '20px',
+            right: '20px',
+            backgroundColor: '#6a4fe7',
+            color: 'white',
+            borderRadius: '5px',
+            padding: '10px 15px',
+            fontSize: '14px',
+            cursor: 'pointer',
+            zIndex: 1100,
+            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          Stop Showing Ad
+        </button>
       )}
     </div>
   );
