@@ -7,7 +7,8 @@ import { IoMdUndo, IoMdRedo, IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
 import { useNavigate } from 'react-router-dom';
 import AWS from '../aws-config';
-import { useImage } from '../components/ImageContext';
+
+const s3 = new AWS.S3();
 
 // LinkedList implementation for undo/redo functionality
 class Node {
@@ -99,12 +100,13 @@ const EditTemplate = () => {
         horizontal: 1
     });
 
-    // New state for managing draggable image layer
     const [draggedImage, setDraggedImage] = useState({
-        image: '', // image data
-        position: { x: 100, y: 100 }, // initial position of the image
-        dragging: false // drag state
+        image: '',
+        position: { x: 100, y: 100 },
+        dragging: false
     });
+
+    const navigate = useNavigate();
 
     const handleTextInput = (e) => setText(e.target.value);
 
@@ -234,87 +236,125 @@ const EditTemplate = () => {
         setCrop(null);
     };
 
-    const saveImage = () => {
-        const getNextEditNumber = () => {
-            let maxNumber = 0;
+    const dataUrlToBlob = (dataUrl) => {
+        const byteString = atob(dataUrl.split(',')[1]);
+        const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+        const byteNumbers = new Uint8Array(byteString.length);
+        
+        for (let i = 0; i < byteString.length; i++) {
+            byteNumbers[i] = byteString.charCodeAt(i);
+        }
+        
+        return new Blob([byteNumbers], { type: mimeString });
+    };
 
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('edited')) {
-                    const number = parseInt(key.replace('edited', ''));
-                    if (!isNaN(number) && number > maxNumber) {
-                        maxNumber = number;
+    const saveImage = async () => {
+        try {
+            const getNextEditNumber = () => {
+                let maxNumber = 0;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('edited')) {
+                        const number = parseInt(key.replace('edited', ''));
+                        if (!isNaN(number) && number > maxNumber) {
+                            maxNumber = number;
+                        }
                     }
                 }
-            }
-            return maxNumber + 1;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = details.naturalWidth;
-        canvas.height = details.naturalHeight;
-        const ctx = canvas.getContext('2d');
-
-        ctx.filter = `brightness(${state.brightness}%) grayscale(${state.grayscale}%) sepia(${state.sepia}%) saturate(${state.saturate}%) contrast(${state.contrast}%) hue-rotate(${state.hueRotate}deg)`;
-
-        ctx.translate(canvas.width / 2, canvas.height / 2);
-        ctx.rotate(state.rotate * Math.PI / 180);
-        ctx.scale(state.vertical, state.horizontal);
-
-        ctx.drawImage(
-            details,
-            -canvas.width / 2,
-            -canvas.height / 2,
-            canvas.width,
-            canvas.height
-        );
-
-        if (text) {
-            ctx.font = `${textStyle.fontSize} Arial`;
-            ctx.fillStyle = textStyle.color;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const textX = (textPosition.x / 100) * canvas.width;
-            const textY = (textPosition.y / 100) * canvas.height;
-            ctx.fillText(text, textX, textY);
-        }
-
-        // Draw the draggable image layer (if any)
-        if (draggedImage.image) {
-            const img = new Image();
-            img.src = draggedImage.image;
-            img.onload = () => {
-                ctx.drawImage(
-                    img,
-                    draggedImage.position.x,
-                    draggedImage.position.y,
-                    img.width,
-                    img.height
-                );
-                
-                const finalImage = canvas.toDataURL('image/jpeg', 0,8);
-                const editNumber = getNextEditNumber();
-
-                const link = document.createElement('a');
-                link.download = `edited${editNumber}.jpg`;
-                link.href = finalImage;
-                link.click();
-
-                localStorage.setItem(`edited${editNumber}`, finalImage);
-
-                navigate('/adManagement');
+                return maxNumber + 1;
             };
-        } else {
-            const finalImage = canvas.toDataURL('image/jpeg', 0,8);
-            const editNumber = getNextEditNumber();
+    
+            const canvas = document.createElement('canvas');
+            canvas.width = details.naturalWidth;
+            canvas.height = details.naturalHeight;
+            const ctx = canvas.getContext('2d');
+    
+            // Apply filters
+            ctx.filter = `brightness(${state.brightness}%) grayscale(${state.grayscale}%) sepia(${state.sepia}%) saturate(${state.saturate}%) contrast(${state.contrast}%) hue-rotate(${state.hueRotate}deg)`;
+    
+            // Apply transformations
+            ctx.translate(canvas.width / 2, canvas.height / 2);
+            ctx.rotate(state.rotate * Math.PI / 180);
+            ctx.scale(state.vertical, state.horizontal);
+    
+            // Draw main image
+            ctx.drawImage(
+                details,
+                -canvas.width / 2,
+                -canvas.height / 2,
+                canvas.width,
+                canvas.height
+            );
+    
+            // Draw text if exists
+            if (text) {
+                ctx.font = `${textStyle.fontSize} Arial`;
+                ctx.fillStyle = textStyle.color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const textX = (textPosition.x / 100) * canvas.width;
+                const textY = (textPosition.y / 100) * canvas.height;
+                ctx.fillText(text, textX, textY);
+            }
+    
+            // Function to handle the final upload
+            const uploadFinalImage = () => {
+                return new Promise((resolve, reject) => {
+                    const finalImage = canvas.toDataURL('image/jpeg', 0.8);
+                    const editNumber = getNextEditNumber();
+                    const blobData = dataUrlToBlob(finalImage);
+    
+                    // Log the bucket name and region being used
+                    console.log('Using bucket:', process.env.REACT_APP_TEMPLATE_BUCKET);
 
-            const link = document.createElement('a');
-            link.download = `edited${editNumber}.jpg`;
-            link.href = finalImage;
-            link.click();
-
-            localStorage.setItem(`edited${editNumber}`, finalImage);
-
+                    const params = {
+                        Bucket: 'templatestorage-byteme',
+                        Key: `edited${editNumber}.jpg`,
+                        Body: blobData,
+                        ContentType: 'image/jpeg',
+                    };
+    
+                    // Upload to S3
+                    s3.upload(params, (err, data) => {
+                        if (err) {
+                            console.error('Detailed upload error:', err);
+                            reject(err);
+                        } else {
+                            console.log('Upload successful:', data);
+                            // Save to localStorage
+                            localStorage.setItem(`edited${editNumber}`, finalImage);
+                            resolve(data);
+                        }
+                    });
+                });
+            };
+    
+            // Handle dragged image if it exists
+            if (draggedImage.image) {
+                const img = new Image();
+                img.src = draggedImage.image;
+                await new Promise((resolve) => {
+                    img.onload = () => {
+                        ctx.drawImage(
+                            img,
+                            draggedImage.position.x,
+                            draggedImage.position.y,
+                            img.width,
+                            img.height
+                        );
+                        resolve();
+                    };
+                });
+            }
+    
+            // Perform the upload
+            await uploadFinalImage();
+            
+            // Navigate only after successful upload
             navigate('/adManagement');
+        } catch (error) {
+            console.error('Error in saveImage:', error);
+            alert(`Failed to upload image: ${error.message}`);
         }
     };
 
@@ -373,14 +413,6 @@ const EditTemplate = () => {
             reader.readAsDataURL(e.target.files[0]);
         }
     };
-
-    const navigate = useNavigate();
-
-    const handleSaveImage = () => {
-    // Save the image data to local storage
-    localStorage.setItem('editedImage', useImage);
-    navigate('/adManagement'); // Use the navigate function to redirect
-};
 
     return (
         <div className="image_editor">
