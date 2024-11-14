@@ -251,22 +251,24 @@ const Library = () => {
 
             {/* Preview Modal */}
             {previewMedia && (
-                <div className="preview-modal">
-                    <p>Preview:</p>
-                    {previewMedia.type.startsWith('image') && (
-                        <img src={previewMedia.url} alt="Preview" className="preview-image" />
-                    )}
-                    {previewMedia.type.startsWith('video') && (
-                        <video src={previewMedia.url} controls className="preview-video" />
-                    )}
-                    {previewMedia.type.startsWith('audio') && (
-                        <audio src={previewMedia.url} controls className="preview-audio" />
-                    )}
-                    <button onClick={() => setPreviewMedia(null)}>Close Preview</button>
-                </div>
+    <div className="preview-modal" onClick={() => setPreviewMedia(null)}>
+        <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+            <p>Preview:</p>
+            {previewMedia.type.startsWith('image') && (
+                <img src={previewMedia.url} alt="Preview" className="preview-media" />
             )}
+            {previewMedia.type.startsWith('video') && (
+                <video src={previewMedia.url} controls autoPlay className="preview-media" />
+            )}
+            {previewMedia.type.startsWith('audio') && (
+                <audio src={previewMedia.url} controls autoPlay className="preview-media" />
+            )}
+            <button className="close-button" onClick={() => setPreviewMedia(null)}>Close Preview</button>
         </div>
-    );
-};
+    </div>
+)}
+
+    </div>
+)};
 
 export default Library;
