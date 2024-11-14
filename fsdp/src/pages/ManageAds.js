@@ -1,4 +1,3 @@
-//ManageAds.js
 import AWS from '../aws-config';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +13,7 @@ const ManageAds = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileName, setFileName] = useState('');
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [previewType, setPreviewType] = useState(''); // Track type of preview
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -38,7 +38,9 @@ const ManageAds = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         setSelectedFile(file);
+        setFileName(file.name);
         setPreviewUrl(URL.createObjectURL(file));
+        setPreviewType(file.type.split('/')[0]); // Set the preview type based on file type
     };
 
     const uploadAdToS3 = async () => {
@@ -79,6 +81,7 @@ const ManageAds = () => {
             setSelectedFile(null);
             setFileName('');
             setPreviewUrl(null);
+            setPreviewType(''); // Clear the preview type
             setShowCreateOptions(false);
         } catch (error) {
             console.error("Error uploading ad:", error);
@@ -157,20 +160,39 @@ const ManageAds = () => {
                     </button>
 
                     <div>
-                        <h4>Or, Upload an Image</h4>
+                        <h4>Or, Upload Media</h4>
                         {previewUrl && (
                             <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-                                <img src={previewUrl} 
-                                alt="Preview"
-                                className ="preview-image"
-                                style={{ 
-                                    width: '100%',
-                                    maxHeight: '200px',
-                                    objectFit: 'cover',
-                                    borderRadius: '5px',
-                                    marginBottom: '5px',
-                                    cursor: 'pointer',
-                                    }} />
+                                {previewType === 'image' && (
+                                    <img
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        className="preview-image"
+                                        style={{
+                                            width: '100%',
+                                            maxHeight: '200px',
+                                            objectFit: 'cover',
+                                            borderRadius: '5px',
+                                            marginBottom: '5px',
+                                            cursor: 'pointer',
+                                        }}
+                                    />
+                                )}
+                                {previewType === 'video' && (
+                                    <video
+                                        src={previewUrl}
+                                        controls
+                                        className="preview-video"
+                                        style={{
+                                            width: '100%',
+                                            maxHeight: '200px',
+                                            objectFit: 'cover',
+                                            borderRadius: '5px',
+                                            marginBottom: '5px',
+                                            cursor: 'pointer',
+                                        }}
+                                    />
+                                )}
                             </div>
                         )}
                         <input
@@ -180,7 +202,7 @@ const ManageAds = () => {
                             onChange={(e) => setFileName(e.target.value)}
                             className="file-name-input"
                         />
-                        <input type="file" accept="image/*" onChange={handleFileChange} />
+                        <input type="file" accept="image/*,video/*,audio/*" onChange={handleFileChange} />
                         <button onClick={uploadAdToS3} className="upload-button">
                             Upload Ad
                         </button>
@@ -203,17 +225,42 @@ const ManageAds = () => {
                             alignItems: 'center',
                         }}
                     >
-                        <img
-                            src={ad.url}
-                            alt={ad.name}
-                            style={{
-                                width: '100%',
-                                height: '100px',
-                                objectFit: 'cover',
-                                borderRadius: '5px',
-                                marginBottom: '5px'
-                            }}
-                        />
+                        {ad.type === 'image' && (
+                            <img
+                                src={ad.url}
+                                alt={ad.name}
+                                style={{
+                                    width: '100%',
+                                    height: '100px',
+                                    objectFit: 'cover',
+                                    borderRadius: '5px',
+                                    marginBottom: '5px'
+                                }}
+                            />
+                        )}
+                        {ad.type === 'video' && (
+                            <video
+                                src={ad.url}
+                                controls
+                                style={{
+                                    width: '100%',
+                                    height: '100px',
+                                    objectFit: 'cover',
+                                    borderRadius: '5px',
+                                    marginBottom: '5px'
+                                }}
+                            />
+                        )}
+                        {ad.type === 'audio' && (
+                            <audio
+                                src={ad.url}
+                                controls
+                                style={{
+                                    width: '100%',
+                                    marginBottom: '5px'
+                                }}
+                            />
+                        )}
                         <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{ad.name}</p>
                         <button
                             onClick={() => deleteAd(ad.id)}
@@ -236,7 +283,7 @@ const ManageAds = () => {
                                 color: '#fff',
                                 border: 'none',
                                 borderRadius: '5px',
-                                cursoer: 'pointer',
+                                cursor: 'pointer',
                             }}
                         >
                             Edit
