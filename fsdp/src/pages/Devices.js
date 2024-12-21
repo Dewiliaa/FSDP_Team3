@@ -5,7 +5,7 @@ import '../styles/devices.css';
 import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus, FaBullhorn, FaPlay } from 'react-icons/fa';
 
-const socket = io.connect('http://192.168.86.32:3001'); // Replace with your server's IP address and port
+const socket = io.connect('http://192.168.17.1:3001'); // Replace with your server's IP address and port
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Devices = () => {
