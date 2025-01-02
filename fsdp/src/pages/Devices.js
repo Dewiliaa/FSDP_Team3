@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import AWS from '../aws-config';
 import '../styles/devices.css';
+import { FaEllipsisH } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
 import { FaTabletAlt, FaPlus, FaBullhorn, FaPlay } from 'react-icons/fa';
 
-const socket = io.connect('http://192.168.17.1:3001'); // Replace with your server's IP address and port
+const socket = io.connect('http://192.168.1.233:3001'); // Replace with your server's IP address and port
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 const Devices = () => {
@@ -14,6 +15,8 @@ const Devices = () => {
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
   const [deviceName, setDeviceName] = useState('');
   const [connectedDevices, setConnectedDevices] = useState([]);
+  const [openDropdown, setOpenDropdown] = useState(null);
+
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -106,6 +109,22 @@ const Devices = () => {
     }
   };
 
+  const toggleDropdown = (deviceName) => {
+    setOpenDropdown((prev) => (prev === deviceName ? null : deviceName));
+  };  
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.device-container')) {
+        setOpenDropdown(null);
+      }
+    };
+  
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+  
+
   return (
     <div className="devices">
       {/* Live Ad Banner - Display only on localhost, above media section */}
@@ -150,14 +169,31 @@ const Devices = () => {
         <div className="device-grid">
           {connectedDevices.map((device, index) => (
             <div key={index} className="device-container">
-              {device.name} - {device.status}
+              <span>{device.name} - {device.status}</span>
+              <button
+                className="more-button"
+                onClick={() => toggleDropdown(device.name)}
+              >
+                <FaEllipsisH />
+              </button>
+              {openDropdown === device.name && (
+                <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
+                  <button onClick={() => console.log(`Viewing ${device.name}`)}>View</button>
+                  <button onClick={() => console.log(`Displaying ${device.name}`)}>Display</button>
+                  <button onClick={() => console.log(`Deleting ${device.name}`)}>Delete</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
       )}
 
       {/* Gallery of Ads */}
-      <div className="ad-gallery" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px', marginTop: '20px' }}>
+      <div className="ads-header">
+        <h3>Advertisement Gallery</h3>
+        <hr />
+      </div>
+      <div className="ad-gallery">
         {ads.map((ad) => (
           <div
             key={ad.id}
@@ -224,21 +260,12 @@ const Devices = () => {
 
       {/* Full-Screen Video Modal */}
       {isVideoModalOpen && selectedAd && selectedAd.type === 'video' && (
-        <div className="full-screen-ad" style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: '#000', display: 'flex', justifyContent: 'center',
-          alignItems: 'center', zIndex: 1000
-        }}>
+        <div className="full-screen-ad">
           <video
             src={selectedAd.url}
             controls
             autoPlay
             loop
-            style={{
-              maxWidth: '100%',
-              maxHeight: '95%',
-              borderRadius: '10px',
-            }}
             onClick={() => setIsVideoModalOpen(false)}
           />
         </div>
@@ -278,19 +305,7 @@ const Devices = () => {
       {isServerSite && (
         <button
           onClick={handleStopAdClick}
-          style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            backgroundColor: '#6a4fe7',
-            color: 'white',
-            borderRadius: '5px',
-            padding: '10px 15px',
-            fontSize: '14px',
-            cursor: 'pointer',
-            zIndex: 1100,
-            boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.2)'
-          }}
+          className="stop-ad-button"
         >
           Stop Showing Ad
         </button>

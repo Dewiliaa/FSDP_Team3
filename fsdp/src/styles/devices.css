@@ -132,15 +132,48 @@
     margin-top: 20px;
   }
   
-  .device-container {
-    width: 300px;
-    padding: 10px;
-    margin: 5px 0;
-    background-color: #f0f0f0;
-    border-radius: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
+  .device-containers {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
   }
+  
+  .device-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .more-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .dropdown {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+  }
+  
+  .dropdown button {
+    width: 100%;
+    padding: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .dropdown button:hover {
+    background-color: #f0f0f0;
+  }
+  
   
   .choose-devices-text {
       margin-top: 15px;
@@ -162,59 +195,127 @@
   }
 
 
+/* Container for the list of connected devices */
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Grid layout for devices */
+  gap: 30px;
+  padding: 20px;
+}
 
-  /* New Device Code */
-/* Style for "Set to Connected" button */
-/* Styling for the device name and status */
+/* Styling for the individual device container */
+.device-container {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.device-container:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Subtle hover effect */
+}
+
 .device-container span {
-    margin-bottom: 10px; /* Add space between device name/status and buttons */
-    font-size: 16px;
-    font-weight: 600;
-  }
-  
-  /* Styling for the buttons */
-  .device-container button {
-    margin-top: 8px; /* Add space between buttons */
-    padding: 8px 16px;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    width: 100%; /* Make buttons fill the width of the container */
-  }
-  
-  /* Style for "Set to Connected" button */
-  .device-container button:first-child {
-    background-color: #4CAF50; /* Green */
-    color: white;
-  }
-  
-  .device-container button:first-child:hover {
-    background-color: #45a049;
-    transform: translateY(-2px); /* Subtle hover effect */
-  }
-  
-  /* Style for "Set to Disconnected" button */
-  .device-container button:last-child {
-    background-color: #f44336; /* Red */
-    color: white;
-  }
-  
-  .device-container button:last-child:hover {
-    background-color: #e53935;
-    transform: translateY(-2px); /* Subtle hover effect */
-  }
-  
-  /* Style when the button is disabled */
-  .device-container button:disabled {
-    background-color: #bbb;
-    color: #fff;
-    cursor: not-allowed;
-    transform: none;
-  }
+  font-size: 16px;
+  font-weight: 600;
+  color: #333; /* Dark color for text */
+  flex-grow: 1;
+}
 
-  
+.more-button {
+  background-color: #f1f1f1;
+  border: none;
+  width: 30px;  /* Fixed width */
+  height: 30px; /* Fixed height */
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+  border-radius: 50%; /* Circular button */
+  display: flex;
+  justify-content: center; /* Horizontally center the content */
+  align-items: center; /* Vertically center the content */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  padding: 0;  /* Remove any padding that might cause misalignment */
+  line-height: 1;  /* Ensure no extra line height affects centering */
+}
+
+.more-button:hover {
+  background-color: #ddd;
+  transform: scale(1.1);  /* Slight zoom effect on hover */
+}
+
+.more-button svg {
+  width: 13px; /* Smaller width for thinner appearance */
+  height: auto;
+}
+
+
+/* Dropdown menu */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px; /* Softer corners for a modern look */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Deeper shadow for better separation */
+  z-index: 100;
+  width: 160px; /* Slightly wider for better fit */
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+
+  opacity: 0; /* Initially hidden */
+  visibility: hidden; /* Initially hidden */
+  transition: opacity 0.3s ease, visibility 0.3s ease; /* Smooth fade-in/out */
+}
+
+.dropdown-menu.show {
+  opacity: 1; /* Visible when class 'show' is added */
+  visibility: visible; /* Make the dropdown visible */
+}
+
+/* Dropdown menu button styling */
+.dropdown-menu button {
+  padding: 10px 16px; /* Increased padding for a more clickable look */
+  background-color: #f9f9f9;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 4px; /* Rounded corners for each button */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth background and scale effect */
+}
+
+/* Hover and active button effects */
+.dropdown-menu button:hover {
+  background-color: #f1f1f1;
+  transform: scale(1.05); /* Slight scaling effect on hover */
+}
+
+/* Focus state for accessibility */
+.dropdown-menu button:focus {
+  outline: none;
+  background-color: #e0e0e0; /* Subtle background change on focus */
+}
+
+/* No devices message */
+.no-devices-message {
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+  margin-top: 50px;
+  font-weight: 500;
+}
+
+
+
   /* Ad Button */
 .ad-overlay {
     position: fixed;       /* Make it fixed so it stays on top of the page */
@@ -271,31 +372,94 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.6); /* Dark overlay */
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
   }
-  
-  /* Modal Content Box */
+
   .modal-content {
-    background: #fff;
-    padding: 2rem;
-    width: 90%;
-    max-width: 400px;
-    border-radius: 8px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.3s ease; /* Animation effect */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      border-radius: 15px;
+      padding: 25px;
+      width: 90%;
+      max-width: 450px;
+      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+      animation: slide-down 0.3s ease-out;
+      gap: 20px; /* Ensures proper spacing between items */
+      text-align: center;
   }
-  
-  /* Heading */
+
   .modal-content h3 {
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-    color: #333;
+      font-size: 24px;
+      font-weight: bold;
+      color: #6a4fe7;
   }
+
+  .modal-content input {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      width: calc(100% - 24px);
+      font-size: 16px;
+  }
+
+  .modal-content input:focus {
+    border-color: #6a4fe7;
+    outline: none;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .modal-content button {
+    margin: 5px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+  }
+
+  .modal-content button:hover {
+    background-color: #6a4fe7;
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .modal-content .add-button {
+    background-color: #4caf50;
+    color: white;
+  }
+
+  .modal-content .cancel-button {
+    background-color: #ff3d00;
+    color: white;
+  }
+
+  /* Modal Animation */
+  @keyframes slide-down {
+    from {
+      transform: translateY(-50%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
   
   /* Modal Text */
   .modal-content p {
@@ -339,6 +503,15 @@
   .modal-buttons button:last-child:hover {
     background: #c82333;
   }
+
+
+  .ad-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+  }
+
   
   .ad-container {
     position: fixed;
@@ -361,15 +534,39 @@
     flex-direction: column;
     align-items: center;
   }
+
+  .full-screen-ad {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .full-screen-ad video {
+    max-width: 100%;
+    max-height: 95%;
+    border-radius: 10px;
+  }
+
   
   .stop-ad-button {
-    margin-top: 10px;
-    padding: 10px;
-    background-color: #f44336;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #6a4fe7;
     color: white;
-    border: none;
     border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 14px;
     cursor: pointer;
+    z-index: 1100;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
   }
   
   .stop-ad-button:hover {
