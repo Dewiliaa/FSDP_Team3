@@ -124,9 +124,15 @@ io.on('connection', (socket) => {
   // Handle device removal
   socket.on('remove_device', (deviceId) => {
     if (connectedDevices.has(deviceId)) {
-      connectedDevices.delete(deviceId);
+      const device = connectedDevices.get(deviceId);
+      // Keep the device in connectedDevices but mark as unregistered
+      device.isRegistered = false;
+      connectedDevices.set(deviceId, device);
+      
+      // Remove from registered devices
       registeredDevices.delete(deviceId);
-      // Broadcast updated lists
+      
+      // Broadcast updates
       io.emit('available_devices', Array.from(connectedDevices.values()));
       io.emit('device_list', Array.from(registeredDevices.values()));
     }

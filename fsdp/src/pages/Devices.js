@@ -21,6 +21,8 @@ const Devices = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDisplayModalOpen, setIsDisplayModalOpen] = useState(false);
   const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
+  const [deviceToRemove, setDeviceToRemove] = useState(null);
 
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
@@ -170,9 +172,18 @@ const Devices = () => {
     setOpenDropdown(null);
   };
   
-  const handleRemoveDevice = (deviceToRemove) => {
-    socket.emit('remove_device', deviceToRemove.socketId);
+  const handleRemoveDevice = (device) => {
+    setDeviceToRemove(device);
+    setIsRemoveModalOpen(true);
     setOpenDropdown(null);
+  };
+  
+  const confirmRemoveDevice = () => {
+    if (deviceToRemove) {
+      socket.emit('remove_device', deviceToRemove.socketId);
+      setIsRemoveModalOpen(false);
+      setDeviceToRemove(null);
+    }
   };
 
   const confirmDisplayAd = () => {
@@ -313,6 +324,23 @@ const Devices = () => {
               <button onClick={() => {
                 setIsDisplayModalOpen(false);
                 setSelectedDeviceForAd(null);
+              }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Confirmation Modal */}
+      {isRemoveModalOpen && deviceToRemove && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Remove Device</h3>
+            <p>Are you sure you want to remove {deviceToRemove.name}?</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+              <button onClick={confirmRemoveDevice}>Yes, Remove</button>
+              <button onClick={() => {
+                setIsRemoveModalOpen(false);
+                setDeviceToRemove(null);
               }}>Cancel</button>
             </div>
           </div>
