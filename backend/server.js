@@ -1,3 +1,4 @@
+// Modified Server.js
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -14,11 +15,38 @@ const io = new Server(server, {
   },
 });
 
-let devices = []; // Keep track of connected devices
+let connectedDevices = new Map(); // Devices that are connected but not necessarily added
+let registeredDevices = new Map(); // Devices that have been officially added
 
-// Handling new socket connections
+const getDeviceInfo = (userAgent) => {
+  const info = {
+    browser: 'Unknown',
+    os: 'Unknown',
+    device: 'Unknown',
+  };
+  
+  if (userAgent.includes('Windows')) info.os = 'Windows';
+  else if (userAgent.includes('Mac')) info.os = 'MacOS';
+  else if (userAgent.includes('Linux')) info.os = 'Linux';
+  else if (userAgent.includes('Android')) info.os = 'Android';
+  else if (userAgent.includes('iOS')) info.os = 'iOS';
+
+  if (userAgent.includes('Mobile')) info.device = 'Mobile';
+  else if (userAgent.includes('Tablet')) info.device = 'Tablet';
+  else info.device = 'Desktop';
+
+  // Detect browser
+  if (userAgent.includes('Chrome')) info.browser = 'Chrome';
+  else if (userAgent.includes('Firefox')) info.browser = 'Firefox';
+  else if (userAgent.includes('Safari')) info.browser = 'Safari';
+  else if (userAgent.includes('Edge')) info.browser = 'Edge';
+
+  return info;
+};
+
 io.on('connection', (socket) => {
-  console.log(`User Connected: ${socket.id}`);
+  console.log(`New device connected: ${socket.id}`);
+
 
   // Listen for advertisement trigger event
   socket.on('trigger_ad', (adImagePath) => {
@@ -36,30 +64,75 @@ io.on('connection', (socket) => {
     io.emit('display_ad', null);
   });
 
-  // Handling new device addition
-  socket.on('add_device', (deviceName) => {
-    devices.push({ name: deviceName, status: 'Not connected', socketId: socket.id });
-    io.emit('device_list', devices); // Broadcast updated list to all clients
+
+  // Handle initial connection and device detection
+  socket.on('device_connected', (userAgent) => {
+    const deviceInfo = getDeviceInfo(userAgent);
+    const deviceData = {
+      socketId: socket.id,
+      status: 'Connected',
+      lastSeen: new Date().toISOString(),
+      info: deviceInfo,
+      ip: socket.handshake.address,
+      isRegistered: false
+    };
+
+    connectedDevices.set(socket.id, deviceData);
+    // Broadcast updated list of connected (but not necessarily registered) devices
+    io.emit('available_devices', Array.from(connectedDevices.values()));
   });
 
-  // Handling device status update
-  socket.on('update_device_status', (deviceName, status) => {
-    const device = devices.find((d) => d.name === deviceName);
+  // Handle official device registration
+  socket.on('register_device', ({ deviceName, socketId }) => {
+    const device = connectedDevices.get(socketId);
     if (device) {
-      device.status = status;
-      io.emit('device_list', devices); // Broadcast updated list to all clients
+      device.name = deviceName;
+      device.isRegistered = true;
+      registeredDevices.set(socketId, device);
+      
+      // Update the devices list for the main interface
+      io.emit('device_list', Array.from(registeredDevices.values()));
     }
   });
 
-  // Handling user disconnect
+  // Handle heartbeat
+  socket.on('heartbeat', () => {
+    if (connectedDevices.has(socket.id)) {
+      const device = connectedDevices.get(socket.id);
+      device.lastSeen = new Date().toISOString();
+      connectedDevices.set(socket.id, device);
+      io.emit('available_devices', Array.from(connectedDevices.values()));
+    }
+  });
+
+  // Handle disconnect
   socket.on('disconnect', () => {
-    devices = devices.filter((device) => device.socketId !== socket.id);
-    io.emit('device_list', devices); // Broadcast updated list to all clients
-    console.log(`User Disconnected: ${socket.id}`);
+    connectedDevices.delete(socket.id);
+    registeredDevices.delete(socket.id);
+    io.emit('available_devices', Array.from(connectedDevices.values()));
+    io.emit('device_list', Array.from(registeredDevices.values()));
+    console.log(`Device disconnected: ${socket.id}`);
+  });
+
+  // Keep your existing ad-related socket handlers here
+
+  socket.on('trigger_device_ad', ({ deviceId, adUrl }) => {
+    // Only emit to the specific device
+    io.to(deviceId).emit('display_ad', adUrl);
+  });
+  
+  // Handle device removal
+  socket.on('remove_device', (deviceId) => {
+    if (connectedDevices.has(deviceId)) {
+      connectedDevices.delete(deviceId);
+      registeredDevices.delete(deviceId);
+      // Broadcast updated lists
+      io.emit('available_devices', Array.from(connectedDevices.values()));
+      io.emit('device_list', Array.from(registeredDevices.values()));
+    }
   });
 });
 
-// Start the server on port 3001
 server.listen(3001, () => {
   console.log('SERVER IS RUNNING');
 });

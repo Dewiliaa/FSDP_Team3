@@ -4,7 +4,7 @@ import AWS from '../aws-config';
 import '../styles/devices.css';
 import { FaEllipsisH } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
-import { FaTabletAlt, FaPlus, FaBullhorn, FaPlay } from 'react-icons/fa';
+import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
 const socket = io.connect('http://192.168.1.233:3001'); // Replace with your server's IP address and port
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
@@ -14,8 +14,13 @@ const Devices = () => {
   const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
   const [deviceName, setDeviceName] = useState('');
+  const [availableDevices, setAvailableDevices] = useState([]);
+  const [selectedDevice, setSelectedDevice] = useState(null);
   const [connectedDevices, setConnectedDevices] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDisplayModalOpen, setIsDisplayModalOpen] = useState(false);
+  const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
 
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
@@ -49,7 +54,7 @@ const Devices = () => {
       socket.off('display_ad');
       socket.off('ad_confirmed');
     };
-  }, [ads]);
+  }, [ads, isServerSite]);
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
@@ -69,6 +74,35 @@ const Devices = () => {
     };
 
     fetchAdsFromDynamoDB();
+  }, []);
+
+  useEffect(() => {
+    // Set up heartbeat
+    const heartbeatInterval = setInterval(() => {
+      socket.emit('heartbeat');
+    }, 5000);
+  
+    return () => clearInterval(heartbeatInterval);
+  }, []);
+
+  useEffect(() => {
+    // Announce this device's presence
+    socket.emit('device_connected', navigator.userAgent);
+  
+    // Listen for available devices updates
+    socket.on('available_devices', (devices) => {
+      setAvailableDevices(devices);
+    });
+  
+    // Set up heartbeat
+    const heartbeatInterval = setInterval(() => {
+      socket.emit('heartbeat');
+    }, 5000);
+  
+    return () => {
+      clearInterval(heartbeatInterval);
+      socket.off('available_devices');
+    };
   }, []);
 
   const handleShowAdClick = () => setIsAdConfirmModalOpen(true);
@@ -101,17 +135,59 @@ const Devices = () => {
   };
 
   const confirmAddDevice = () => {
-    if (deviceName) {
-      socket.emit('add_device', deviceName);
-      closeAddDeviceModal();
-    } else {
-      alert("Please enter a device name.");
+    if (!selectedDevice) {
+      alert("Please select a device.");
+      return;
     }
+  
+    const deviceDetails = selectedDevice
+      ? {
+          deviceName: deviceName || `${selectedDevice.info.device}_${selectedDevice.socketId.slice(0, 6)}`,
+          socketId: selectedDevice.socketId,
+        }
+      : {
+          deviceName,
+          socketId: socket.id,
+        };
+  
+    socket.emit('register_device', deviceDetails);
+    closeAddDeviceModal();
   };
 
   const toggleDropdown = (deviceName) => {
     setOpenDropdown((prev) => (prev === deviceName ? null : deviceName));
   };  
+
+  const handleViewDevice = (device) => {
+    setSelectedDevice(device);
+    setIsViewModalOpen(true);
+    setOpenDropdown(null);
+  };
+  
+  const handleDisplayAd = (device) => {
+    setSelectedDeviceForAd(device);
+    setIsDisplayModalOpen(true);
+    setOpenDropdown(null);
+  };
+  
+  const handleRemoveDevice = (deviceToRemove) => {
+    socket.emit('remove_device', deviceToRemove.socketId);
+    setOpenDropdown(null);
+  };
+
+  const confirmDisplayAd = () => {
+    if (selectedAd && selectedDeviceForAd) {
+      // Emit event to display ad only to specific device
+      socket.emit('trigger_device_ad', {
+        deviceId: selectedDeviceForAd.socketId,
+        adUrl: selectedAd.url
+      });
+      setIsDisplayModalOpen(false);
+      setSelectedDeviceForAd(null);
+    } else {
+      alert("Please select an ad to display.");
+    }
+  };
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -178,13 +254,68 @@ const Devices = () => {
               </button>
               {openDropdown === device.name && (
                 <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
-                  <button onClick={() => console.log(`Viewing ${device.name}`)}>View</button>
-                  <button onClick={() => console.log(`Displaying ${device.name}`)}>Display</button>
-                  <button onClick={() => console.log(`Deleting ${device.name}`)}>Delete</button>
+                  <button onClick={() => handleViewDevice(device)}>View</button>
+                  <button onClick={() => handleDisplayAd(device)}>Display</button>
+                  <button onClick={() => handleRemoveDevice(device)}>Remove</button>
                 </div>
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Device View Modal */}
+      {isViewModalOpen && selectedDevice && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Device Details</h3>
+            <div className="device-details">
+              <p><strong>Name:</strong> {selectedDevice.name}</p>
+              <p><strong>Status:</strong> {selectedDevice.status}</p>
+              <p><strong>Operating System:</strong> {selectedDevice.info.os}</p>
+              <p><strong>Device Type:</strong> {selectedDevice.info.device}</p>
+              <p><strong>Browser:</strong> {selectedDevice.info.browser}</p>
+              <p><strong>Last Seen:</strong> {new Date(selectedDevice.lastSeen).toLocaleString()}</p>
+            </div>
+            <button onClick={() => setIsViewModalOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Display Ad to Device Modal */}
+      {isDisplayModalOpen && selectedDeviceForAd && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Display Ad to {selectedDeviceForAd.name}</h3>
+            <div className="ad-selection">
+              <h4>Select an Advertisement</h4>
+              <div className="ad-grid" style={{ maxHeight: '300px', overflow: 'auto' }}>
+                {ads.map((ad) => (
+                  <div
+                    key={ad.id}
+                    className={`ad-item ${selectedAd && selectedAd.id === ad.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedAd(ad)}
+                    style={{
+                      border: selectedAd && selectedAd.id === ad.id ? '2px solid #6a4fe7' : '1px solid #ccc',
+                      padding: '8px',
+                      margin: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <p>{ad.name}</p>
+                    <small>{ad.type}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <button onClick={confirmDisplayAd}>Display Ad</button>
+              <button onClick={() => {
+                setIsDisplayModalOpen(false);
+                setSelectedDeviceForAd(null);
+              }}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -288,15 +419,61 @@ const Devices = () => {
         <div className="modal">
           <div className="modal-content">
             <h3>Add Device</h3>
-            <input
-              type="text"
-              placeholder="Enter device name"
-              value={deviceName}
-              onChange={(e) => setDeviceName(e.target.value)}
-              style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
-            />
-            <button onClick={confirmAddDevice}>Confirm</button>
-            <button onClick={closeAddDeviceModal}>Cancel</button>
+            
+            {/* Available Devices Section */}
+            <div className="available-devices-section" style={{ marginBottom: '20px' }}>
+              <h4>Available Devices</h4>
+              {availableDevices.filter(device => !device.isRegistered).map((device) => (
+                <div 
+                  key={device.socketId}
+                  className={`device-option ${selectedDevice?.socketId === device.socketId ? 'selected' : ''}`}
+                  onClick={() => setSelectedDevice(device)}
+                  style={{
+                    padding: '10px',
+                    margin: '5px 0',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    backgroundColor: selectedDevice === device ? '#FFFFFF' : '#f5f5f5',
+                    border: '1px solid #ccc',
+                  }}
+                >
+                  <div style={{ fontWeight: 'bold' }}>
+                    {device.info.device} ({device.info.os})
+                  </div>
+                  <div style={{ fontSize: '0.8em', color: '#666' }}>
+                    Browser: {device.info.browser}
+                    {device.socketId === socket.id ? ' (This Device)' : ''}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="custom-name-section">
+              <h4>Device Name</h4>
+              <input
+                type="text"
+                placeholder="Enter custom device name (optional)"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                style={{ width: '100%', padding: '8px', marginBottom: '10px' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {/* Add Device Button */}
+              <button
+                className="confirm-button"
+                onClick={confirmAddDevice}
+                disabled={!selectedDevice} // Disable button if no device is selected
+                style={{
+                  backgroundColor: !selectedDevice ? '#ccc' : '#6a4fe7', // Gray color for disabled state
+                  cursor: !selectedDevice ? 'not-allowed' : 'pointer',  // Pointer cursor only when enabled
+                }}
+              >
+                Add Device
+              </button>
+              <button onClick={closeAddDeviceModal}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
