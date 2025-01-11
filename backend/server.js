@@ -116,9 +116,16 @@ io.on('connection', (socket) => {
 
   // Keep your existing ad-related socket handlers here
 
-  socket.on('trigger_device_ad', ({ deviceId, adUrl }) => {
-    // Only emit to the specific device
+  socket.on('trigger_device_ad', ({ deviceId, adUrl, ad }) => {
     io.to(deviceId).emit('display_ad', adUrl);
+    // Broadcast ad status update to all clients
+    io.emit('device_ad_update', { deviceId, ad });
+  });
+
+  socket.on('stop_device_ad', (deviceId) => {
+    io.to(deviceId).emit('display_ad', null);
+    // Broadcast ad status update to all clients
+    io.emit('device_ad_update', { deviceId, ad: null });
   });
   
   // Handle device removal

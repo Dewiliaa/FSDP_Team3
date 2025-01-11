@@ -19,6 +19,7 @@ const Devices = () => {
   const [connectedDevices, setConnectedDevices] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [deviceAds, setDeviceAds] = useState(new Map());
   const [isDisplayModalOpen, setIsDisplayModalOpen] = useState(false);
   const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
@@ -107,6 +108,22 @@ const Devices = () => {
     };
   }, []);
 
+  useEffect(() => {
+    socket.on('device_ad_update', ({ deviceId, ad }) => {
+      const newDeviceAds = new Map(deviceAds);
+      if (ad) {
+        newDeviceAds.set(deviceId, ad);
+      } else {
+        newDeviceAds.delete(deviceId);
+      }
+      setDeviceAds(newDeviceAds);
+    });
+  
+    return () => {
+      socket.off('device_ad_update');
+    };
+  }, [deviceAds]);
+
   const handleShowAdClick = () => setIsAdConfirmModalOpen(true);
 
   const confirmShowAd = () => {
@@ -167,8 +184,18 @@ const Devices = () => {
   };
   
   const handleDisplayAd = (device) => {
-    setSelectedDeviceForAd(device);
-    setIsDisplayModalOpen(true);
+    const isDisplaying = deviceAds.has(device.socketId);
+    if (isDisplaying) {
+      // Stop the ad
+      socket.emit('stop_device_ad', device.socketId);
+      const newDeviceAds = new Map(deviceAds);
+      newDeviceAds.delete(device.socketId);
+      setDeviceAds(newDeviceAds);
+    } else {
+      // Show ad selection modal
+      setSelectedDeviceForAd(device);
+      setIsDisplayModalOpen(true);
+    }
     setOpenDropdown(null);
   };
   
@@ -188,11 +215,17 @@ const Devices = () => {
 
   const confirmDisplayAd = () => {
     if (selectedAd && selectedDeviceForAd) {
-      // Emit event to display ad only to specific device
       socket.emit('trigger_device_ad', {
         deviceId: selectedDeviceForAd.socketId,
-        adUrl: selectedAd.url
+        adUrl: selectedAd.url,
+        ad: selectedAd // Send full ad object
       });
+      
+      // Update device ads map
+      const newDeviceAds = new Map(deviceAds);
+      newDeviceAds.set(selectedDeviceForAd.socketId, selectedAd);
+      setDeviceAds(newDeviceAds);
+      
       setIsDisplayModalOpen(false);
       setSelectedDeviceForAd(null);
     } else {
@@ -266,7 +299,9 @@ const Devices = () => {
               {openDropdown === device.name && (
                 <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
                   <button onClick={() => handleViewDevice(device)}>View</button>
-                  <button onClick={() => handleDisplayAd(device)}>Display</button>
+                  <button onClick={() => handleDisplayAd(device)}>
+                    {deviceAds.has(device.socketId) ? 'Stop Display' : 'Display'}
+                  </button>
                   <button onClick={() => handleRemoveDevice(device)}>Remove</button>
                 </div>
               )}
@@ -274,6 +309,7 @@ const Devices = () => {
           ))}
         </div>
       )}
+
 
       {/* Device View Modal */}
       {isViewModalOpen && selectedDevice && (
@@ -287,6 +323,45 @@ const Devices = () => {
               <p><strong>Device Type:</strong> {selectedDevice.info.device}</p>
               <p><strong>Browser:</strong> {selectedDevice.info.browser}</p>
               <p><strong>Last Seen:</strong> {new Date(selectedDevice.lastSeen).toLocaleString()}</p>
+              
+              {/* Current Display Section */}
+              <div className="current-display" style={{ marginTop: '20px' }}>
+                <h4>Currently Displaying</h4>
+                {deviceAds.has(selectedDevice.socketId) ? (
+                  <div className="current-ad" style={{ marginTop: '10px' }}>
+                    <p><strong>{deviceAds.get(selectedDevice.socketId).name}</strong></p>
+                    {deviceAds.get(selectedDevice.socketId).type === 'image' ? (
+                      <img 
+                        src={deviceAds.get(selectedDevice.socketId).url}
+                        alt={deviceAds.get(selectedDevice.socketId).name}
+                        style={{
+                          maxWidth: '200px',
+                          maxHeight: '150px',
+                          objectFit: 'contain',
+                          marginTop: '10px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px'
+                        }}
+                      />
+                    ) : (
+                      <video
+                        src={deviceAds.get(selectedDevice.socketId).url}
+                        style={{
+                          maxWidth: '200px',
+                          maxHeight: '150px',
+                          objectFit: 'contain',
+                          marginTop: '10px',
+                          border: '1px solid #ccc',
+                          borderRadius: '4px'
+                        }}
+                        controls
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <p style={{ color: '#666', fontStyle: 'italic' }}>No ad currently displaying</p>
+                )}
+              </div>
             </div>
             <button onClick={() => setIsViewModalOpen(false)}>Close</button>
           </div>
