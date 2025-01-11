@@ -24,6 +24,7 @@ const Devices = () => {
   const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [deviceToRemove, setDeviceToRemove] = useState(null);
+  const [isDisplayConfirmModalOpen, setIsDisplayConfirmModalOpen] = useState(false);
 
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
@@ -186,11 +187,9 @@ const Devices = () => {
   const handleDisplayAd = (device) => {
     const isDisplaying = deviceAds.has(device.socketId);
     if (isDisplaying) {
-      // Stop the ad
-      socket.emit('stop_device_ad', device.socketId);
-      const newDeviceAds = new Map(deviceAds);
-      newDeviceAds.delete(device.socketId);
-      setDeviceAds(newDeviceAds);
+      // Show confirmation modal for stopping the ad
+      setSelectedDeviceForAd(device);
+      setIsDisplayConfirmModalOpen(true);
     } else {
       // Show ad selection modal
       setSelectedDeviceForAd(device);
@@ -230,6 +229,17 @@ const Devices = () => {
       setSelectedDeviceForAd(null);
     } else {
       alert("Please select an ad to display.");
+    }
+  };
+
+  const confirmStopDisplay = () => {
+    if (selectedDeviceForAd) {
+      socket.emit('stop_device_ad', selectedDeviceForAd.socketId);
+      const newDeviceAds = new Map(deviceAds);
+      newDeviceAds.delete(selectedDeviceForAd.socketId);
+      setDeviceAds(newDeviceAds);
+      setIsDisplayConfirmModalOpen(false);
+      setSelectedDeviceForAd(null);
     }
   };
 
@@ -398,6 +408,23 @@ const Devices = () => {
               <button onClick={confirmDisplayAd}>Display Ad</button>
               <button onClick={() => {
                 setIsDisplayModalOpen(false);
+                setSelectedDeviceForAd(null);
+              }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Display Stop Confirmation Modal */}
+      {isDisplayConfirmModalOpen && selectedDeviceForAd && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Stop Display</h3>
+            <p>Are you sure you want to stop the current advertisement on {selectedDeviceForAd.name}?</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '20px' }}>
+              <button onClick={confirmStopDisplay}>Yes, Stop Display</button>
+              <button onClick={() => {
+                setIsDisplayConfirmModalOpen(false);
                 setSelectedDeviceForAd(null);
               }}>Cancel</button>
             </div>
