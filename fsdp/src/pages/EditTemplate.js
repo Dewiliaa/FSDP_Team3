@@ -14,14 +14,16 @@ const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
         <input
           type="number"
           value={dimensions.width}
-          onChange={(e) => setDimensions((prev) => ({ ...prev, width: parseInt(e.target.value, 10) }))} />
+          onChange={(e) => setDimensions((prev) => ({ ...prev, width: parseInt(e.target.value, 10) }))}
+        />
       </label>
       <label>
         Height:
         <input
           type="number"
           value={dimensions.height}
-          onChange={(e) => setDimensions((prev) => ({ ...prev, height: parseInt(e.target.value, 10) }))} />
+          onChange={(e) => setDimensions((prev) => ({ ...prev, height: parseInt(e.target.value, 10) }))}
+        />
       </label>
       <button type="submit">Create Canvas</button>
     </form>
@@ -41,7 +43,8 @@ const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddTex
         type="text"
         placeholder="Enter text"
         value={newText}
-        onChange={(e) => setNewText(e.target.value)} />
+        onChange={(e) => setNewText(e.target.value)}
+      />
       <button onClick={onAddText}>Add Text</button>
     </div>
     <div className="color-picker">
@@ -50,18 +53,13 @@ const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddTex
         <input
           type="color"
           value={currentColor}
-          onChange={(e) => setCurrentColor(e.target.value)} />
+          onChange={(e) => setCurrentColor(e.target.value)}
+        />
       </label>
     </div>
-    <button onClick={onUndo} disabled={undoDisabled}>
-      Undo
-    </button>
-    <button onClick={onRedo} disabled={redoDisabled}>
-      Redo
-    </button>
-    <button onClick={onDelete}>
-      Delete
-    </button>
+    <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
+    <button onClick={onRedo} disabled={redoDisabled}>Redo</button>
+    <button onClick={onDelete}>Delete</button>
   </div>
 ));
 
@@ -161,6 +159,25 @@ const EditTemplate = () => {
         selectedElement.width,
         selectedElement.height
       );
+
+      RESIZE_HANDLES.forEach((handle) => {
+        let handleX, handleY;
+        if (handle === 'nw') {
+          handleX = selectedElement.x;
+          handleY = selectedElement.y;
+        } else if (handle === 'ne') {
+          handleX = selectedElement.x + selectedElement.width;
+          handleY = selectedElement.y;
+        } else if (handle === 'se') {
+          handleX = selectedElement.x + selectedElement.width;
+          handleY = selectedElement.y + selectedElement.height;
+        } else if (handle === 'sw') {
+          handleX = selectedElement.x;
+          handleY = selectedElement.y + selectedElement.height;
+        }
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(handleX - HANDLE_SIZE / 2, handleY - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
+      });
     }
   }, []);
 
@@ -180,6 +197,132 @@ const EditTemplate = () => {
     redrawCanvas();
   }, [redrawCanvas]);
 
+  const handleMouseDown = useCallback((e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const elements = [...currentState.current.shapes, ...currentState.current.texts, ...currentState.current.images];
+    const { selectedElement } = interactionStateRef.current;
+
+    if (selectedElement) {
+      RESIZE_HANDLES.some((handle) => {
+        let handleX, handleY;
+        if (handle === 'nw') {
+          handleX = selectedElement.x;
+          handleY = selectedElement.y;
+        } else if (handle === 'ne') {
+          handleX = selectedElement.x + selectedElement.width;
+          handleY = selectedElement.y;
+        } else if (handle === 'se') {
+          handleX = selectedElement.x + selectedElement.width;
+          handleY = selectedElement.y + selectedElement.height;
+        } else if (handle === 'sw') {
+          handleX = selectedElement.x;
+          handleY = selectedElement.y + selectedElement.height;
+        }
+        const withinHandle =
+          Math.abs(x - handleX) <= HANDLE_SIZE / 2 && Math.abs(y - handleY) <= HANDLE_SIZE / 2;
+        if (withinHandle) {
+          interactionStateRef.current.isResizing = true;
+          interactionStateRef.current.selectedHandle = handle;
+          return true;
+        }
+        return false;
+      });
+    }
+
+    if (!interactionStateRef.current.isResizing) {
+      for (let i = elements.length - 1; i >= 0; i--) {
+        const element = elements[i];
+        if (
+          x >= element.x &&
+          x <= element.x + element.width &&
+          y >= element.y &&
+          y <= element.y + element.height
+        ) {
+          interactionStateRef.current.isMoving = true;
+          interactionStateRef.current.selectedElement = element;
+          interactionStateRef.current.startPos = { x, y };
+          interactionStateRef.current.originalElementState = { ...element };
+          redrawCanvas();
+          return;
+        }
+      }
+    }
+
+    interactionStateRef.current.selectedElement = null;
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const handleMouseMove = useCallback((e) => {
+    const { isMoving, isResizing, selectedElement, startPos, selectedHandle, originalElementState } =
+      interactionStateRef.current;
+
+    if (!isMoving && !isResizing) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const dx = x - startPos.x;
+    const dy = y - startPos.y;
+
+    if (isMoving && selectedElement) {
+      selectedElement.x = originalElementState.x + dx;
+      selectedElement.y = originalElementState.y + dy;
+    } else if (isResizing && selectedElement) {
+      if (selectedHandle === 'nw') {
+        selectedElement.x = originalElementState.x + dx;
+        selectedElement.y = originalElementState.y + dy;
+        selectedElement.width = originalElementState.width - dx;
+        selectedElement.height = originalElementState.height - dy;
+      } else if (selectedHandle === 'ne') {
+        selectedElement.y = originalElementState.y + dy;
+        selectedElement.width = originalElementState.width + dx;
+        selectedElement.height = originalElementState.height - dy;
+      } else if (selectedHandle === 'se') {
+        selectedElement.width = originalElementState.width + dx;
+        selectedElement.height = originalElementState.height + dy;
+      } else if (selectedHandle === 'sw') {
+        selectedElement.x = originalElementState.x + dx;
+        selectedElement.width = originalElementState.width - dx;
+        selectedElement.height = originalElementState.height + dy;
+      }
+
+      selectedElement.width = Math.max(selectedElement.width, 20);
+      selectedElement.height = Math.max(selectedElement.height, 20);
+    }
+
+    redrawCanvas();
+  }, [redrawCanvas]);
+
+  const handleMouseUp = useCallback(() => {
+    const { isMoving, isResizing } = interactionStateRef.current;
+
+    if (isMoving || isResizing) {
+      pushState();
+    }
+
+    interactionStateRef.current.isMoving = false;
+    interactionStateRef.current.isResizing = false;
+    interactionStateRef.current.selectedHandle = null;
+  }, [pushState]);
+
+  const initializeCanvas = useCallback((width, height) => {
+    const canvas = canvasRef.current;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctxRef.current = ctx;
+
+    pushState();
+    redrawCanvas();
+    setShowDimensionModal(false);
+  }, [pushState, redrawCanvas]);
+
   const undo = useCallback(() => {
     if (currentStateIndex > 0) {
       const newIndex = currentStateIndex - 1;
@@ -198,67 +341,22 @@ const EditTemplate = () => {
 
   const deleteSelected = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
-    if (!selectedElement) {
-      console.warn('No element selected to delete.');
+    if (!selectedElement) return;
+
+    const type = selectedElement.type;
+    const validTypes = ['shapes', 'texts', 'images'];
+
+    if (!validTypes.includes(type)) {
+      console.error(`Invalid type: ${type}`);
       return;
     }
-  
-    // Check and validate the type of the selected element
-    if (selectedElement.type === 'shapes') {
-      currentState.current.shapes = currentState.current.shapes.filter((el) => el !== selectedElement);
-    } else if (selectedElement.type === 'texts') {
-      currentState.current.texts = currentState.current.texts.filter((el) => el !== selectedElement);
-    } else if (selectedElement.type === 'images') {
-      currentState.current.images = currentState.current.images.filter((el) => el !== selectedElement);
-    } else {
-      console.error(`Invalid type: ${selectedElement.type}`);
-      return;
-    }
-  
-    // Clear the selection
+
+    currentState.current[type] = currentState.current[type].filter((el) => el !== selectedElement);
+
     interactionStateRef.current.selectedElement = null;
-  
-    // Push the updated state to history and redraw the canvas
     pushState();
     redrawCanvas();
   }, [pushState, redrawCanvas]);
-
-  const initializeCanvas = useCallback((width, height) => {
-    const canvas = canvasRef.current;
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctxRef.current = ctx;
-
-    pushState();
-    redrawCanvas();
-    setShowDimensionModal(false);
-  }, [pushState, redrawCanvas]);
-
-  const handleCanvasClick = useCallback((e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const elements = [...currentState.current.shapes, ...currentState.current.texts, ...currentState.current.images];
-    for (let i = elements.length - 1; i >= 0; i--) {
-      const element = elements[i];
-      if (
-        x >= element.x &&
-        x <= element.x + element.width &&
-        y >= element.y &&
-        y <= element.y + element.height
-      ) {
-        interactionStateRef.current.selectedElement = element;
-        redrawCanvas();
-        return;
-      }
-    }
-
-    interactionStateRef.current.selectedElement = null;
-    redrawCanvas();
-  }, [redrawCanvas]);
 
   return (
     <div className="template_editor">
@@ -339,8 +437,14 @@ const EditTemplate = () => {
         onDelete={deleteSelected}
       />
 
-      <div className="canvas_container">
-        <canvas ref={canvasRef} onClick={handleCanvasClick} />
+      <div
+        className="canvas_container"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <canvas ref={canvasRef} />
       </div>
     </div>
   );
