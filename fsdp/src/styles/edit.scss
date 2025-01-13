@@ -40,6 +40,16 @@
                 background-color: #edf2f7;
                 border-color: #cbd5e0;
             }
+
+            &:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+            }
+
+            &:focus-visible {
+                outline: 2px solid #4a90e2;
+                outline-offset: 1px;
+            }
         }
 
         label {
@@ -65,6 +75,15 @@
 
             input[type="file"] {
                 display: none;
+
+                &::-webkit-file-upload-button {
+                    visibility: hidden;
+                    display: none;
+                }
+                &::file-selector-button {
+                    visibility: hidden;
+                    display: none;
+                }
             }
 
             svg {
@@ -94,6 +113,11 @@
                     border-color: #4a90e2;
                     box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
                 }
+
+                &:focus-visible {
+                    outline: 2px solid #4a90e2;
+                    outline-offset: 1px;
+                }
             }
 
             button {
@@ -104,6 +128,32 @@
 
                 &:hover {
                     background-color: #357abd;
+                }
+            }
+        }
+
+        .color-picker {
+            input[type="color"] {
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+                width: 50px;
+                height: 30px;
+                padding: 0;
+                border: 1px solid #e4e7eb;
+                border-radius: 4px;
+                cursor: pointer;
+
+                &::-webkit-color-swatch-wrapper {
+                    padding: 0;
+                }
+                &::-webkit-color-swatch {
+                    border: none;
+                    border-radius: 3px;
+                }
+                &::-moz-color-swatch {
+                    border: none;
+                    border-radius: 3px;
                 }
             }
         }
@@ -122,16 +172,30 @@
         justify-content: center;
         align-items: center;
         overflow: hidden;
+        // User select
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        // Touch handling
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none;
+        -ms-touch-action: none;
 
         canvas {
             box-shadow: 0 0 0 1px #e4e7eb;
             cursor: crosshair;
             max-width: 100%;
             max-height: 100%;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            -ms-touch-action: none;
         }
     }
 
-    // Dimension Modal styles remain the same...
+    // Dimension Modal
     .dimension_modal {
         position: fixed;
         top: 0;
@@ -177,6 +241,11 @@
                         border-color: #4a90e2;
                         box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
                     }
+
+                    &:focus-visible {
+                        outline: 2px solid #4a90e2;
+                        outline-offset: 1px;
+                    }
                 }
             }
 
@@ -193,6 +262,16 @@
 
                 &:hover {
                     background-color: #357abd;
+                }
+
+                &:focus {
+                    outline: none;
+                    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+                }
+
+                &:focus-visible {
+                    outline: 2px solid #4a90e2;
+                    outline-offset: 1px;
                 }
             }
         }
