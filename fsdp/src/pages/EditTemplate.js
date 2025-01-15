@@ -30,7 +30,7 @@ const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   </div>
 ));
 
-const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement}) => (
+const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement, bringToFront, sendToBack, toggleLock}) => (
   <div className="toolbar">
     <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
     <button onClick={() => onAddShape('circle')}>Add Circle</button>
@@ -238,6 +238,47 @@ const EditTemplate = () => {
     }
   }, [pushState, redrawCanvas]);
 
+  const bringToFront = useCallback(() => {
+    const { selectedElement } = interactionStateRef.current;
+    if (!selectedElement) return;
+  
+    const type = selectedElement.type;
+    const index = currentState.current[type].indexOf(selectedElement);
+  
+    if (index >= 0) {
+      currentState.current[type].splice(index, 1);
+      currentState.current[type].push(selectedElement); // Add to the end
+      pushState();
+      redrawCanvas();
+    }
+  }, [pushState, redrawCanvas]);
+  
+  const sendToBack = useCallback(() => {
+    const { selectedElement } = interactionStateRef.current;
+    if (!selectedElement) return;
+  
+    const type = selectedElement.type;
+    const index = currentState.current[type].indexOf(selectedElement);
+  
+    if (index >= 0) {
+      currentState.current[type].splice(index, 1);
+      currentState.current[type].unshift(selectedElement); // Add to the beginning
+      pushState();
+      redrawCanvas();
+    }
+  }, [pushState, redrawCanvas]);
+  
+  const toggleLock = useCallback(() => {
+    const { selectedElement } = interactionStateRef.current;
+    if (!selectedElement) return;
+  
+    selectedElement.locked = !selectedElement.locked; // Toggle lock
+    interactionStateRef.current.selectedElement = null; // Deselect the locked element
+    pushState();
+    redrawCanvas();
+  }, [pushState, redrawCanvas]);
+  
+
   const applyState = useCallback((state) => {
     const imagesWithElements = state.images.map((imgData) => {
       const img = new Image();
@@ -304,6 +345,7 @@ const EditTemplate = () => {
     // If not resizing, check for element selection
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i];
+      if (element.locked) continue;
       if (
         x >= element.x &&
         x <= element.x + element.width &&
@@ -481,6 +523,7 @@ const EditTemplate = () => {
             width: 100,
             height: 100,
             color: currentColor,
+            locked: false,
           };
           currentState.current.shapes.push(shape);
           pushState();
@@ -551,6 +594,28 @@ const EditTemplate = () => {
       >
         <canvas ref={canvasRef} />
       </div>
+
+      <div className="layer-tools">
+      <button
+        onClick={bringToFront}
+        disabled={!interactionStateRef.current.selectedElement}
+      >
+        Bring to Front
+      </button>
+      <button
+        onClick={sendToBack}
+        disabled={!interactionStateRef.current.selectedElement}
+      >
+        Send to Back
+      </button>
+      <button
+        onClick={toggleLock}
+        disabled={!interactionStateRef.current.selectedElement}
+      >
+        {interactionStateRef.current.selectedElement?.locked ? 'Unlock' : 'Lock'}
+      </button>
+    </div>
+
     </div>
   );
 };
