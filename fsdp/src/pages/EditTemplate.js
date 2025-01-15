@@ -272,8 +272,7 @@ const EditTemplate = () => {
     const { selectedElement } = interactionStateRef.current;
     if (!selectedElement) return;
   
-    selectedElement.locked = !selectedElement.locked; // Toggle lock
-    interactionStateRef.current.selectedElement = null; // Deselect the locked element
+    selectedElement.locked = !selectedElement.locked;
     pushState();
     redrawCanvas();
   }, [pushState, redrawCanvas]);
@@ -345,7 +344,6 @@ const EditTemplate = () => {
     // If not resizing, check for element selection
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i];
-      if (element.locked) continue;
       if (
         x >= element.x &&
         x <= element.x + element.width &&
@@ -354,7 +352,7 @@ const EditTemplate = () => {
       ) {
         interactionStateRef.current = {
           ...interactionStateRef.current,
-          isMoving: true,
+          isMoving: !element.locked,
           selectedElement: element,
           startPos: { x, y },
           originalElementState: { ...element }
