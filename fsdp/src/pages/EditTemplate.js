@@ -30,7 +30,7 @@ const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   </div>
 ));
 
-const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, selectedElement}) => (
+const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement}) => (
   <div className="toolbar">
     <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
     <button onClick={() => onAddShape('circle')}>Add Circle</button>
@@ -60,6 +60,19 @@ const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddTex
       </button>
     </div>
 
+    <div className="font-picker">
+      <label>
+        Font:
+        <select value={selectedFont} onChange={(e) => onChangeFont(e.target.value)}>
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Georgia">Georgia</option>
+        </select>
+      </label>
+    </div>
+
     <div className="color-picker">
       <label>
         Color:
@@ -81,17 +94,14 @@ const EditTemplate = () => {
   const ctxRef = useRef(null);
   const [showDimensionModal, setShowDimensionModal] = useState(true);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+  const [currentFont, setCurrentFont] = useState('Arial');
   const [currentColor, setCurrentColor] = useState('#000000');
   const [newText, setNewText] = useState('');
-
   const [currentStateIndex, setCurrentStateIndex] = useState(-1);
   const stateHistory = useRef([]);
   const maxHistoryLength = 50;
 
-  const currentState = useRef({
-    shapes: [],
-    images: [],
-    texts: []
+  const currentState = useRef({shapes: [], images: [], texts: []
   });
 
   const interactionStateRef = useRef({
@@ -153,7 +163,7 @@ const EditTemplate = () => {
     });
 
     texts.forEach((text) => {
-      ctx.font = `${text.fontSize}px Arial`;
+      ctx.font = `${text.fontSize}px ${text.font}`;
       ctx.fillStyle = text.color;
       ctx.fillText(text.text, text.x, text.y + text.height);
     });
@@ -213,6 +223,16 @@ const EditTemplate = () => {
       selectedElement.fontSize = newFontSize;
       // Adjust height proportionally to font size change
       selectedElement.height = newFontSize + 4; // Add small padding
+      pushState();
+      redrawCanvas();
+    }
+  }, [pushState, redrawCanvas]);
+
+  const handleFontChange = useCallback((font) => {
+    setCurrentFont(font);
+    const { selectedElement } = interactionStateRef.current;
+    if (selectedElement && selectedElement.type === 'texts') {
+      selectedElement.font = font;
       pushState();
       redrawCanvas();
     }
@@ -500,6 +520,7 @@ const EditTemplate = () => {
               width: 100,
               height: 24,
               fontSize: 20,
+              font: currentFont,
               color: currentColor,
             };
             currentState.current.texts.push(textElement);
@@ -516,6 +537,8 @@ const EditTemplate = () => {
         redoDisabled={currentStateIndex >= stateHistory.current.length - 1}
         onDelete={deleteSelected}
         onChangeFontSize={changeFontSize}
+        onChangeFont={handleFontChange}
+        selectedFont={currentFont}
         selectedElement={interactionStateRef.current.selectedElement}
       />
 
