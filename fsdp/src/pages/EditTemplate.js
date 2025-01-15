@@ -30,7 +30,7 @@ const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   </div>
 ));
 
-const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete }) => (
+const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, selectedElement}) => (
   <div className="toolbar">
     <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
     <button onClick={() => onAddShape('circle')}>Add Circle</button>
@@ -46,7 +46,20 @@ const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddTex
         onChange={(e) => setNewText(e.target.value)}
       />
       <button onClick={onAddText}>Add Text</button>
+      <button 
+        onClick={() => onChangeFontSize('increase')}
+        disabled={!selectedElement || selectedElement.type !== 'texts'}
+      >
+        A+
+      </button>
+      <button 
+        onClick={() => onChangeFontSize('decrease')}
+        disabled={!selectedElement || selectedElement.type !== 'texts'}
+      >
+        A-
+      </button>
     </div>
+
     <div className="color-picker">
       <label>
         Color:
@@ -180,6 +193,30 @@ const EditTemplate = () => {
       });
     }
   }, []);
+
+  const changeFontSize = useCallback((action) => {
+    const { selectedElement } = interactionStateRef.current;
+    if (!selectedElement || selectedElement.type !== 'texts') return;
+
+    const MIN_FONT_SIZE = 8;
+    const MAX_FONT_SIZE = 72;
+    const STEP_SIZE = 2;
+
+    let newFontSize = selectedElement.fontSize;
+    if (action === 'increase') {
+      newFontSize = Math.min(selectedElement.fontSize + STEP_SIZE, MAX_FONT_SIZE);
+    } else if (action === 'decrease') {
+      newFontSize = Math.max(selectedElement.fontSize - STEP_SIZE, MIN_FONT_SIZE);
+    }
+
+    if (newFontSize !== selectedElement.fontSize) {
+      selectedElement.fontSize = newFontSize;
+      // Adjust height proportionally to font size change
+      selectedElement.height = newFontSize + 4; // Add small padding
+      pushState();
+      redrawCanvas();
+    }
+  }, [pushState, redrawCanvas]);
 
   const applyState = useCallback((state) => {
     const imagesWithElements = state.images.map((imgData) => {
@@ -461,7 +498,7 @@ const EditTemplate = () => {
               x: 150,
               y: 150,
               width: 100,
-              height: 20,
+              height: 24,
               fontSize: 20,
               color: currentColor,
             };
@@ -478,6 +515,8 @@ const EditTemplate = () => {
         undoDisabled={currentStateIndex <= 0}
         redoDisabled={currentStateIndex >= stateHistory.current.length - 1}
         onDelete={deleteSelected}
+        onChangeFontSize={changeFontSize}
+        selectedElement={interactionStateRef.current.selectedElement}
       />
 
       <div
