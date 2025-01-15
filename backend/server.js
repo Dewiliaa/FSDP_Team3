@@ -24,6 +24,16 @@ const getDeviceInfo = (userAgent) => {
     os: 'Unknown',
     device: 'Unknown',
   };
+
+  if (userAgent.includes('SmartTV') || 
+      userAgent.includes('SMART-TV') || 
+      userAgent.includes('WebOS') || 
+      userAgent.includes('Tizen') || 
+      userAgent.includes('BRAVIA') ||
+      userAgent.includes('TV Safari')) info.device = 'TV';
+  else if (userAgent.includes('Mobile')) info.device = 'Mobile';
+  else if (userAgent.includes('Tablet')) info.device = 'Tablet';
+  else info.device = 'Desktop';
   
   if (userAgent.includes('Windows')) info.os = 'Windows';
   else if (userAgent.includes('Mac')) info.os = 'MacOS';
@@ -77,8 +87,31 @@ io.on('connection', (socket) => {
       isRegistered: false
     };
 
+    // Check if this is a reconnection of a registered device
+    for (const [id, device] of registeredDevices.entries()) {
+      // Match based on device info and IP
+      if (device.ip === deviceData.ip && 
+          device.info.browser === deviceInfo.browser && 
+          device.info.os === deviceInfo.os && 
+          device.info.device === deviceInfo.device) {
+        // Update the existing device with new socket ID and status
+        device.socketId = socket.id;
+        device.status = 'Connected';
+        device.lastSeen = new Date().toISOString();
+        
+        // Update both maps with new socket ID
+        registeredDevices.delete(id);
+        registeredDevices.set(socket.id, device);
+        connectedDevices.set(socket.id, device);
+        
+        // Broadcast updates
+        io.emit('device_list', Array.from(registeredDevices.values()));
+        return; // Exit early as we've handled the reconnection
+      }
+    }
+
+    // If not a reconnection, proceed with normal connection
     connectedDevices.set(socket.id, deviceData);
-    // Broadcast updated list of connected (but not necessarily registered) devices
     io.emit('available_devices', Array.from(connectedDevices.values()));
   });
 
@@ -107,10 +140,17 @@ io.on('connection', (socket) => {
 
   // Handle disconnect
   socket.on('disconnect', () => {
-    connectedDevices.delete(socket.id);
-    registeredDevices.delete(socket.id);
-    io.emit('available_devices', Array.from(connectedDevices.values()));
-    io.emit('device_list', Array.from(registeredDevices.values()));
+    // Only update status for registered devices, unregistered ones can still be removed
+    const device = connectedDevices.get(socket.id);
+    if (device && registeredDevices.has(socket.id)) {
+      device.status = 'Disconnected';
+      registeredDevices.set(socket.id, device);
+      io.emit('device_list', Array.from(registeredDevices.values()));
+    } else {
+      // For unregistered devices, remove them as before
+      connectedDevices.delete(socket.id);
+      io.emit('available_devices', Array.from(connectedDevices.values()));
+    }
     console.log(`Device disconnected: ${socket.id}`);
   });
 

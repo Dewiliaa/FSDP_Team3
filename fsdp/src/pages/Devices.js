@@ -24,6 +24,9 @@ const Devices = () => {
   const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [deviceToRemove, setDeviceToRemove] = useState(null);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+  const [selectedDevices, setSelectedDevices] = useState(new Set());
+  const [isMultiDisplayModalOpen, setIsMultiDisplayModalOpen] = useState(false);
   const [isDisplayConfirmModalOpen, setIsDisplayConfirmModalOpen] = useState(false);
 
   const [ads, setAds] = useState([]);
@@ -185,6 +188,11 @@ const Devices = () => {
   };
   
   const handleDisplayAd = (device) => {
+    // Check if device is disconnected
+    if (device.status === 'Disconnected') {
+      alert('This device needs to be connected before displaying ads.');
+      return;
+    }
     const isDisplaying = deviceAds.has(device.socketId);
     if (isDisplaying) {
       // Show confirmation modal for stopping the ad
@@ -243,6 +251,30 @@ const Devices = () => {
     }
   };
 
+  const confirmMultiDisplayAd = () => {
+    if (!selectedAd) {
+      alert('Please select an ad to display');
+      return;
+    }
+
+    // Update each selected device
+    const newDeviceAds = new Map(deviceAds);
+    selectedDevices.forEach(deviceId => {
+      socket.emit('trigger_device_ad', {
+        deviceId,
+        adUrl: selectedAd.url,
+        ad: selectedAd
+      });
+      newDeviceAds.set(deviceId, selectedAd);
+    });
+
+    setDeviceAds(newDeviceAds);
+    setIsMultiDisplayModalOpen(false);
+    setIsSelectMode(false);
+    setSelectedDevices(new Set());
+    setSelectedAd(null);
+  };
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (!e.target.closest('.device-container')) {
@@ -279,18 +311,45 @@ const Devices = () => {
       </div>
 
       <div className="button-container">
-        <button className="select-button">
+        <button 
+          className={`select-button ${isSelectMode ? 'active' : ''}`}
+          onClick={() => {
+            setIsSelectMode(!isSelectMode);
+            if (isSelectMode) {
+              setSelectedDevices(new Set());
+            }
+          }}
+        >
           <FaTabletAlt className="icon" />
-          {isDevicesSelected ? 'Select Devices' : 'Select Groups'}
+          {isSelectMode ? 'Cancel Selection' : 'Select Devices'}
         </button>
-        <button className="add-button" onClick={openAddDeviceModal}>
-          <FaPlus className="icon" />
-          {isDevicesSelected ? 'Add Device' : 'Add Group'}
-        </button>
-        <button className="ad-button" onClick={handleShowAdClick}>
-          <FaBullhorn className="icon" />
-          Show Ad
-        </button>
+        {isSelectMode ? (
+          <button 
+            className="ad-button"
+            onClick={() => {
+              if (selectedDevices.size === 0) {
+                alert('Please select at least one device');
+                return;
+              }
+              setIsMultiDisplayModalOpen(true);
+            }}
+            disabled={selectedDevices.size === 0}
+          >
+            <FaBullhorn className="icon" />
+            Display to Selected ({selectedDevices.size})
+          </button>
+        ) : (
+          <>
+            <button className="add-button" onClick={openAddDeviceModal}>
+              <FaPlus className="icon" />
+              Add Device
+            </button>
+            <button className="ad-button" onClick={handleShowAdClick}>
+              <FaBullhorn className="icon" />
+              Show Ad
+            </button>
+          </>
+        )}
       </div>
 
       {connectedDevices.length === 0 ? (
@@ -298,15 +357,46 @@ const Devices = () => {
       ) : (
         <div className="device-grid">
           {connectedDevices.map((device, index) => (
-            <div key={index} className="device-container">
+            <div 
+              key={index} 
+              className={`device-container ${isSelectMode ? 'selectable' : ''} ${
+                selectedDevices.has(device.socketId) ? 'selected' : ''
+              }`}
+              onClick={() => {
+                if (isSelectMode) {
+                  if (device.status === 'Disconnected') {
+                    alert('Cannot select disconnected devices');
+                    return;
+                  }
+                  const newSelectedDevices = new Set(selectedDevices);
+                  if (newSelectedDevices.has(device.socketId)) {
+                    newSelectedDevices.delete(device.socketId);
+                  } else {
+                    newSelectedDevices.add(device.socketId);
+                  }
+                  setSelectedDevices(newSelectedDevices);
+                }
+              }}
+              style={{
+                cursor: isSelectMode ? 'pointer' : 'default',
+                border: selectedDevices.has(device.socketId) 
+                  ? '2px solid #6a4fe7' 
+                  : '1px solid #ccc'
+              }}
+            >
               <span>{device.name} - {device.status}</span>
-              <button
-                className="more-button"
-                onClick={() => toggleDropdown(device.name)}
-              >
-                <FaEllipsisH />
-              </button>
-              {openDropdown === device.name && (
+              {!isSelectMode && (
+                <button
+                  className="more-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDropdown(device.name);
+                  }}
+                >
+                  <FaEllipsisH />
+                </button>
+              )}
+              {openDropdown === device.name && !isSelectMode && (
                 <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
                   <button onClick={() => handleViewDevice(device)}>View</button>
                   <button onClick={() => handleDisplayAd(device)}>
@@ -374,6 +464,60 @@ const Devices = () => {
               </div>
             </div>
             <button onClick={() => setIsViewModalOpen(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Multi-Display Modal */}
+      {isMultiDisplayModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Display Ad to Selected Devices</h3>
+            <p>Displaying to {selectedDevices.size} device(s)</p>
+            
+            <div className="ad-selection">
+              <h4>Select an Advertisement</h4>
+              <div className="ad-grid" style={{ maxHeight: '300px', overflow: 'auto' }}>
+                {ads.map((ad) => (
+                  <div
+                    key={ad.id}
+                    className={`ad-item ${selectedAd && selectedAd.id === ad.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedAd(ad)}
+                    style={{
+                      border: selectedAd && selectedAd.id === ad.id ? '2px solid #6a4fe7' : '1px solid #ccc',
+                      padding: '8px',
+                      margin: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <p>{ad.name}</p>
+                    <small>{ad.type}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="selected-devices" style={{ marginTop: '20px' }}>
+              <h4>Selected Devices:</h4>
+              <div style={{ maxHeight: '100px', overflow: 'auto' }}>
+                {Array.from(selectedDevices).map(deviceId => {
+                  const device = connectedDevices.find(d => d.socketId === deviceId);
+                  return device ? (
+                    <div key={deviceId} style={{ padding: '4px 0' }}>
+                      {device.name}
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={confirmMultiDisplayAd}>Display Ad</button>
+              <button onClick={() => {
+                setIsMultiDisplayModalOpen(false);
+                setSelectedAd(null);
+              }}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
