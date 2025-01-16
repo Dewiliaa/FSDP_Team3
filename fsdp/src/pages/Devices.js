@@ -1,15 +1,54 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';  // Add this new line
 import io from 'socket.io-client';
 import AWS from '../aws-config';
 import '../styles/devices.css';
-import { FaEllipsisH } from 'react-icons/fa';
+import { FaEllipsisH, FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
-import { FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 
-const socket = io.connect('http://192.168.1.233:3001'); // Replace with your server's IP address and port
+const socket = io('http://10.1.107.93:3001', {
+  auth: {
+      token: localStorage.getItem('token')
+  },
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000
+});
+
+socket.on('connect', () => {
+  console.log('Connected to server');
+});
+
+socket.on('disconnect', (reason) => {
+  console.log('Disconnected:', reason);
+});
+
+socket.on('connect_error', (error) => {
+  console.log('Connection error:', error.message);
+});
+
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
-
 const Devices = () => {
+
+  const navigate = useNavigate();  // Add this line
+
+  // Add this new useEffect for auth
+  useEffect(() => {
+      socket.on('connect_error', (error) => {
+          if (error.message.includes('Authentication error')) {
+              console.log('Authentication failed');
+              navigate('/login');
+          }
+      });
+
+      return () => {
+          socket.off('connect_error');
+      };
+  }, [navigate]);
+
   const [isDevicesSelected, setIsDevicesSelected] = useState(true);
   const [isAdConfirmModalOpen, setIsAdConfirmModalOpen] = useState(false);
   const [isAddDeviceModalOpen, setIsAddDeviceModalOpen] = useState(false);
@@ -24,10 +63,12 @@ const Devices = () => {
   const [selectedDeviceForAd, setSelectedDeviceForAd] = useState(null);
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [deviceToRemove, setDeviceToRemove] = useState(null);
+  const [isDisplayConfirmModalOpen, setIsDisplayConfirmModalOpen] = useState(false);
+
+  // Add these new states for multi-select feature
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedDevices, setSelectedDevices] = useState(new Set());
   const [isMultiDisplayModalOpen, setIsMultiDisplayModalOpen] = useState(false);
-  const [isDisplayConfirmModalOpen, setIsDisplayConfirmModalOpen] = useState(false);
 
   const [ads, setAds] = useState([]);
   const [selectedAd, setSelectedAd] = useState(null);
@@ -36,6 +77,48 @@ const Devices = () => {
   const [liveAd, setLiveAd] = useState(''); // State for currently live ad
   const isServerSite = window.location.hostname === 'localhost';
 
+  // In your useEffect where you set up device listeners
+  useEffect(() => {
+    console.log('Setting up ad display listeners, isServerSite:', isServerSite);
+    
+    socket.on('display_ad', (adMediaPath) => {
+        console.log('Received display_ad event:', adMediaPath);
+        console.log('Current ads:', ads); // Add this to see available ads
+        
+        if (!isServerSite) {
+            const ad = ads.find(ad => ad.url === adMediaPath);
+            console.log('Matched ad:', ad);
+            if (ad) {
+                console.log('Setting up ad display for:', ad.type);
+                setSelectedAd(ad);
+                if (ad.type === 'image') {
+                    setIsImageModalOpen(true);
+                    console.log('Image modal should be open now');
+                } else if (ad.type === 'video') {
+                    setIsVideoModalOpen(true);
+                    console.log('Video modal should be open now');
+                }
+                setLiveAd(ad.name);
+            } else {
+                console.log('No matching ad found for URL:', adMediaPath);
+            }
+        } else {
+            console.log('Not displaying ad because isServerSite is true');
+        }
+    });
+
+    socket.on('ad_confirmed', () => {
+        console.log('Ad confirmed');
+        setIsAdConfirmModalOpen(false);
+    });
+
+    return () => {
+        socket.off('display_ad');
+        socket.off('ad_confirmed');
+    };
+}, [ads, isServerSite]);
+
+    // Rest of your existing component code stays exactly the same
   useEffect(() => {
     socket.on('device_list', (devices) => setConnectedDevices(devices));
 
@@ -131,15 +214,18 @@ const Devices = () => {
   const handleShowAdClick = () => setIsAdConfirmModalOpen(true);
 
   const confirmShowAd = () => {
+    console.log('Confirming ad display:', selectedAd);
     if (selectedAd && selectedAd.url) {
-      socket.emit('trigger_ad', selectedAd.url);
-      socket.emit('show_ad_message', `Now playing: ${selectedAd.name}`);
-      setLiveAd(selectedAd.name); // Set live ad name in the banner
-      setIsAdConfirmModalOpen(false);
+        console.log('Emitting trigger_ad event with URL:', selectedAd.url);
+        socket.emit('trigger_ad', selectedAd.url);
+        socket.emit('show_ad_message', `Now playing: ${selectedAd.name}`);
+        setLiveAd(selectedAd.name);
+        setIsAdConfirmModalOpen(false);
     } else {
-      alert("Please select an ad to display.");
+        console.log('No ad selected');
+        alert("Please select an ad to display.");
     }
-  };
+};
 
   const handleStopAdClick = () => {
     setIsImageModalOpen(false);
@@ -188,12 +274,11 @@ const Devices = () => {
   };
   
   const handleDisplayAd = (device) => {
-    // Check if device is disconnected
+    const isDisplaying = deviceAds.has(device.socketId);
     if (device.status === 'Disconnected') {
       alert('This device needs to be connected before displaying ads.');
       return;
     }
-    const isDisplaying = deviceAds.has(device.socketId);
     if (isDisplaying) {
       // Show confirmation modal for stopping the ad
       setSelectedDeviceForAd(device);
@@ -240,17 +325,6 @@ const Devices = () => {
     }
   };
 
-  const confirmStopDisplay = () => {
-    if (selectedDeviceForAd) {
-      socket.emit('stop_device_ad', selectedDeviceForAd.socketId);
-      const newDeviceAds = new Map(deviceAds);
-      newDeviceAds.delete(selectedDeviceForAd.socketId);
-      setDeviceAds(newDeviceAds);
-      setIsDisplayConfirmModalOpen(false);
-      setSelectedDeviceForAd(null);
-    }
-  };
-
   const confirmMultiDisplayAd = () => {
     if (!selectedAd) {
       alert('Please select an ad to display');
@@ -273,6 +347,17 @@ const Devices = () => {
     setIsSelectMode(false);
     setSelectedDevices(new Set());
     setSelectedAd(null);
+  };
+
+  const confirmStopDisplay = () => {
+    if (selectedDeviceForAd) {
+      socket.emit('stop_device_ad', selectedDeviceForAd.socketId);
+      const newDeviceAds = new Map(deviceAds);
+      newDeviceAds.delete(selectedDeviceForAd.socketId);
+      setDeviceAds(newDeviceAds);
+      setIsDisplayConfirmModalOpen(false);
+      setSelectedDeviceForAd(null);
+    }
   };
 
   useEffect(() => {
@@ -342,7 +427,7 @@ const Devices = () => {
           <>
             <button className="add-button" onClick={openAddDeviceModal}>
               <FaPlus className="icon" />
-              Add Device
+              {isDevicesSelected ? 'Add Device' : 'Add Group'}
             </button>
             <button className="ad-button" onClick={handleShowAdClick}>
               <FaBullhorn className="icon" />
@@ -357,46 +442,15 @@ const Devices = () => {
       ) : (
         <div className="device-grid">
           {connectedDevices.map((device, index) => (
-            <div 
-              key={index} 
-              className={`device-container ${isSelectMode ? 'selectable' : ''} ${
-                selectedDevices.has(device.socketId) ? 'selected' : ''
-              }`}
-              onClick={() => {
-                if (isSelectMode) {
-                  if (device.status === 'Disconnected') {
-                    alert('Cannot select disconnected devices');
-                    return;
-                  }
-                  const newSelectedDevices = new Set(selectedDevices);
-                  if (newSelectedDevices.has(device.socketId)) {
-                    newSelectedDevices.delete(device.socketId);
-                  } else {
-                    newSelectedDevices.add(device.socketId);
-                  }
-                  setSelectedDevices(newSelectedDevices);
-                }
-              }}
-              style={{
-                cursor: isSelectMode ? 'pointer' : 'default',
-                border: selectedDevices.has(device.socketId) 
-                  ? '2px solid #6a4fe7' 
-                  : '1px solid #ccc'
-              }}
-            >
+            <div key={index} className="device-container">
               <span>{device.name} - {device.status}</span>
-              {!isSelectMode && (
-                <button
-                  className="more-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleDropdown(device.name);
-                  }}
-                >
-                  <FaEllipsisH />
-                </button>
-              )}
-              {openDropdown === device.name && !isSelectMode && (
+              <button
+                className="more-button"
+                onClick={() => toggleDropdown(device.name)}
+              >
+                <FaEllipsisH />
+              </button>
+              {openDropdown === device.name && (
                 <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
                   <button onClick={() => handleViewDevice(device)}>View</button>
                   <button onClick={() => handleDisplayAd(device)}>
@@ -468,60 +522,6 @@ const Devices = () => {
         </div>
       )}
 
-      {/* Multi-Display Modal */}
-      {isMultiDisplayModalOpen && (
-        <div className="modal">
-          <div className="modal-content">
-            <h3>Display Ad to Selected Devices</h3>
-            <p>Displaying to {selectedDevices.size} device(s)</p>
-            
-            <div className="ad-selection">
-              <h4>Select an Advertisement</h4>
-              <div className="ad-grid" style={{ maxHeight: '300px', overflow: 'auto' }}>
-                {ads.map((ad) => (
-                  <div
-                    key={ad.id}
-                    className={`ad-item ${selectedAd && selectedAd.id === ad.id ? 'selected' : ''}`}
-                    onClick={() => setSelectedAd(ad)}
-                    style={{
-                      border: selectedAd && selectedAd.id === ad.id ? '2px solid #6a4fe7' : '1px solid #ccc',
-                      padding: '8px',
-                      margin: '4px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <p>{ad.name}</p>
-                    <small>{ad.type}</small>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="selected-devices" style={{ marginTop: '20px' }}>
-              <h4>Selected Devices:</h4>
-              <div style={{ maxHeight: '100px', overflow: 'auto' }}>
-                {Array.from(selectedDevices).map(deviceId => {
-                  const device = connectedDevices.find(d => d.socketId === deviceId);
-                  return device ? (
-                    <div key={deviceId} style={{ padding: '4px 0' }}>
-                      {device.name}
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            </div>
-
-            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
-              <button onClick={confirmMultiDisplayAd}>Display Ad</button>
-              <button onClick={() => {
-                setIsMultiDisplayModalOpen(false);
-                setSelectedAd(null);
-              }}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Display Ad to Device Modal */}
       {isDisplayModalOpen && selectedDeviceForAd && (
         <div className="modal">
@@ -587,6 +587,60 @@ const Devices = () => {
               <button onClick={() => {
                 setIsRemoveModalOpen(false);
                 setDeviceToRemove(null);
+              }}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+       {/* Multi-Display Modal */}
+       {isMultiDisplayModalOpen && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Display Ad to Selected Devices</h3>
+            <p>Displaying to {selectedDevices.size} device(s)</p>
+            
+            <div className="ad-selection">
+              <h4>Select an Advertisement</h4>
+              <div className="ad-grid" style={{ maxHeight: '300px', overflow: 'auto' }}>
+                {ads.map((ad) => (
+                  <div
+                    key={ad.id}
+                    className={`ad-item ${selectedAd && selectedAd.id === ad.id ? 'selected' : ''}`}
+                    onClick={() => setSelectedAd(ad)}
+                    style={{
+                      border: selectedAd && selectedAd.id === ad.id ? '2px solid #6a4fe7' : '1px solid #ccc',
+                      padding: '8px',
+                      margin: '4px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <p>{ad.name}</p>
+                    <small>{ad.type}</small>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="selected-devices" style={{ marginTop: '20px' }}>
+              <h4>Selected Devices:</h4>
+              <div style={{ maxHeight: '100px', overflow: 'auto' }}>
+                {Array.from(selectedDevices).map(deviceId => {
+                  const device = connectedDevices.find(d => d.socketId === deviceId);
+                  return device ? (
+                    <div key={deviceId} style={{ padding: '4px 0' }}>
+                      {device.name}
+                    </div>
+                  ) : null;
+                })}
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button onClick={confirmMultiDisplayAd}>Display Ad</button>
+              <button onClick={() => {
+                setIsMultiDisplayModalOpen(false);
+                setSelectedAd(null);
               }}>Cancel</button>
             </div>
           </div>
