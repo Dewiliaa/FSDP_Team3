@@ -848,3 +848,36 @@ input:checked + .slider {
   box-sizing: border-box;
   width: 100%;
 }
+
+.scheduling {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: #f9f9f9;
+}
+
+.scheduling .calendar-container {
+  margin-bottom: 20px;
+}
+
+.scheduling .time-selection label {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.scheduling .button-container {
+  text-align: center;
+}
+
+.scheduling .schedule-button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.scheduling .schedule-button:hover {
+  background-color: #45a049;
+}

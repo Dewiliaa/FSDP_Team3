@@ -1,40 +1,104 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CalendarComponent from '../components/CalendarComponent';
+import AWS from '../aws-config'; // Import AWS configuration
 import '../styles/Scheduling.css';
 
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
+
 const Scheduling = () => {
+    const [ads, setAds] = useState([]); // Store ads from the database
     const [selectedRange, setSelectedRange] = useState([new Date(), new Date()]);
     const [startTime, setStartTime] = useState("00:00");
-    const [endTime, setEndTime] = useState("23:59");
+    const [selectedAd, setSelectedAd] = useState("");
+    const [selectedDevice, setSelectedDevice] = useState("Device 1");
+    const [scheduledAds, setScheduledAds] = useState([]);
 
-    const handleDateTimeRangeChange = (newDateRange, newStartTime, newEndTime) => {
-        setSelectedRange(newDateRange);
-        setStartTime(newStartTime);
-        setEndTime(newEndTime);
-    };
+    // Load schedules from localStorage
+    useEffect(() => {
+        const savedSchedules = JSON.parse(localStorage.getItem("adSchedules")) || [];
+        setScheduledAds(savedSchedules);
+    }, []);
 
+    // Fetch ads from the database on component mount
+    useEffect(() => {
+        const fetchAds = async () => {
+            try {
+                const adsParams = { TableName: 'Ads' };
+                const adsData = await dynamoDb.scan(adsParams).promise();
+
+                const fetchedAds = adsData.Items.map(item => ({
+                    id: item.ad_id,
+                    name: item.name,
+                    url: item.url,
+                }));
+
+                setAds(fetchedAds);
+                if (fetchedAds.length > 0) {
+                    setSelectedAd(fetchedAds[0].id); // Set the first ad as default
+                }
+            } catch (error) {
+                console.error("Error fetching ads:", error);
+            }
+        };
+
+        fetchAds();
+    }, []);
+
+    // Cleanup expired schedules periodically
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const currentTime = new Date();
+            const updatedSchedules = scheduledAds.filter(ad => new Date(ad.startDateTime) > currentTime);
+            setScheduledAds(updatedSchedules);
+            localStorage.setItem("adSchedules", JSON.stringify(updatedSchedules));
+        }, 1000 * 60); // Check every minute
+
+        return () => clearInterval(interval); // Cleanup on unmount
+    }, [scheduledAds]);
+
+    // Function to handle scheduling
     const handleScheduleClick = () => {
-        alert(`Scheduled from ${selectedRange[0].toDateString()} ${startTime} to ${selectedRange[1].toDateString()} ${endTime}`);
+        const startDateTime = new Date(
+            `${selectedRange[0].toDateString()} ${startTime}`
+        );
+
+        const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
+
+        const newSchedule = {
+            ad: selectedAdDetails.name,
+            device: selectedDevice,
+            startDateTime: startDateTime.toISOString(),
+            adUrl: selectedAdDetails.url,
+        };
+
+        const updatedSchedules = [...scheduledAds, newSchedule];
+        setScheduledAds(updatedSchedules);
+        localStorage.setItem("adSchedules", JSON.stringify(updatedSchedules));
+
+        alert("Ad scheduled successfully!");
     };
 
     return (
         <div className="scheduling">
-            <h2 className="page-title">Scheduling</h2>
+            <h2 className="page-title">Ad Scheduling</h2>
             <div className="scheduling-calendar">
-                <CalendarComponent onDateTimeRangeChange={handleDateTimeRangeChange} />
+                <CalendarComponent onDateTimeRangeChange={setSelectedRange} />
                 <div className="selection-container">
                     <label>
                         Select Ad
-                        <select>
-                            <option>Ad 1</option>
-                            <option>Ad 2</option>
+                        <select value={selectedAd} onChange={(e) => setSelectedAd(e.target.value)}>
+                            {ads.map((ad) => (
+                                <option key={ad.id} value={ad.id}>
+                                    {ad.name}
+                                </option>
+                            ))}
                         </select>
                     </label>
                     <label>
                         Select Device
-                        <select>
-                            <option>Device 1</option>
-                            <option>Device 2</option>
+                        <select value={selectedDevice} onChange={(e) => setSelectedDevice(e.target.value)}>
+                            <option value="Device 1">Device 1</option>
+                            <option value="Device 2">Device 2</option>
                         </select>
                     </label>
                 </div>
@@ -42,9 +106,21 @@ const Scheduling = () => {
                     <button onClick={handleScheduleClick} className="schedule-button">Schedule</button>
                 </div>
             </div>
-            <div className="time-display">
-                <p>Selected date range: {selectedRange[0].toDateString()} - {selectedRange[1].toDateString()}</p>
-                <p>Selected time range: {startTime} - {endTime}</p>
+
+            <div className="scheduled-ads">
+                <h3>Scheduled Ads</h3>
+                {scheduledAds.length > 0 ? (
+                    <ul>
+                        {scheduledAds.map((ad, index) => (
+                            <li key={index} className="scheduled-ad-item">
+                                <strong>{ad.ad}</strong> on <em>{ad.device}</em> at
+                                {new Date(ad.startDateTime).toLocaleString()}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No ads scheduled yet.</p>
+                )}
             </div>
         </div>
     );
