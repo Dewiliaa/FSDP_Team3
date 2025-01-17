@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import Home from './Home';
 import Dashboard from './pages/Dashboard';
 import ManageAds from './pages/ManageAds';
@@ -17,11 +17,50 @@ import './App.css';
 import CanvaPage from './pages/CanvaPage';
 
 // Separate component for the main app content to use hooks
+const ProtectedRoute = ({ children }) => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const token = localStorage.getItem('token');
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Validate token with backend
+        const validateToken = async () => {
+            try {
+                const response = await fetch('http://10.1.107.93:3001/api/auth/validate', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    localStorage.removeItem('isAuthenticated');
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                }
+            } catch (error) {
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('token');
+                navigate('/login');
+            }
+        };
+
+        if (token) {
+            validateToken();
+        }
+    }, [token, navigate]);
+
+    if (!isAuthenticated || !token) {
+        return <Navigate to="/login" />;
+    }
+
+    return children;
+};
+
 function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('isAuthenticated') === 'true'
     );
-
+    
     const location = useLocation();
 
     useEffect(() => {
@@ -39,27 +78,80 @@ function AppContent() {
 
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route 
-                    path="/login" 
-                    element={<Login setIsAuthenticated={setIsAuthenticated} />} 
+                <Route
+                    path="/login"
+                    element={<Login setIsAuthenticated={setIsAuthenticated} />}
                 />
-                <Route 
-                    path="/dashboard" 
-                    element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
+                <Route
+                    path="/dashboard"
+                    element={
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
+                    }
                 />
-                <Route path="/adManagement" element={<ManageAds />} />
-                <Route path="/adTemplate" element={<ChooseTemplate />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/scheduling" element={<Scheduling />} />
-                <Route path="/devices" element={<Devices />} />
-                <Route path="/edit-template" element={<EditTemplate />} />
-                <Route path="/canva" element={<CanvaPage />} />
+                <Route
+                    path="/adManagement"
+                    element={
+                        <ProtectedRoute>
+                            <ManageAds />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/adTemplate"
+                    element={
+                        <ProtectedRoute>
+                            <ChooseTemplate />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/library"
+                    element={
+                        <ProtectedRoute>
+                            <Library />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/scheduling"
+                    element={
+                        <ProtectedRoute>
+                            <Scheduling />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/devices"
+                    element={
+                        <ProtectedRoute>
+                            <Devices />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/edit-template"
+                    element={
+                        <ProtectedRoute>
+                            <EditTemplate />
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/canva"
+                    element={
+                        <ProtectedRoute>
+                            <CanvaPage />
+                        </ProtectedRoute>
+                    }
+                />
             </Routes>
         </div>
     );
 }
 
-// Main App component with providers
+// Main App component remains the same
 function App() {
     return (
         <Router>
