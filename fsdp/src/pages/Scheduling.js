@@ -9,6 +9,7 @@ const Scheduling = () => {
     const [ads, setAds] = useState([]); // Store ads from the database
     const [selectedRange, setSelectedRange] = useState([new Date(), new Date()]);
     const [startTime, setStartTime] = useState("00:00");
+    const [endTime, setEndTime] = useState("00:00"); // Added end time
     const [selectedAd, setSelectedAd] = useState("");
     const [selectedDevice, setSelectedDevice] = useState("Device 1");
     const [scheduledAds, setScheduledAds] = useState([]);
@@ -58,9 +59,23 @@ const Scheduling = () => {
 
     // Function to handle scheduling
     const handleScheduleClick = () => {
+        if (!startTime || !endTime) {
+            alert("Both start time and end time must be filled to post the advertisement.");
+            return;
+        }
+
         const startDateTime = new Date(
             `${selectedRange[0].toDateString()} ${startTime}`
         );
+
+        const endDateTime = new Date(
+            `${selectedRange[1].toDateString()} ${endTime}`
+        );
+
+        if (startDateTime >= endDateTime) {
+            alert("The end time must be after the start time.");
+            return;
+        }
 
         const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
 
@@ -68,6 +83,7 @@ const Scheduling = () => {
             ad: selectedAdDetails.name,
             device: selectedDevice,
             startDateTime: startDateTime.toISOString(),
+            endDateTime: endDateTime.toISOString(),
             adUrl: selectedAdDetails.url,
         };
 
@@ -113,8 +129,9 @@ const Scheduling = () => {
                     <ul>
                         {scheduledAds.map((ad, index) => (
                             <li key={index} className="scheduled-ad-item">
-                                <strong>{ad.ad}</strong> on <em>{ad.device}</em> at
-                                {new Date(ad.startDateTime).toLocaleString()}
+                                <strong>{ad.ad}</strong> on <em>{ad.device}</em> from{" "}
+                                {new Date(ad.startDateTime).toLocaleString()} to{" "}
+                                {new Date(ad.endDateTime).toLocaleString()}
                             </li>
                         ))}
                     </ul>
