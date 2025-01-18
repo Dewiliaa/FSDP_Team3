@@ -30,7 +30,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     const validateToken = async (token) => {
         try {
-            const response = await fetch('http://10.1.107.93:3001/api/auth/validate', {
+            const response = await fetch('http://192.168.86.28:3001/api/auth/validate', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -55,7 +55,7 @@ const Login = ({ setIsAuthenticated }) => {
         setError('');
 
         try {
-            const response = await fetch('http://10.1.107.93:3001/api/auth/login', {
+            const response = await fetch('http://192.168.86.28:3001/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -68,6 +68,7 @@ const Login = ({ setIsAuthenticated }) => {
             if (response.ok) {
                 // Store the JWT token
                 localStorage.setItem('token', data.token);
+                localStorage.setItem('currentUsername', username);
                 
                 // Handle "Remember Me"
                 if (rememberMe) {

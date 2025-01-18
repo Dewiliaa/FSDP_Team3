@@ -26,7 +26,7 @@ const ProtectedRoute = ({ children }) => {
         // Validate token with backend
         const validateToken = async () => {
             try {
-                const response = await fetch('http://10.1.107.93:3001/api/auth/validate', {
+                const response = await fetch('http://192.168.86.28:3001/api/auth/validate', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -60,7 +60,6 @@ function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('isAuthenticated') === 'true'
     );
-    
     const location = useLocation();
 
     useEffect(() => {
@@ -72,7 +71,7 @@ function AppContent() {
             {location.pathname !== '/' && location.pathname !== '/login' && (
                 <>
                     <Navbar />
-                    <ProfileDropdown />
+                    <ProfileDropdown setIsAuthenticated={setIsAuthenticated} />
                 </>
             )}
 
@@ -151,7 +150,6 @@ function AppContent() {
     );
 }
 
-// Main App component remains the same
 function App() {
     return (
         <Router>
