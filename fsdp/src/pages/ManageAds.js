@@ -13,7 +13,7 @@ const ManageAds = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileName, setFileName] = useState('');
     const [previewUrl, setPreviewUrl] = useState(null);
-    const [previewType, setPreviewType] = useState(''); // Track type of preview
+    const [previewType, setPreviewType] = useState('');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,7 +40,7 @@ const ManageAds = () => {
         setSelectedFile(file);
         setFileName(file.name);
         setPreviewUrl(URL.createObjectURL(file));
-        setPreviewType(file.type.split('/')[0]); // Set the preview type based on file type
+        setPreviewType(file.type.split('/')[0]);
     };
 
     const uploadAdToS3 = async () => {
@@ -81,7 +81,7 @@ const ManageAds = () => {
             setSelectedFile(null);
             setFileName('');
             setPreviewUrl(null);
-            setPreviewType(''); // Clear the preview type
+            setPreviewType('');
             setShowCreateOptions(false);
         } catch (error) {
             console.error("Error uploading ad:", error);
@@ -118,16 +118,6 @@ const ManageAds = () => {
         ad.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleEdit = (ad) => {
-        navigate('/edit-Template', {
-            state: {
-                imageUrl: ad.url,
-                imageName: ad.name,
-                imageId: ad.id
-            }
-        });
-    };
-
     return (
         <div className="manage-ads">
             <h2 className="page-title">Manage Ads</h2>
@@ -153,10 +143,10 @@ const ManageAds = () => {
             {showCreateOptions && (
                 <div className="create-options">
                     <button
-                        onClick={() => navigate('/adTemplate')}
+                        onClick={() => navigate('/edit-template')}
                         className="template-button"
                     >
-                        Choose Template
+                        Create from canvas
                     </button>
 
                     <div>
@@ -276,7 +266,7 @@ const ManageAds = () => {
                             Delete
                         </button>
                         <button
-                            onClick={() => handleEdit(ad)}
+                            onClick={() => handleEditAd(ad)}
                             style={{
                                 padding: '5px 10px',
                                 backgroundColor: '#4CAF50',
