@@ -109,6 +109,36 @@ const io = new Server(server, {
 let connectedDevices = new Map();
 let registeredDevices = new Map();
 
+const createDevicesTable = async () => {
+    const dynamodb = new AWS.DynamoDB();
+    
+    const params = {
+      TableName: 'Devices',
+      KeySchema: [
+        { AttributeName: 'deviceId', KeyType: 'HASH' }  // Partition key
+      ],
+      AttributeDefinitions: [
+        { AttributeName: 'deviceId', AttributeType: 'S' }
+      ],
+      ProvisionedThroughput: {
+        ReadCapacityUnits: 5,
+        WriteCapacityUnits: 5
+      }
+    };
+  
+    try {
+      await dynamodb.createTable(params).promise();
+      console.log('Devices table created successfully');
+    } catch (error) {
+      if (error.code === 'ResourceInUseException') {
+        console.log('Devices table already exists');
+      } else {
+        console.error('Error creating Devices table:', error);
+        throw error;
+      }
+    }
+  };
+
 const getDeviceInfo = (userAgent) => {
     const info = {
         browser: 'Unknown',
@@ -139,6 +169,23 @@ const getDeviceInfo = (userAgent) => {
     else if (userAgent.includes('Edge')) info.browser = 'Edge';
 
     return info;
+};
+
+const initializeDevices = async () => {
+    try {
+        const result = await dynamoDB.scan({
+            TableName: 'Devices'
+        }).promise();
+        
+        result.Items.forEach(device => {
+            registeredDevices.set(device.deviceId, {
+                ...device,
+                status: 'Disconnected' // Start all as disconnected
+            });
+        });
+    } catch (error) {
+        console.error('Error initializing devices:', error);
+    }
 };
 
 // Socket.IO middleware for authentication
@@ -173,56 +220,90 @@ io.on('connection', (socket) => {
         console.error('Socket error:', error);
     });
 
-    socket.on('device_connected', (userAgent) => {
+    socket.on('device_connected', async (userAgent) => {
         const deviceInfo = getDeviceInfo(userAgent);
-        const deviceData = {
-            socketId: socket.id,
-            status: 'Connected',
-            lastSeen: new Date().toISOString(),
-            info: deviceInfo,
-            ip: socket.handshake.address,
-            isRegistered: false,
-            user: socket.user.username,
-            role: socket.user.role
-        };
-
-        // Check for device reconnection
-        for (const [id, device] of registeredDevices.entries()) {
-            if (device.ip === deviceData.ip && 
-                device.info.browser === deviceInfo.browser && 
-                device.info.os === deviceInfo.os && 
-                device.info.device === deviceInfo.device) {
+        const deviceId = `${deviceInfo.device}_${deviceInfo.browser}_${deviceInfo.os}_${socket.handshake.address}`.replace(/[^a-zA-Z0-9]/g, '_');
+    
+        try {
+            const result = await dynamoDB.scan({
+                TableName: 'Devices',
+                FilterExpression: 'deviceId = :deviceId',
+                ExpressionAttributeValues: {
+                    ':deviceId': deviceId
+                }
+            }).promise();
+    
+            if (result.Items && result.Items.length > 0) {
+                const existingDevice = result.Items[0];
+                const updatedDevice = {
+                    ...existingDevice,
+                    socketId: socket.id,
+                    status: 'Connected',
+                    lastSeen: new Date().toISOString()
+                };
+    
+                await dynamoDB.update({
+                    TableName: 'Devices',
+                    Key: { deviceId: existingDevice.deviceId },
+                    UpdateExpression: 'SET socketId = :socketId, #status = :status, lastSeen = :lastSeen',
+                    ExpressionAttributeNames: {
+                        '#status': 'status'
+                    },
+                    ExpressionAttributeValues: {
+                        ':socketId': socket.id,
+                        ':status': 'Connected',
+                        ':lastSeen': new Date().toISOString()
+                    }
+                }).promise();
+    
+                registeredDevices.set(deviceId, updatedDevice);
                 
-                device.socketId = socket.id;
-                device.status = 'Connected';
-                device.lastSeen = new Date().toISOString();
-                
-                registeredDevices.delete(id);
-                registeredDevices.set(socket.id, device);
-                connectedDevices.set(socket.id, device);
-                
+                // Emit updated list with this device's correct connection status
                 io.emit('device_list', Array.from(registeredDevices.values()));
-                return;
+            } else {
+                // Handle unregistered device
+                const deviceData = {
+                    deviceId,
+                    socketId: socket.id,
+                    status: 'Connected',
+                    lastSeen: new Date().toISOString(),
+                    info: deviceInfo,
+                    ip: socket.handshake.address
+                };
+                connectedDevices.set(deviceId, deviceData);
+                io.emit('available_devices', Array.from(connectedDevices.values()));
             }
+        } catch (error) {
+            console.error('Error handling device connection:', error);
         }
-
-        console.log('Adding new device to connected devices:', deviceData);
-        connectedDevices.set(socket.id, deviceData);
-        io.emit('available_devices', Array.from(connectedDevices.values()));
     });
 
-    socket.on('register_device', ({ deviceName, socketId }) => {
+    socket.on('register_device', async (deviceDetails) => {
         if (socket.user.role !== 'admin') {
             socket.emit('error', { message: 'Admin access required' });
             return;
         }
 
-        const device = connectedDevices.get(socketId);
-        if (device) {
-            device.name = deviceName;
-            device.isRegistered = true;
-            registeredDevices.set(socketId, device);
+        try {
+            await dynamoDB.put({
+                TableName: 'Devices',
+                Item: deviceDetails
+            }).promise();
+
+            // Update both maps correctly
+            connectedDevices.delete(deviceDetails.deviceId);
+            registeredDevices.set(deviceDetails.deviceId, {
+                ...deviceDetails,
+                status: 'Connected'
+            });
+
+            // Broadcast full lists immediately to all clients
             io.emit('device_list', Array.from(registeredDevices.values()));
+            
+            console.log('Broadcasting updated device list:', Array.from(registeredDevices.values()));
+        } catch (error) {
+            console.error('Error registering device:', error);
+            socket.emit('error', { message: 'Failed to register device' });
         }
     });
 
@@ -235,17 +316,47 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('disconnect', (reason) => {
-        const device = connectedDevices.get(socket.id);
-        if (device && registeredDevices.has(socket.id)) {
-            device.status = 'Disconnected';
-            registeredDevices.set(socket.id, device);
-            io.emit('device_list', Array.from(registeredDevices.values()));
-        } else {
-            connectedDevices.delete(socket.id);
-            io.emit('available_devices', Array.from(connectedDevices.values()));
-        }
-        console.log(`Device disconnected: ${socket.id}, Reason: ${reason}`);
+    socket.on('disconnect', async (reason) => {
+      try {
+          // Find device by current socket ID
+          const deviceEntry = Array.from(registeredDevices.entries()).find(
+              ([_, device]) => device.socketId === socket.id
+          );
+  
+          if (deviceEntry) {
+              const [deviceId, device] = deviceEntry;
+              
+              // Update DynamoDB
+              await dynamoDB.update({
+                  TableName: 'Devices',
+                  Key: { deviceId: deviceId },
+                  UpdateExpression: 'SET #status = :status, lastSeen = :lastSeen',
+                  ExpressionAttributeNames: {
+                      '#status': 'status'
+                  },
+                  ExpressionAttributeValues: {
+                      ':status': 'Disconnected',
+                      ':lastSeen': new Date().toISOString()
+                  }
+              }).promise();
+  
+              // Update in-memory status
+              device.status = 'Disconnected';
+              registeredDevices.set(deviceId, device);
+              io.emit('device_list', Array.from(registeredDevices.values()));
+          }
+  
+          // Clean up connected devices
+          const connectedEntry = Array.from(connectedDevices.entries()).find(
+              ([_, device]) => device.socketId === socket.id
+          );
+          if (connectedEntry) {
+              connectedDevices.delete(connectedEntry[0]);
+              io.emit('available_devices', Array.from(connectedDevices.values()));
+          }
+      } catch (error) {
+          console.error('Error updating disconnect status:', error);
+      }
     });
 
     socket.on('trigger_ad', (adImagePath) => {
@@ -267,11 +378,16 @@ io.on('connection', (socket) => {
     });
 
     socket.on('stop_ad', () => {
-        if (socket.user.role !== 'admin') {
-            socket.emit('error', { message: 'Admin access required' });
-            return;
-        }
-        io.emit('display_ad', null);
+      if (socket.user.role !== 'admin') {
+        socket.emit('error', { message: 'Admin access required' });
+        return;
+      }
+      
+      // Broadcast null to stop the ad on all clients
+      io.emit('display_ad', null);
+      
+      // Also emit the ad_stopped event for consistency
+      io.emit('ad_stopped', { deviceId: 'all' });
     });
 
     socket.on('trigger_device_ad', ({ deviceId, adUrl, ad }) => {
@@ -284,33 +400,79 @@ io.on('connection', (socket) => {
     });
 
     socket.on('stop_device_ad', (deviceId) => {
-        if (socket.user.role !== 'admin') {
-            socket.emit('error', { message: 'Admin access required' });
-            return;
-        }
+      if (socket.user.role !== 'admin') {
+        socket.emit('error', { message: 'Admin access required' });
+        return;
+      }
+    
+      try {
+        // Send stop signal to specific device
         io.to(deviceId).emit('display_ad', null);
+        
+        // Notify all clients that the ad has been stopped
+        io.emit('ad_stopped', { deviceId });
+        
+        // Update device ad tracking
         io.emit('device_ad_update', { deviceId, ad: null });
+        
+        console.log(`Ad stopped for device: ${deviceId}`);
+      } catch (error) {
+        console.error('Error stopping device ad:', error);
+        socket.emit('error', { message: 'Failed to stop ad' });
+      }
+    });
+
+    socket.on('display_ad', (adMediaPath) => {
+      console.log('Received display_ad event:', adMediaPath);
+      
+      if (!adMediaPath) {
+        // If adMediaPath is null, emit both events for consistency
+        socket.emit('display_ad', null);
+        socket.broadcast.emit('ad_stopped', { deviceId: socket.id });
+      } else {
+        // Regular ad display logic
+        socket.emit('display_ad', adMediaPath);
+      }
     });
     
-    socket.on('remove_device', (deviceId) => {
+    socket.on('remove_device', async (deviceId) => {
         if (socket.user.role !== 'admin') {
-            socket.emit('error', { message: 'Admin access required' });
-            return;
+          socket.emit('error', { message: 'Admin access required' });
+          return;
         }
-        
-        if (connectedDevices.has(deviceId)) {
-            const device = connectedDevices.get(deviceId);
-            device.isRegistered = false;
-            connectedDevices.set(deviceId, device);
-            registeredDevices.delete(deviceId);
-            io.emit('available_devices', Array.from(connectedDevices.values()));
-            io.emit('device_list', Array.from(registeredDevices.values()));
+    
+        try {
+          await dynamoDB.delete({
+            TableName: 'Devices',
+            Key: { deviceId }
+          }).promise();
+    
+          registeredDevices.delete(deviceId);
+          
+          // If device is still connected, move it back to available devices
+          const deviceData = Array.from(connectedDevices.values())
+            .find(device => device.deviceId === deviceId);
+          
+          if (deviceData) {
+            deviceData.isRegistered = false;
+            connectedDevices.set(deviceId, deviceData);
+          }
+    
+          // Broadcast both lists to all clients
+          io.emit('device_list', Array.from(registeredDevices.values()));
+          io.emit('available_devices', Array.from(connectedDevices.values()));
+    
+        } catch (error) {
+          console.error('Error removing device:', error);
+          socket.emit('error', { message: 'Failed to remove device' });
         }
     });
 });
 
 const startServer = async () => {
     try {
+        await createDevicesTable();
+        await initializeDevices();
         server.listen(3001, () => {
             console.log('SERVER IS RUNNING ON PORT 3001');
             console.log('Environment check:', {

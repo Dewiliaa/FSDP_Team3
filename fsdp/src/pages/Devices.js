@@ -7,7 +7,7 @@ import '../styles/devices.css';
 import { FaEllipsisH, FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
 
-const socket = io('http://192.168.86.28:3001', {
+const socket = io('http://192.168.18.66:3001', {
   auth: {
       token: localStorage.getItem('token')
   },
@@ -82,69 +82,69 @@ const Devices = () => {
     console.log('Setting up ad display listeners, isServerSite:', isServerSite);
     
     socket.on('display_ad', (adMediaPath) => {
-        console.log('Received display_ad event:', adMediaPath);
-        console.log('Current ads:', ads); // Add this to see available ads
-        
-        if (!isServerSite) {
-            const ad = ads.find(ad => ad.url === adMediaPath);
-            console.log('Matched ad:', ad);
-            if (ad) {
-                console.log('Setting up ad display for:', ad.type);
-                setSelectedAd(ad);
-                if (ad.type === 'image') {
-                    setIsImageModalOpen(true);
-                    console.log('Image modal should be open now');
-                } else if (ad.type === 'video') {
-                    setIsVideoModalOpen(true);
-                    console.log('Video modal should be open now');
-                }
-                setLiveAd(ad.name);
-            } else {
-                console.log('No matching ad found for URL:', adMediaPath);
-            }
-        } else {
-            console.log('Not displaying ad because isServerSite is true');
-        }
-    });
-
-    socket.on('ad_confirmed', () => {
-        console.log('Ad confirmed');
-        setIsAdConfirmModalOpen(false);
-    });
-
-    return () => {
-        socket.off('display_ad');
-        socket.off('ad_confirmed');
-    };
-}, [ads, isServerSite]);
-
-    // Rest of your existing component code stays exactly the same
-  useEffect(() => {
-    socket.on('device_list', (devices) => setConnectedDevices(devices));
-
-    // Display ad only on non-localhost clients
-    socket.on('display_ad', (adMediaPath) => {
+      console.log('Received display_ad event:', adMediaPath);
+      
+      if (adMediaPath === null) {
+        // Handle stopping the ad
+        setIsImageModalOpen(false);
+        setIsVideoModalOpen(false);
+        setSelectedAd(null);
+        setLiveAd('');
+        return;
+      }
+      
       if (!isServerSite) {
         const ad = ads.find(ad => ad.url === adMediaPath);
-        setSelectedAd(ad || null);
-        if (ad?.type === 'image') {
-          setIsImageModalOpen(true);
-        } else if (ad?.type === 'video') {
-          setIsVideoModalOpen(true);
+        console.log('Matched ad:', ad);
+        if (ad) {
+          setSelectedAd(ad);
+          if (ad.type === 'image') {
+            setIsImageModalOpen(true);
+          } else if (ad.type === 'video') {
+            setIsVideoModalOpen(true);
+          }
+          setLiveAd(ad.name);
         }
-        setLiveAd(ad ? ad.name : ''); // Update live ad name
       }
     });
 
-    // Confirm ad is showing for localhost
-    socket.on('ad_confirmed', () => setIsAdConfirmModalOpen(false));
+    socket.on('ad_confirmed', () => {
+      setIsAdConfirmModalOpen(false);
+    });
 
     return () => {
-      socket.off('device_list');
       socket.off('display_ad');
       socket.off('ad_confirmed');
     };
   }, [ads, isServerSite]);
+
+  // Rest of your existing component code stays exactly the same
+
+  useEffect(() => {
+    const fetchStoredDevices = async () => {
+      try {
+        const params = {
+          TableName: 'Devices'
+        };
+        const result = await dynamoDb.scan(params).promise();
+        setConnectedDevices(result.Items);
+      } catch (error) {
+        console.error('Error fetching stored devices:', error);
+      }
+    };
+  
+    fetchStoredDevices();
+  }, []);
+
+  useEffect(() => {
+    socket.on('device_list', (devices) => {
+      setConnectedDevices(devices); // Direct update instead of merging
+    });
+
+    return () => {
+      socket.off('device_list');
+    };
+  }, []);
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
@@ -197,20 +197,59 @@ const Devices = () => {
 
   useEffect(() => {
     socket.on('device_ad_update', ({ deviceId, ad }) => {
-      const newDeviceAds = new Map(deviceAds);
-      if (ad) {
-        newDeviceAds.set(deviceId, ad);
-      } else {
-        newDeviceAds.delete(deviceId);
-      }
-      setDeviceAds(newDeviceAds);
+      setDeviceAds(prev => {
+        const newDeviceAds = new Map(prev);
+        if (ad) {
+          newDeviceAds.set(deviceId, ad);
+        } else {
+          newDeviceAds.delete(deviceId);
+        }
+        return newDeviceAds;
+      });
     });
   
-    return () => {
-      socket.off('device_ad_update');
-    };
-  }, [deviceAds]);
+    return () => socket.off('device_ad_update');
+  }, []);
 
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.device-container')) {
+        setOpenDropdown(null);
+      }
+    };
+  
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, []);
+
+  useEffect(() => {
+    socket.on('ad_stopped', ({ deviceId }) => {
+      console.log('Ad stopped for device:', deviceId);
+      
+      setDeviceAds(prev => {
+        const newDeviceAds = new Map(prev);
+        // Only remove ad for specific device
+        if (deviceId !== 'all') {
+          newDeviceAds.delete(deviceId);
+        } else {
+          // Clear all ads only for global stop
+          newDeviceAds.clear();
+        }
+        return newDeviceAds;
+      });
+  
+      if (!isServerSite && socket.id === deviceId) {
+        setIsImageModalOpen(false);
+        setIsVideoModalOpen(false);
+        setSelectedAd(null);
+      }
+    });
+  
+    return () => socket.off('ad_stopped');
+  }, [isServerSite]);
+
+
+  // All Ads Functions
   const handleShowAdClick = () => setIsAdConfirmModalOpen(true);
 
   const confirmShowAd = () => {
@@ -228,14 +267,19 @@ const Devices = () => {
 };
 
   const handleStopAdClick = () => {
-    setIsImageModalOpen(false);
-    setIsVideoModalOpen(false);
-    socket.emit('stop_ad');
-    socket.emit('show_ad_message', "No ad is currently playing.");
-    setLiveAd(''); // Clear live ad banner when stopped
-    alert('The ad has stopped showing.');
+    if (isServerSite) {
+      // For global ad display
+      socket.emit('stop_ad');
+      socket.emit('show_ad_message', "No ad is currently playing.");
+      setLiveAd('');
+      setIsImageModalOpen(false);
+      setIsVideoModalOpen(false);
+      setSelectedAd(null);
+    }
   };
 
+
+  // All Devices Functions
   const openAddDeviceModal = () => setIsAddDeviceModalOpen(true);
 
   const closeAddDeviceModal = () => {
@@ -243,24 +287,46 @@ const Devices = () => {
     setDeviceName('');
   };
 
-  const confirmAddDevice = () => {
+  const confirmAddDevice = async () => {
     if (!selectedDevice) {
       alert("Please select a device.");
       return;
     }
-  
-    const deviceDetails = selectedDevice
-      ? {
-          deviceName: deviceName || `${selectedDevice.info.device}_${selectedDevice.socketId.slice(0, 6)}`,
-          socketId: selectedDevice.socketId,
-        }
-      : {
-          deviceName,
-          socketId: socket.id,
-        };
-  
-    socket.emit('register_device', deviceDetails);
-    closeAddDeviceModal();
+
+    // Generate a stable device ID using device info
+    const deviceId = `${selectedDevice.info.device}_${selectedDevice.info.browser}_${selectedDevice.info.os}_${selectedDevice.ip}`.replace(/[^a-zA-Z0-9]/g, '_');
+    
+    const name = deviceName.trim() || `${selectedDevice.info.device}_${deviceId.slice(0, 6)}`;
+
+    const deviceDetails = {
+      deviceId: deviceId,  // Use stable deviceId instead of socketId
+      name: name,
+      socketId: selectedDevice.socketId,  // Keep track of current socketId
+      info: selectedDevice.info,
+      status: 'Connected',
+      lastSeen: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    try {
+      const params = {
+        TableName: 'Devices',
+        Item: deviceDetails
+      };
+      
+      await dynamoDb.put(params).promise();
+      
+      socket.emit('register_device', { 
+        ...deviceDetails,
+        deviceName: name
+      });
+      
+      closeAddDeviceModal();
+    } catch (error) {
+      console.error('Error storing device:', error);
+      alert('Failed to add device. Please try again.');
+    }
   };
 
   const toggleDropdown = (deviceName) => {
@@ -274,21 +340,19 @@ const Devices = () => {
   };
   
   const handleDisplayAd = (device) => {
-    const isDisplaying = deviceAds.has(device.socketId);
-    if (device.status === 'Disconnected') {
-      alert('This device needs to be connected before displaying ads.');
-      return;
-    }
-    if (isDisplaying) {
-      // Show confirmation modal for stopping the ad
-      setSelectedDeviceForAd(device);
-      setIsDisplayConfirmModalOpen(true);
-    } else {
-      // Show ad selection modal
-      setSelectedDeviceForAd(device);
-      setIsDisplayModalOpen(true);
-    }
-    setOpenDropdown(null);
+      const isDisplaying = deviceAds.has(device.socketId);
+      if (device.status === 'Disconnected') {
+          alert('This device needs to be connected before displaying ads.');
+          return;
+      }
+      if (isDisplaying) {
+          setSelectedDeviceForAd(device);
+          setIsDisplayConfirmModalOpen(true);
+      } else {
+          setSelectedDeviceForAd(device);
+          setIsDisplayModalOpen(true);
+      }
+      setOpenDropdown(null);
   };
   
   const handleRemoveDevice = (device) => {
@@ -297,11 +361,29 @@ const Devices = () => {
     setOpenDropdown(null);
   };
   
-  const confirmRemoveDevice = () => {
-    if (deviceToRemove) {
-      socket.emit('remove_device', deviceToRemove.socketId);
-      setIsRemoveModalOpen(false);
-      setDeviceToRemove(null);
+  const confirmRemoveDevice = async () => {
+    if (!deviceToRemove) return;
+    
+    try {
+        const params = {
+            TableName: 'Devices',
+            Key: {
+                deviceId: deviceToRemove.deviceId
+            }
+        };
+        
+        await dynamoDb.delete(params).promise();
+        setConnectedDevices(prevDevices => 
+            prevDevices.filter(d => d.deviceId !== deviceToRemove.deviceId)
+        );
+        
+        socket.emit('remove_device', deviceToRemove.deviceId);
+        
+        setIsRemoveModalOpen(false);
+        setDeviceToRemove(null);
+    } catch (error) {
+        console.error('Error removing device:', error);
+        alert('Failed to remove device. Please try again.');
     }
   };
 
@@ -352,24 +434,10 @@ const Devices = () => {
   const confirmStopDisplay = () => {
     if (selectedDeviceForAd) {
       socket.emit('stop_device_ad', selectedDeviceForAd.socketId);
-      const newDeviceAds = new Map(deviceAds);
-      newDeviceAds.delete(selectedDeviceForAd.socketId);
-      setDeviceAds(newDeviceAds);
       setIsDisplayConfirmModalOpen(false);
       setSelectedDeviceForAd(null);
     }
   };
-
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (!e.target.closest('.device-container')) {
-        setOpenDropdown(null);
-      }
-    };
-  
-    document.addEventListener('click', handleOutsideClick);
-    return () => document.removeEventListener('click', handleOutsideClick);
-  }, []);
   
 
   return (
@@ -454,7 +522,7 @@ const Devices = () => {
                 <div className={`dropdown-menu ${openDropdown === device.name ? 'show' : ''}`}>
                   <button onClick={() => handleViewDevice(device)}>View</button>
                   <button onClick={() => handleDisplayAd(device)}>
-                    {deviceAds.has(device.socketId) ? 'Stop Display' : 'Display'}
+                      {deviceAds.has(device.socketId) ? 'Stop Display' : 'Display'}
                   </button>
                   <button onClick={() => handleRemoveDevice(device)}>Remove</button>
                 </div>
