@@ -139,6 +139,36 @@ const createDevicesTable = async () => {
     }
   };
 
+  const createTVGroupsTable = async () => {
+    const dynamodb = new AWS.DynamoDB();
+    
+    const params = {
+        TableName: 'TV_Groups',
+        KeySchema: [
+            { AttributeName: 'tv_group_id', KeyType: 'HASH' }
+        ],
+        AttributeDefinitions: [
+            { AttributeName: 'tv_group_id', AttributeType: 'S' }
+        ],
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
+        }
+    };
+
+    try {
+        await dynamodb.createTable(params).promise();
+        console.log('TV_Groups table created successfully');
+    } catch (error) {
+        if (error.code === 'ResourceInUseException') {
+            console.log('TV_Groups table already exists');
+        } else {
+            console.error('Error creating TV_Groups table:', error);
+            throw error;
+        }
+    }
+};
+
 const getDeviceInfo = (userAgent) => {
     const info = {
         browser: 'Unknown',
@@ -467,11 +497,34 @@ io.on('connection', (socket) => {
           socket.emit('error', { message: 'Failed to remove device' });
         }
     });
+
+    socket.on('create_group', async (groupData) => {
+        if (socket.user.role !== 'admin') {
+            socket.emit('error', { message: 'Admin access required' });
+            return;
+        }
+    
+        try {
+            await dynamoDB.put({
+                TableName: 'TV_Groups',
+                Item: groupData
+            }).promise();
+    
+            // Emit updated groups list
+            const result = await dynamoDB.scan({ TableName: 'TV_Groups' }).promise();
+            io.emit('groups_list', result.Items);
+    
+        } catch (error) {
+            console.error('Error creating group:', error);
+            socket.emit('error', { message: 'Failed to create group' });
+        }
+    });
 });
 
 const startServer = async () => {
     try {
         await createDevicesTable();
+        await createTVGroupsTable();
         await initializeDevices();
         server.listen(3001, () => {
             console.log('SERVER IS RUNNING ON PORT 3001');
