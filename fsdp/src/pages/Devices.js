@@ -7,7 +7,7 @@ import '../styles/devices.css';
 import { FaEllipsisH, FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
 
-const socket = io('http://192.168.18.66:3001', {
+const socket = io('http://192.168.1.11:3001', {
   auth: {
       token: localStorage.getItem('token')
   },
