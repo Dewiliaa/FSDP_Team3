@@ -176,27 +176,42 @@ const getDeviceInfo = (userAgent) => {
         device: 'Unknown',
     };
     
-    // Enhanced device detection including TV
-    if (userAgent.includes('SmartTV') || 
-        userAgent.includes('SMART-TV') || 
-        userAgent.includes('WebOS') || 
-        userAgent.includes('Tizen') || 
-        userAgent.includes('BRAVIA') ||
-        userAgent.includes('TV Safari')) info.device = 'TV';
+    // TV detection
+    if (userAgent.match(/TV|WebOS|SMART-TV|SmartTV|Tizen|BRAVIA|LG Browser|NetCast|NETTV|CE-HTML|Opera TV|Roku|DLNA|HbbTV|CrKey|Philips|Sharp|Viera|VIDAA|Hisense|Orsay|Toshiba|Thomson|SmartHub|LGE|SRAF|Panasonic/i)) {
+        info.device = 'TV';
+    }
+    // Screen size check for large displays
+    else if (typeof window !== 'undefined' && window.screen) {
+        const screenSize = Math.sqrt(Math.pow(window.screen.width, 2) + Math.pow(window.screen.height, 2)) / 96;
+        if (screenSize > 32 && !userAgent.includes('Mobile') && !userAgent.includes('Tablet')) {
+            info.device = 'TV';
+        }
+        else if (userAgent.includes('Mobile')) info.device = 'Mobile';
+        else if (userAgent.includes('Tablet')) info.device = 'Tablet';
+        else info.device = 'Desktop';
+    }
     else if (userAgent.includes('Mobile')) info.device = 'Mobile';
     else if (userAgent.includes('Tablet')) info.device = 'Tablet';
     else info.device = 'Desktop';
     
+    // OS Detection
     if (userAgent.includes('Windows')) info.os = 'Windows';
     else if (userAgent.includes('Mac')) info.os = 'MacOS';
     else if (userAgent.includes('Linux')) info.os = 'Linux';
     else if (userAgent.includes('Android')) info.os = 'Android';
     else if (userAgent.includes('iOS')) info.os = 'iOS';
+    else if (userAgent.includes('Tizen')) info.os = 'Tizen';
+    else if (userAgent.includes('WebOS')) info.os = 'WebOS';
 
+    // Browser Detection
     if (userAgent.includes('Chrome')) info.browser = 'Chrome';
     else if (userAgent.includes('Firefox')) info.browser = 'Firefox';
     else if (userAgent.includes('Safari')) info.browser = 'Safari';
     else if (userAgent.includes('Edge')) info.browser = 'Edge';
+    else if (userAgent.includes('Opera')) info.browser = 'Opera';
+    else if (userAgent.includes('TV Safari')) info.browser = 'TV Safari';
+    else if (userAgent.includes('Samsung')) info.browser = 'Samsung Browser';
+    else if (userAgent.includes('LG')) info.browser = 'LG Browser';
 
     return info;
 };
@@ -347,46 +362,51 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', async (reason) => {
-      try {
-          // Find device by current socket ID
-          const deviceEntry = Array.from(registeredDevices.entries()).find(
-              ([_, device]) => device.socketId === socket.id
-          );
+        try {
+            // Find device by current socket ID
+            const deviceEntry = Array.from(registeredDevices.entries()).find(
+                ([_, device]) => device.socketId === socket.id
+            );
+    
+            if (deviceEntry) {
+                const [deviceId, device] = deviceEntry;
+                
+                // Update DynamoDB
+                await dynamoDB.update({
+                    TableName: 'Devices',
+                    Key: { deviceId: deviceId },
+                    UpdateExpression: 'SET #status = :status, lastSeen = :lastSeen',
+                    ExpressionAttributeNames: {
+                        '#status': 'status'
+                    },
+                    ExpressionAttributeValues: {
+                        ':status': 'Disconnected',
+                        ':lastSeen': new Date().toISOString()
+                    }
+                }).promise();
+    
+                // Update in-memory status
+                device.status = 'Disconnected';
+                registeredDevices.set(deviceId, device);
   
-          if (deviceEntry) {
-              const [deviceId, device] = deviceEntry;
-              
-              // Update DynamoDB
-              await dynamoDB.update({
-                  TableName: 'Devices',
-                  Key: { deviceId: deviceId },
-                  UpdateExpression: 'SET #status = :status, lastSeen = :lastSeen',
-                  ExpressionAttributeNames: {
-                      '#status': 'status'
-                  },
-                  ExpressionAttributeValues: {
-                      ':status': 'Disconnected',
-                      ':lastSeen': new Date().toISOString()
-                  }
-              }).promise();
-  
-              // Update in-memory status
-              device.status = 'Disconnected';
-              registeredDevices.set(deviceId, device);
-              io.emit('device_list', Array.from(registeredDevices.values()));
-          }
-  
-          // Clean up connected devices
-          const connectedEntry = Array.from(connectedDevices.entries()).find(
-              ([_, device]) => device.socketId === socket.id
-          );
-          if (connectedEntry) {
-              connectedDevices.delete(connectedEntry[0]);
-              io.emit('available_devices', Array.from(connectedDevices.values()));
-          }
-      } catch (error) {
-          console.error('Error updating disconnect status:', error);
-      }
+                // Clear any active ads for the disconnected device
+                io.emit('ad_stopped', { deviceId: socket.id });
+                io.emit('device_ad_update', { deviceId: socket.id, ad: null });
+                
+                io.emit('device_list', Array.from(registeredDevices.values()));
+            }
+    
+            // Clean up connected devices
+            const connectedEntry = Array.from(connectedDevices.entries()).find(
+                ([_, device]) => device.socketId === socket.id
+            );
+            if (connectedEntry) {
+                connectedDevices.delete(connectedEntry[0]);
+                io.emit('available_devices', Array.from(connectedDevices.values()));
+            }
+        } catch (error) {
+            console.error('Error updating disconnect status:', error);
+        }
     });
 
     socket.on('trigger_ad', (adImagePath) => {

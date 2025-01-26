@@ -7,7 +7,7 @@ import '../styles/Scheduling.css';
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 // Initialize the socket connection
-const socket = io('http://192.168.1.11:3001', {
+const socket = io('http://192.168.18.66:3001', {
     auth: {
         token: localStorage.getItem('token') // Assuming token is stored in localStorage
     },

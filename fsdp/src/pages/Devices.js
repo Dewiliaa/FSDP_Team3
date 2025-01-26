@@ -150,13 +150,27 @@ const Devices = () => {
 
   useEffect(() => {
     socket.on('device_list', (devices) => {
-      setConnectedDevices(devices); // Direct update instead of merging
+      setConnectedDevices(devices);
+      // Check and clear ads for any disconnected devices
+      devices.forEach(device => {
+        if (device.status === 'Disconnected' && deviceAds.has(device.socketId)) {
+          setDeviceAds(prev => {
+            const newDeviceAds = new Map(prev);
+            newDeviceAds.delete(device.socketId);
+            return newDeviceAds;
+          });
+          
+          // Reset any open display modals for the disconnected device
+          if (selectedDeviceForAd?.socketId === device.socketId) {
+            setSelectedDeviceForAd(null);
+            setIsDisplayConfirmModalOpen(false);
+          }
+        }
+      });
     });
-
-    return () => {
-      socket.off('device_list');
-    };
-  }, []);
+  
+    return () => socket.off('device_list');
+  }, [deviceAds, selectedDeviceForAd]);
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
