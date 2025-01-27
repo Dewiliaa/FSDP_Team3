@@ -3,11 +3,12 @@ import CalendarComponent from '../components/CalendarComponent';
 import AWS from '../aws-config'; // Import AWS configuration
 import io from 'socket.io-client';  // Import socket.io-client
 import '../styles/Scheduling.css';
+import config from '../config'; // Import the config file
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 // Initialize the socket connection
-const socket = io('http://192.168.18.66:3001', {
+const socket = io(config.wsUrl, {
     auth: {
         token: localStorage.getItem('token') // Assuming token is stored in localStorage
     },
