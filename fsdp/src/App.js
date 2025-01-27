@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
         // Validate token with backend
         const validateToken = async () => {
             try {
-                const response = await fetch(config.wsUrl +'/api/auth/validate', {
+                const response = await fetch(config.apiBaseUrl +'/api/auth/validate', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
