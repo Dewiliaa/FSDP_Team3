@@ -8,7 +8,7 @@ import config from '../config'; // Import the config file
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 // Initialize the socket connection
-const socket = io(config.wsUrl, {
+const socket = io(config.apiBaseUrl, {
     auth: {
         token: localStorage.getItem('token') // Assuming token is stored in localStorage
     },

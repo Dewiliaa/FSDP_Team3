@@ -31,7 +31,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     const validateToken = async (token) => {
         try {
-            const response = await fetch(config.wsUrl + '/api/auth/validate', {
+            const response = await fetch(config.apiBaseUrl + '/api/auth/validate', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -56,7 +56,7 @@ const Login = ({ setIsAuthenticated }) => {
         setError('');
 
         try {
-            const response = await fetch(config.wsUrl +'/api/auth/login', {
+            const response = await fetch(config.apiBaseUrl +'/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
