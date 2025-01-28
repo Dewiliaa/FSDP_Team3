@@ -15,6 +15,7 @@ import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
 import CanvaPage from './pages/CanvaPage';
+import config from './config';
 
 // Separate component for the main app content to use hooks
 const ProtectedRoute = ({ children }) => {
@@ -26,7 +27,11 @@ const ProtectedRoute = ({ children }) => {
         // Validate token with backend
         const validateToken = async () => {
             try {
+<<<<<<< HEAD
                 const response = await fetch('http://192.168.1.62:3001/api/auth/validate', {
+=======
+                const response = await fetch(config.apiBaseUrl +'/api/auth/validate', {
+>>>>>>> db9d8ed82928d9268895c661b2114b687aa14aa6
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

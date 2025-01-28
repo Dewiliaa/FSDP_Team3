@@ -1,574 +1,556 @@
-/* Devices */
+/* Main layout */
 .devices {
-    margin-left: 200px;
-    padding: 20px;
-  }
-  
-  .switch-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    margin-top: 20px;
-  }
-  
-  .button-container {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 40px;
-  }
-  
-  .select-button, .add-button {
-    display: flex;
-    align-items: center;
-    padding: 10px 20px;
-    font-size: 1em;
-    font-weight: bold;
-    font-family: Arial, Helvetica, sans-serif;
-    color: white;
-    background-color: #007bff;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .select-button .icon, .add-button .icon {
-    margin-right: 8px;
-    font-size: 1.2em;
-  }
-  
-  .select-button:hover, .add-button:hover {
-    background-color: #0056b3;
-  }
-  
-  .add-button {
-    background-color: #28a745;
-  }
-  
-  .add-button:hover {
-    background-color: #218838;
-  }
-  
-  .no-devices-message {
-    text-align: center;
-    font-size: 1.5em;
-    font-family: Arial, Helvetica, sans-serif;
-    color: #333;
-    margin: 40px 0;
-  }
-  
-  /* Modal */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 10;
-  }
-  
-  .modal-content {
-    background: white;
-    padding: 20px;
-    width: 300px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    text-align: center;
-  }
-  
-  .modal-title {
-    font-size: 30px;
-    font-weight: 300;
-  }
-  
-  .device-list {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .device-list li {
-    padding: 10px;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    margin: 5px 0;
-    border-radius: 4px;
-  }
-  
-  .device-list li.selected {
-    background-color: #2196f3;
-    color: white;
-  }
-  
-  .device-name-input {
-    height: 30px;
-    font-size: 20px;
-  }
-  
-  .modal-buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-  }
-  
-  .modal-buttons button {
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  
-  .modal-buttons button:hover {
-    background-color: #ccc;
-  }
-  
-  .device-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 10px; 
-    margin-top: 20px;
-  }
-  
-  .device-containers {
-    display: flex;
-    flex-direction: column;
-    margin-top: 20px;
-  }
-  
-  .device-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-  
-  .more-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .dropdown {
-    position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-  }
-  
-  .dropdown button {
-    width: 100%;
-    padding: 5px;
-    background: none;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .dropdown button:hover {
-    background-color: #f0f0f0;
-  }
-  
-  
-  .choose-devices-text {
-      margin-top: 15px;
-      font-size: 16px;
-      color: #555; 
-  }
-  
-  .ad-selection {
-      list-style: none;
-      padding: 0;
-  }
-  
-  .ad-selection .ad-option {
-      padding: 10px;
-      cursor: pointer;
-      border: 1px solid #ccc;
-      margin: 5px 0;
-      border-radius: 4px;
-  }
-
-
-/* Container for the list of connected devices */
-.device-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Grid layout for devices */
-  gap: 30px;
-  padding: 20px;
+  margin-left: 200px;
+  padding: 32px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
 }
 
-/* Styling for the individual device container */
-.device-container {
+.page-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 1.5rem;
+}
+
+/* Control panel */
+.button-container {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+}
+
+.control-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  gap: 8px;
+}
+
+.select-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  gap: 8px;
+  background-color: #4f46e5;
+  color: white;
+}
+
+.select-button:hover {
+  background-color: #4338ca;
+  transform: translateY(-1px);
+}
+
+.select-button.active {
+  background-color: #312e81;
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  gap: 8px;
+  background-color: #10b981;
+  color: white;
+}
+
+.add-button:hover {
+  background-color: #059669;
+  transform: translateY(-1px);
+}
+
+.ad-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  gap: 8px;
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+  color: white;
+}
+
+.ad-button:hover {
+  background: linear-gradient(135deg, #db2777, #e11d48);
+  transform: translateY(-1px);
+}
+
+/* Search Bar */
+.search-container {
+  margin-bottom: 24px;
+}
+
+.search-box {
   position: relative;
+  max-width: 400px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 1rem;
+}
+
+/* Device grid */
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.device-container {
+  min-height: 280px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px;
+  gap: 20px;
+  position: relative;
+  border: 2px solid #d3d3d3;
+  border-radius: 16px;
+ }
+
+ .device-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
-}
+  width: 100%;
+  position: relative;
+ }
 
 .device-container:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Subtle hover effect */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.device-container span {
-  font-size: 16px;
+.device-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #f3f4f6;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4f46e5;
+}
+
+.device-name {
   font-weight: 600;
-  color: #333; /* Dark color for text */
-  flex-grow: 1;
+  color: #1f2937;
 }
 
-.more-button {
-  background-color: #f1f1f1;
-  border: none;
-  width: 30px;  /* Fixed width */
-  height: 30px; /* Fixed height */
-  cursor: pointer;
-  font-size: 18px;
-  color: #888;
-  border-radius: 50%; /* Circular button */
-  display: flex;
-  justify-content: center; /* Horizontally center the content */
-  align-items: center; /* Vertically center the content */
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  padding: 0;  /* Remove any padding that might cause misalignment */
-  line-height: 1;  /* Ensure no extra line height affects centering */
+.device-status {
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
-.more-button:hover {
-  background-color: #ddd;
-  transform: scale(1.1);  /* Slight zoom effect on hover */
-}
-
-.more-button svg {
-  width: 13px; /* Smaller width for thinner appearance */
-  height: auto;
-}
-
-
-/* Dropdown menu */
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: white;
-  border: 1px solid #ccc;
-  border-radius: 8px; /* Softer corners for a modern look */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Deeper shadow for better separation */
-  z-index: 100;
-  width: 160px; /* Slightly wider for better fit */
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-
-  opacity: 0; /* Initially hidden */
-  visibility: hidden; /* Initially hidden */
-  transition: opacity 0.3s ease, visibility 0.3s ease; /* Smooth fade-in/out */
-}
-
-.dropdown-menu.show {
-  opacity: 1; /* Visible when class 'show' is added */
-  visibility: visible; /* Make the dropdown visible */
-}
-
-/* Dropdown menu button styling */
-.dropdown-menu button {
-  padding: 10px 16px; /* Increased padding for a more clickable look */
-  background-color: #f9f9f9;
-  border: none;
-  text-align: left;
-  font-size: 14px;
-  color: #333;
-  cursor: pointer;
-  border-radius: 4px; /* Rounded corners for each button */
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth background and scale effect */
-}
-
-/* Hover and active button effects */
-.dropdown-menu button:hover {
-  background-color: #f1f1f1;
-  transform: scale(1.05); /* Slight scaling effect on hover */
-}
-
-/* Focus state for accessibility */
-.dropdown-menu button:focus {
-  outline: none;
-  background-color: #e0e0e0; /* Subtle background change on focus */
-}
-
-/* No devices message */
-.no-devices-message {
-  text-align: center;
-  font-size: 18px;
-  color: #666;
-  margin-top: 50px;
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
+.status-connected {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-disconnected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.device-display-status {
+  margin-top: 16px;
+  width: 100%;
+  position: relative;
+}
+
+.display-container {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ }
+ 
+ .display-container.empty {
+  background: #f8fafc;
+  border: 2px dashed #e2e8f0;
+  color: #64748b;
+  font-weight: 500;
+ }
+
+ .display-container.empty span {
+  text-align: center;
+  font-size: 1rem;
+  color: #94a3b8;
+}
+
+.display-container.active {
+  background-color: #000;
+}
+
+.display-container video,
+.display-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.live-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+ } 
+
+ .live-dot {
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+ }
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Device actions */
+.more-button {
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.more-button:hover {
+  background-color: #f3f4f6;
+  color: #4f46e5;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 40px;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  min-width: 160px;
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-menu button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #374151;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown-menu button:hover {
+  background-color: #f3f4f6;
+  color: #4f46e5;
+}
+
+/* Selection mode */
+.device-container.selectable {
+  cursor: pointer;
+  border: 2px solid #d3d3d3;
+}
+
+.device-container.selectable:hover {
+  border-color: #4f46e5;
+  background-color: #f5f3ff;
+}
+
+.device-container.selected {
+  border-color: #4f46e5;
+  background-color: #ede9fe;
+}
+
+/* Ad gallery */
+.modal-content.display-modal-content {
+  width: 90vw;
+  max-width: 1200px;
+  max-height: 80vh;
+  overflow-y: auto;
+ }
+
+.ad-grid {
+ display: grid;  
+ grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+ gap: 1rem;
+ padding: 1rem;
+ max-height: 60vh;
+ overflow-y: auto;
+}
+
+.ad-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.ad-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ad-item img,
+.ad-item video {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+}
+
+.ad-preview {
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
 
 
-  /* Ad Button */
-.ad-overlay {
-    position: fixed;       /* Make it fixed so it stays on top of the page */
-    top: 0;
-    left: 0;
-    width: 100vw;          /* Full width of the viewport */
-    height: 100vh;         /* Full height of the viewport */
-    background-color: rgba(0, 0, 0, 0.5);  /* Optional: semi-transparent background */
-    display: flex;
-    justify-content: center;  /* Center the image horizontally */
-    align-items: center;      /* Center the image vertically */
-    z-index: 9999;           /* Make sure it's on top of other content */
-  }
-  
-  .ad-overlay img {
-    width: 100%;  /* Make the image take up the full width of the container */
-    height: 100%; /* Make the image take up the full height of the container */
-    object-fit: cover; /* Ensure the image covers the area without distortion */
-  }
-  
-  .ad-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #ff6b6b, #f06595);
-    color: white;
-    font-weight: bold;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  
-  .ad-button .icon {
-    margin-right: 8px;
-  }
-  
-  .ad-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
-  }
-  
-  .ad-button:active {
-    transform: scale(0.98);
-    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
-  }
-  
-  /* Modal Overlay */
-  .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-
-  .modal-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: #ffffff;
-      border-radius: 15px;
-      padding: 25px;
-      width: 90%;
-      max-width: 450px;
-      box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
-      animation: slide-down 0.3s ease-out;
-      gap: 20px; /* Ensures proper spacing between items */
-      text-align: center;
-  }
-
-  .modal-content h3 {
-      font-size: 24px;
-      font-weight: bold;
-      color: #6a4fe7;
-  }
-
-  .modal-content input {
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      width: calc(100% - 24px);
-      font-size: 16px;
-  }
-
-  .modal-content input:focus {
-    border-color: #6a4fe7;
-    outline: none;
-  }
-
-  .button-group {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .modal-content button {
-    margin: 5px;
-    padding: 12px 20px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-  }
-
-  .modal-content button:hover {
-    background-color: #6a4fe7;
-    color: white;
-    transform: scale(1.05);
-  }
-
-  .modal-content .add-button {
-    background-color: #4caf50;
-    color: white;
-  }
-
-  .modal-content .cancel-button {
-    background-color: #ff3d00;
-    color: white;
-  }
-
-  /* Modal Animation */
-  @keyframes slide-down {
-    from {
-      transform: translateY(-50%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  
-  /* Modal Text */
-  .modal-content p {
-    margin-bottom: 1.5rem;
-    font-size: 1rem;
-    color: #555;
-  }
-  
-  /* Modal Buttons */
-  .modal-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-  }
-  
-  .modal-buttons button {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-  }
-  
-  /* Yes Button Styling */
-  .modal-buttons button:first-child {
-    background: #28a745;
-    color: #fff;
-  }
-  
-  .modal-buttons button:first-child:hover {
-    background: #218838;
-  }
-  
-  /* No Button Styling */
-  .modal-buttons button:last-child {
-    background: #dc3545;
-    color: #fff;
-  }
-  
-  .modal-buttons button:last-child:hover {
-    background: #c82333;
-  }
 
 
-  .ad-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    margin-top: 20px;
-  }
+/* Modals */
+.modal {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  animation: modalFadeIn 0.3s ease;
+}
 
-  
-  .ad-container {
-    position: fixed;
-    top: 50%;
-    left: 55%;
-    transform: translate(-50%, -50%);  /* Centers the container */
-    padding: 20px;
-    background-color: #fff;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .ad-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
+.modal-title {
+  font-size: 1.75rem;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
+  font-weight: 700;
+ }
 
-  .full-screen-ad {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+.modal-subtitle {
+  font-size: 1.25rem;
+  color: #6366f1;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
 
-  .full-screen-ad video {
-    max-width: 100%;
-    max-height: 95%;
-    border-radius: 10px;
-  }
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.3s ease;
+}
 
-  
-  .stop-ad-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #6a4fe7;
-    color: white;
-    border-radius: 5px;
-    padding: 10px 15px;
-    font-size: 14px;
-    cursor: pointer;
-    z-index: 1100;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  
-  .stop-ad-button:hover {
-    background-color: #d32f2f;
-  }
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* View Modal */
+.device-details {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 20px 0;
+}
+
+.device-details p {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e2e8f0;
+  margin: 0;
+}
+
+.device-details p:last-child {
+  border-bottom: none;
+}
+
+.device-details strong {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.current-display {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid #e2e8f0;
+}
+
+.current-display h4 {
+  color: #0f172a;
+  font-size: 1.1rem;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.modal-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #4f46e5;
+  color: white;
+}
+
+.primary-button:hover {
+  background: #4338ca;
+  transform: translateY(-1px);
+}
+
+.secondary-button {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.secondary-button:hover {
+  background: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.danger-button {
+  background: #ef4444;
+  color: white;
+}
+
+.danger-button:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Remove confirmation modal */
+.confirm-modal-content {
+  text-align: center;
+  padding: 40px;
+}
+
+.confirm-modal-content h3 {
+  color: #dc2626;
+  font-size: 1.5rem;
+  margin-bottom: 12px;
+}
+
+.confirm-modal-content p {
+  color: #64748b;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+}
+
+/* Display Modal */
+.ad-item.selected {
+  border: 2px solid #4f46e5;
+  background-color: #f5f3ff;
+}
+
+.ad-item {
+  padding: 12px;
+  border: 2px solid transparent;
+  background: white;
+  border: 2px solid #d3d3d3;
+}

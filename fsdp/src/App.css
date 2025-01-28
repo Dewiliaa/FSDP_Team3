@@ -867,3 +867,45 @@ input:checked + .slider {
 .scheduling .schedule-button:hover {
   background-color: #45a049;
 }
+
+/* Styling for time selection */
+.time-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Space between time inputs */
+  margin-bottom: 20px; /* Space below time inputs */
+}
+
+.time-selection label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.time-selection input {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+}
+
+/* Styling for ad and device selection */
+.ad-device-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Space between ad and device selectors */
+}
+
+.ad-device-selection label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.ad-device-selection select {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  width: 100%;
+}
+

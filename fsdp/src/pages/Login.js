@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Lottie from 'react-lottie';
 import loadingAnimation from '../assets/loading.json';
 import '../App.css';
+import config from '../config';
 
 const Login = ({ setIsAuthenticated }) => {
     const navigate = useNavigate();
@@ -30,7 +31,11 @@ const Login = ({ setIsAuthenticated }) => {
 
     const validateToken = async (token) => {
         try {
+<<<<<<< HEAD
             const response = await fetch('http://192.168.1.62:3001/api/auth/validate', {
+=======
+            const response = await fetch(config.apiBaseUrl + '/api/auth/validate', {
+>>>>>>> db9d8ed82928d9268895c661b2114b687aa14aa6
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -55,7 +60,11 @@ const Login = ({ setIsAuthenticated }) => {
         setError('');
 
         try {
+<<<<<<< HEAD
             const response = await fetch('http://192.168.1.62:3001/api/auth/login', {
+=======
+            const response = await fetch(config.apiBaseUrl +'/api/auth/login', {
+>>>>>>> db9d8ed82928d9268895c661b2114b687aa14aa6
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

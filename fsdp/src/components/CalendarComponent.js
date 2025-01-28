@@ -10,13 +10,13 @@ const CalendarComponent = ({ onDateTimeRangeChange }) => {
 
     useEffect(() => {
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        setStartTime(currentTime);
+        setStartTime(currentTime); // Set current time for start time on first render
     }, []);
     
     const onDateChange = (newDateRange) => {
         if (newDateRange[0] >= new Date().setHours(0, 0, 0, 0)) { 
             setDateRange(newDateRange);
-            onDateTimeRangeChange(newDateRange, startTime, endTime); // Pass changes to parent
+            onDateTimeRangeChange(newDateRange, startTime, endTime); // Pass date and times to parent
         }
     };
     
@@ -34,7 +34,7 @@ const CalendarComponent = ({ onDateTimeRangeChange }) => {
             }
         } else {
             setStartTime(selectedTime);
-            onDateTimeRangeChange(dateRange, selectedTime, endTime);
+            onDateTimeRangeChange(dateRange, selectedTime, endTime); // Update parent
         }
     };
     
