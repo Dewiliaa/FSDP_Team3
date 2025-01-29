@@ -83,52 +83,55 @@ const Scheduling = () => {
         };
     }, [selectedDevice]); // Re-run when selectedDevice changes
 
+    // Handle scheduling of ads
     const handleScheduleClick = () => {
         console.log("Selected Ad:", selectedAd);
         console.log("Selected Device:", selectedDevice);
-    
+
         if (!selectedDevice || !selectedAd) {
             alert("Please select both a device and an ad.");
             return;
         }
-    
+
         const selectedDeviceDetails = connectedDevices.find(device => device.deviceId === selectedDevice);
         if (!selectedDeviceDetails || selectedDeviceDetails.status !== 'Connected') {
             alert("Please select a connected device.");
             return;
         }
-    
+
         const startDateTime = new Date(`${selectedRange[0].toDateString()} ${startTime}`);
         const endDateTime = new Date(`${selectedRange[1].toDateString()} ${endTime}`);
-    
+
         if (endDateTime <= startDateTime) {
             alert("The end time must be after the start time.");
             return;
         }
-    
+
         const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
-    
+
         const newSchedule = {
             ad: selectedAdDetails.name,
             device: selectedDevice,
             startDateTime: startDateTime.toISOString(),
             endDateTime: endDateTime.toISOString(),
             adUrl: selectedAdDetails.url,
+            startTime: startDateTime.toLocaleString(), // Added startTime to the scheduled ad data
         };
-    
+
         const updatedSchedules = [...scheduledAds, newSchedule];
         setScheduledAds(updatedSchedules);
         localStorage.setItem("adSchedules", JSON.stringify(updatedSchedules));
-    
+
         // Emit the scheduled ad to devices immediately for testing
         socket.emit('display_ad', {
             adUrl: selectedAdDetails.url,
             deviceId: selectedDevice,
             ad: selectedAdDetails.name,
+            scheduledTime: startDateTime.toLocaleString(), // Send start time with the ad data
         });
-    
+
         alert("Ad scheduled and broadcasted successfully!");
-    
+
         // Schedule the ad to appear at the right time
         const delay = startDateTime - new Date(); // Calculate the delay in milliseconds
         if (delay > 0) {
@@ -137,12 +140,12 @@ const Scheduling = () => {
                     adUrl: selectedAdDetails.url,
                     deviceId: selectedDevice,
                     ad: selectedAdDetails.name,
+                    scheduledTime: startDateTime.toLocaleString(), // Send start time with the ad data
                 });
                 console.log(`Ad ${selectedAdDetails.name} is now displayed on device ${selectedDevice}`);
             }, delay); // Emit the event when the time comes
         }
     };
-    
 
     // Clear expired ads
     useEffect(() => {
@@ -204,7 +207,8 @@ const Scheduling = () => {
                             <li key={index} className="scheduled-ad-item">
                                 <strong>{ad.ad}</strong> on <em>{ad.device}</em> from{" "}
                                 {new Date(ad.startDateTime).toLocaleString()} to{" "}
-                                {new Date(ad.endDateTime).toLocaleString()}
+                                {new Date(ad.endDateTime).toLocaleString()}<br />
+                                <strong>Start Time:</strong> {ad.startTime}  {/* Display the start time */}
                             </li>
                         ))}
                     </ul>
