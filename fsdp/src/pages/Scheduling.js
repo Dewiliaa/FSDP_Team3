@@ -83,10 +83,27 @@ const Scheduling = () => {
         };
     }, [selectedDevice]); // Re-run when selectedDevice changes
 
+    // Validate if the start time is valid (must be current time or later)
+    const validateStartTime = () => {
+        const currentTime = new Date();
+        const selectedStartDateTime = new Date(`${selectedRange[0].toDateString()} ${startTime}`);
+        
+        if (selectedStartDateTime < currentTime) {
+            alert("You cannot schedule an ad for a time in the past. Please select a time equal to or later than the current time.");
+            return false;
+        }
+        return true;
+    };
+
     // Handle scheduling of ads
     const handleScheduleClick = () => {
         console.log("Selected Ad:", selectedAd);
         console.log("Selected Device:", selectedDevice);
+
+        // Validate the start time
+        if (!validateStartTime()) {
+            return;
+        }
 
         if (!selectedDevice || !selectedAd) {
             alert("Please select both a device and an ad.");

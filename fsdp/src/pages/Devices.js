@@ -147,6 +147,41 @@ const Devices = () => {
 // Image modal rendering part
 {isImageModalOpen && selectedAd && selectedAd.adMediaPath && (
     <div className="full-screen-ad">
+        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
+        <img
+            src={selectedAd.adMediaPath}
+            alt={selectedAd.adName}
+            style={{
+                width: '100vw',
+                height: '100vh',
+                objectFit: 'cover',
+                backgroundColor: '#000',
+            }}
+            onClick={() => setIsImageModalOpen(false)}  // Close modal on click
+        />
+    </div>
+)}
+
+{isVideoModalOpen && selectedAd && selectedAd.adMediaPath && (
+    <div className="full-screen-ad">
+        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
+        <video
+            src={selectedAd.adMediaPath}
+            controls
+            autoPlay
+            loop
+            style={{
+                width: '100vw',
+                height: '100vh',
+                objectFit: 'cover',
+            }}
+            onClick={() => setIsVideoModalOpen(false)}  // Close modal on click
+        />
+    </div>
+)} 
+// Image modal rendering part
+{isImageModalOpen && selectedAd && selectedAd.adMediaPath && (
+    <div className="full-screen-ad">
         <h3>Scheduled Time: {scheduledStartTime}</h3>  {/* Display the scheduled start time */}
         <img
             src={selectedAd.adMediaPath}
