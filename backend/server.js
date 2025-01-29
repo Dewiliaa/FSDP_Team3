@@ -113,21 +113,18 @@ let registeredDevices = new Map();
 app.post('/schedule-ad', async (req, res) => {
     const { adUrl, deviceId, startDateTime, adName } = req.body;
 
-    // Save the scheduled ad (in-memory or DynamoDB)
-    const newAd = {
-        adUrl,
-        deviceId,
-        startDateTime,
-        adName,
-    };
-
     // Calculate the delay (in milliseconds) until the scheduled time
     const delay = new Date(startDateTime) - new Date();
 
     if (delay > 0) {
         // Schedule the ad to be sent to the device after the delay
         setTimeout(() => {
-            io.to(deviceId).emit('display_ad', { adUrl, deviceId, ad: adName });
+            io.to(deviceId).emit('display_ad', { 
+                adUrl, 
+                deviceId, 
+                ad: adName,
+                scheduledTime: new Date(startDateTime).toLocaleString()  // Include the scheduled time here
+            });
             console.log(`Ad scheduled: ${adName} will be displayed on ${deviceId}`);
         }, delay);
     }

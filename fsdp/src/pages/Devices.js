@@ -113,22 +113,20 @@ const Devices = () => {
             console.log('Matched ad:', ad);
 
             if (ad) {
-                // Set the ad and start rendering it
                 setSelectedAd(ad);
 
                 // Check if the ad is an image or video and open the respective modal
                 if (ad.type === 'image') {
-                    setIsImageModalOpen(true);  // Open image modal if it's an image
+                    setIsImageModalOpen(true);
                 } else if (ad.type === 'video') {
-                    setIsVideoModalOpen(true);  // Open video modal if it's a video
+                    setIsVideoModalOpen(true);
                 }
 
-                // Set the live ad
                 setLiveAd(ad.name);
 
                 // Set the scheduled time for display
-                console.log('Scheduled Start Time:', data.startDateTime);
-                setScheduledStartTime(data.startDateTime);  // Store the scheduled time in state
+                console.log('Scheduled Start Time:', data.scheduledTime);
+                setScheduledStartTime(data.scheduledTime);  // Store the scheduled time in state
             }
         }
     });
@@ -142,7 +140,7 @@ const Devices = () => {
         socket.off('display_ad');
         socket.off('ad_confirmed');
     };
-}, [ads, isServerSite]);
+}, [ads, isServerSite]);  // Properly initialize and include dependencies in the array
 
 // Image modal rendering part
 {isImageModalOpen && selectedAd && selectedAd.adMediaPath && (
@@ -158,6 +156,24 @@ const Devices = () => {
                 backgroundColor: '#000',
             }}
             onClick={() => setIsImageModalOpen(false)}  // Close modal on click
+        />
+    </div>
+)}
+
+{isVideoModalOpen && selectedAd && selectedAd.adMediaPath && (
+    <div className="full-screen-ad">
+        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
+        <video
+            src={selectedAd.adMediaPath}
+            controls
+            autoPlay
+            loop
+            style={{
+                width: '100vw',
+                height: '100vh',
+                objectFit: 'cover',
+            }}
+            onClick={() => setIsVideoModalOpen(false)}  // Close modal on click
         />
     </div>
 )}
