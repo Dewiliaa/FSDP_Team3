@@ -130,7 +130,7 @@ const Devices = () => {
       socket.off('ad_confirmed');
     };
   }, [ads, isServerSite]);
-
+  
   // Rest of your existing component code stays exactly the same
 
   useEffect(() => {
