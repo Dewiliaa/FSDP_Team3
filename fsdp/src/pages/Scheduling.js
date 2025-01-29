@@ -131,6 +131,18 @@ const Scheduling = () => {
         alert("Ad scheduled and broadcasted successfully!");
     };
 
+    // Clear expired ads
+    useEffect(() => {
+        const clearExpiredAds = () => {
+            const currentTime = new Date().toISOString();
+            const filteredAds = scheduledAds.filter(ad => new Date(ad.endDateTime) > new Date(currentTime));
+            setScheduledAds(filteredAds);
+            localStorage.setItem("adSchedules", JSON.stringify(filteredAds));
+        };
+
+        clearExpiredAds();  // Clear expired ads when the component mounts or the ad schedules are updated
+    }, [scheduledAds]);  // Re-run when scheduled ads change
+
     return (
         <div className="scheduling">
             <h2 className="page-title">Ad Scheduling</h2>
