@@ -1,8 +1,6 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
-import React, { useState, useRef, useCallback, memo } from 'react';
-import LibraryPanel from './Librarypanel';
 
 
 const s3 = new AWS.S3();
@@ -36,7 +34,7 @@ const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   </div>
 ));
 
-const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement, bringToFront, sendToBack, toggleLock, toggleGrid, gridEnabled}) => (
+const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement, bringToFront, sendToBack, toggleLock}) => (
   <div className="toolbar">
     <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
     <button onClick={() => onAddShape('circle')}>Add Circle</button>
@@ -92,7 +90,6 @@ const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddTex
     <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
     <button onClick={onRedo} disabled={redoDisabled}>Redo</button>
     <button onClick={onDelete}>Delete</button>
-    <button onClick={toggleGrid}>{gridEnabled ? 'Disable Grid' : 'Enable Grid'}</button>
   </div>
 ));
 
@@ -107,7 +104,6 @@ const EditTemplate = () => {
   const [currentStateIndex, setCurrentStateIndex] = useState(-1);
   const stateHistory = useRef([]);
   const maxHistoryLength = 50;
-  const [gridEnabled, setGridEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const currentState = useRef({shapes: [], images: [], texts: []
@@ -191,36 +187,16 @@ const EditTemplate = () => {
 
   const redrawCanvas = useCallback(() => {
     if (!ctxRef.current) return;
-  
+
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
-  
-    // Clear the canvas
+
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-    // Draw grid if enabled
-    if (gridEnabled) {
-      const gridSize = 20;
-      ctx.strokeStyle = '#e0e0e0';
-      for (let x = 0; x < canvas.width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
-    }
-  
+
     const { shapes, images, texts } = currentState.current;
     const { selectedElement } = interactionStateRef.current;
-  
-    // Redraw shapes
+
     shapes.forEach((shape) => {
       ctx.fillStyle = shape.color;
       if (shape.shapeType === 'rectangle') {
@@ -237,22 +213,19 @@ const EditTemplate = () => {
         ctx.fill();
       }
     });
-  
-    // Redraw texts
+
     texts.forEach((text) => {
       ctx.font = `${text.fontSize}px ${text.font}`;
       ctx.fillStyle = text.color;
       ctx.fillText(text.text, text.x, text.y + text.height);
     });
-  
-    // Redraw images
+
     images.forEach((image) => {
       if (image.img) {
         ctx.drawImage(image.img, image.x, image.y, image.width, image.height);
       }
     });
-  
-    // Highlight the selected element
+
     if (selectedElement) {
       ctx.strokeStyle = 'blue';
       ctx.strokeRect(
@@ -261,8 +234,7 @@ const EditTemplate = () => {
         selectedElement.width,
         selectedElement.height
       );
-  
-      // Draw resize handles
+
       RESIZE_HANDLES.forEach((handle) => {
         let handleX, handleY;
         if (handle === 'nw') {
@@ -279,15 +251,10 @@ const EditTemplate = () => {
           handleY = selectedElement.y + selectedElement.height;
         }
         ctx.fillStyle = 'blue';
-        ctx.fillRect(
-          handleX - HANDLE_SIZE / 2,
-          handleY - HANDLE_SIZE / 2,
-          HANDLE_SIZE,
-          HANDLE_SIZE
-        );
+        ctx.fillRect(handleX - HANDLE_SIZE / 2, handleY - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
       });
     }
-  }, [gridEnabled]);
+  }, []);
 
   const changeFontSize = useCallback((action) => {
     const { selectedElement } = interactionStateRef.current;
@@ -376,11 +343,6 @@ const EditTemplate = () => {
       images: imagesWithElements
     };
 
-    redrawCanvas();
-  }, [redrawCanvas]);
-
-  const toggleGrid = useCallback(() => {
-    setGridEnabled((prev) => !prev);
     redrawCanvas();
   }, [redrawCanvas]);
 
