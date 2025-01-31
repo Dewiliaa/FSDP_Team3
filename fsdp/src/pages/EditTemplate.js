@@ -1,12 +1,15 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
+import React, { useState, useRef, useCallback, memo } from 'react';
+import LibraryPanel from './Librarypanel';
 
 
 const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const HANDLE_SIZE = 8;
 const RESIZE_HANDLES = ['nw', 'ne', 'se', 'sw'];
+const [showLibrary, setShowLibrary] = useState(true);
 
 const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   <div className="dimension_modal">
