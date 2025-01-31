@@ -2,6 +2,9 @@ import React, { useState, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
 
+
+const s3 = new AWS.S3();
+const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const HANDLE_SIZE = 8;
 const RESIZE_HANDLES = ['nw', 'ne', 'se', 'sw'];
 
@@ -100,9 +103,57 @@ const EditTemplate = () => {
   const [currentStateIndex, setCurrentStateIndex] = useState(-1);
   const stateHistory = useRef([]);
   const maxHistoryLength = 50;
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentState = useRef({shapes: [], images: [], texts: []
   });
+
+  // Add save functionality
+  const saveToS3 = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      const canvas = canvasRef.current;
+      
+      // Convert canvas to blob
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      // Generate unique filename
+      const filename = `ad_${Date.now()}.png`;
+      
+      // S3 upload parameters
+      const params = {
+        Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
+        Key: `media/${filename}`,
+        Body: blob,
+        ContentType: 'image/png',
+        ACL: 'public-read'
+      };
+
+      // Upload to S3
+      const data = await s3.upload(params).promise();
+
+      // Save metadata to DynamoDB
+      const dynamoParams = {
+        TableName: 'Ads',
+        Item: {
+          ad_id: data.Key,
+          name: filename,
+          type: 'image',
+          uploadDate: new Date().toISOString(),
+          url: data.Location,
+        },
+      };
+
+      await dynamoDb.put(dynamoParams).promise();
+      
+      alert('Ad saved successfully!');
+    } catch (error) {
+      console.error('Error saving ad:', error);
+      alert('Error saving ad. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
 
   const interactionStateRef = useRef({
     isMoving: false,
@@ -582,6 +633,14 @@ const EditTemplate = () => {
         selectedFont={currentFont}
         selectedElement={interactionStateRef.current.selectedElement}
       />
+       
+      <button
+        className="save-button"
+        onClick={saveToS3}
+        disabled={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save Ad'}
+        </button>
 
       <div
         className="canvas_container"
