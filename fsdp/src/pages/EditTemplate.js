@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
+import AWS from '../aws-config';
 
 
 const s3 = new AWS.S3();
