@@ -8,7 +8,7 @@ import { FaSearch } from 'react-icons/fa';
 import DeviceSwitch from '../components/DeviceSwitch';
 import config from '../config';
 
-const socket = io('http://192.168.86.28:3001', {
+const socket = io(config.socketUrl, {
   auth: {
       token: localStorage.getItem('token')
   },
