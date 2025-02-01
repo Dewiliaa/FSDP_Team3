@@ -357,38 +357,39 @@ const EditTemplate = () => {
   const bringToFront = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
     if (!selectedElement) return;
-  
+
     const type = selectedElement.type;
-    const index = currentState.current[type].indexOf(selectedElement);
+    if (!currentState.current[type]) return;
+
+    // Remove from the list
+    currentState.current[type] = currentState.current[type].filter(el => el !== selectedElement);
+    
+    // Push it to the front (last element in array)
+    currentState.current[type].push(selectedElement);
+
+    console.log("🚀 Bringing to front:", selectedElement);
+    pushState();
+    redrawCanvas();
+}, [pushState, redrawCanvas]);
   
-    if (index !== -1) {
-      // Remove element from its position
-      currentState.current[type].splice(index, 1);
-      // Push it to the end (front)
-      currentState.current[type].push(selectedElement);
-      
-      pushState();
-      redrawCanvas();
-    }
-  }, [pushState, redrawCanvas]);
+const sendToBack = useCallback(() => {
+  const { selectedElement } = interactionStateRef.current;
+  if (!selectedElement) return;
+
+  const type = selectedElement.type;
+  if (!currentState.current[type]) return;
+
+  // Remove from the list
+  currentState.current[type] = currentState.current[type].filter(el => el !== selectedElement);
   
-  const sendToBack = useCallback(() => {
-    const { selectedElement } = interactionStateRef.current;
-    if (!selectedElement) return;
-  
-    const type = selectedElement.type;
-    const index = currentState.current[type].indexOf(selectedElement);
-  
-    if (index !== -1) {
-      // Remove element from its position
-      currentState.current[type].splice(index, 1);
-      // Add it at the start (back)
-      currentState.current[type].unshift(selectedElement);
-      
-      pushState();
-      redrawCanvas();
-    }
-  }, [pushState, redrawCanvas]);
+  // Add it to the start (first element in array)
+  currentState.current[type].unshift(selectedElement);
+
+  console.log("📥 Sending to back:", selectedElement);
+  pushState();
+  redrawCanvas();
+}, [pushState, redrawCanvas]);
+
   
   const toggleLock = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
@@ -419,144 +420,160 @@ const EditTemplate = () => {
   const handleMouseDown = useCallback((e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
 
     const elements = [...currentState.current.shapes, ...currentState.current.texts, ...currentState.current.images];
-    const { selectedElement } = interactionStateRef.current;
+    let selectedElement = null;
+
+    // ✅ Check resize handles first
+    for (let i = elements.length - 1; i >= 0; i--) {
+        const element = elements[i];
+
+        for (const handle of RESIZE_HANDLES) {
+            let handleX, handleY;
+
+            switch (handle) {
+                case 'nw':
+                    handleX = element.x;
+                    handleY = element.y;
+                    break;
+                case 'ne':
+                    handleX = element.x + element.width;
+                    handleY = element.y;
+                    break;
+                case 'se':
+                    handleX = element.x + element.width;
+                    handleY = element.y + element.height;
+                    break;
+                case 'sw':
+                    handleX = element.x;
+                    handleY = element.y + element.height;
+                    break;
+                default:
+                    continue;
+            }
+
+            if (
+                Math.abs(x - handleX) <= HANDLE_SIZE / 2 &&
+                Math.abs(y - handleY) <= HANDLE_SIZE / 2
+            ) {
+                interactionStateRef.current = {
+                    isResizing: true,
+                    selectedHandle: handle,
+                    selectedElement: element,
+                    startPos: { x, y },
+                    originalElementState: { ...element }
+                };
+                return;
+            }
+        }
+    }
+
+    // ✅ If no resize handle is selected, check for element selection
+    for (let i = elements.length - 1; i >= 0; i--) {
+        const element = elements[i];
+        if (
+            x >= element.x &&
+            x <= element.x + element.width &&
+            y >= element.y &&
+            y <= element.y + element.height
+        ) {
+            selectedElement = element;
+            break;
+        }
+    }
 
     if (selectedElement) {
-      const handleFound = RESIZE_HANDLES.some((handle) => {
-        let handleX, handleY;
-        if (handle === 'nw') {
-          handleX = selectedElement.x;
-          handleY = selectedElement.y;
-        } else if (handle === 'ne') {
-          handleX = selectedElement.x + selectedElement.width;
-          handleY = selectedElement.y;
-        } else if (handle === 'se') {
-          handleX = selectedElement.x + selectedElement.width;
-          handleY = selectedElement.y + selectedElement.height;
-        } else if (handle === 'sw') {
-          handleX = selectedElement.x;
-          handleY = selectedElement.y + selectedElement.height;
-        }
-
-        const withinHandle =
-          Math.abs(x - handleX) <= HANDLE_SIZE / 2 && Math.abs(y - handleY) <= HANDLE_SIZE / 2;
-
-        if (withinHandle) {
-          interactionStateRef.current = {
-            ...interactionStateRef.current,
-            isResizing: true,
-            selectedHandle: handle,
+        interactionStateRef.current = {
+            isMoving: !selectedElement.locked,
+            selectedElement,
             startPos: { x, y },
             originalElementState: { ...selectedElement }
-          };
-          return true;
-        }
-        return false;
-      });
-
-      if (handleFound) {
-        return;
-      }
-    }
-
-    // If not resizing, check for element selection
-    for (let i = elements.length - 1; i >= 0; i--) {
-      const element = elements[i];
-      if (
-        x >= element.x &&
-        x <= element.x + element.width &&
-        y >= element.y &&
-        y <= element.y + element.height
-      ) {
-        interactionStateRef.current = {
-          ...interactionStateRef.current,
-          isMoving: !element.locked,
-          selectedElement: element,
-          startPos: { x, y },
-          originalElementState: { ...element }
         };
         redrawCanvas();
-        return;
-      }
+    } else {
+        interactionStateRef.current = {
+            isMoving: false,
+            isResizing: false,
+            selectedElement: null
+        };
+        redrawCanvas();
     }
+}, [redrawCanvas]);
 
-    // If clicked outside any element
-    interactionStateRef.current = {
-      ...interactionStateRef.current,
-      selectedElement: null,
-      isMoving: false,
-      isResizing: false
-    };
-    redrawCanvas();
-  }, [redrawCanvas]);
 
-  const handleMouseMove = useCallback((e) => {
-    const { isMoving, isResizing, selectedElement, startPos, selectedHandle, originalElementState } =
+
+const handleMouseMove = useCallback((e) => {
+  const { isMoving, isResizing, selectedElement, startPos, selectedHandle, originalElementState } =
       interactionStateRef.current;
 
-    if (!isMoving && !isResizing) return;
-    if (!selectedElement || !originalElementState) return;
+  if (!isMoving && !isResizing) return;
+  if (!selectedElement || !originalElementState) return;
 
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  const canvas = canvasRef.current;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
 
-    const dx = x - startPos.x;
-    const dy = y - startPos.y;
+  const x = (e.clientX - rect.left) * scaleX;
+  const y = (e.clientY - rect.top) * scaleY;
 
-    if (isMoving) {
+  const dx = x - startPos.x;
+  const dy = y - startPos.y;
+
+  if (isMoving) {
       selectedElement.x = originalElementState.x + dx;
       selectedElement.y = originalElementState.y + dy;
-    } else if (isResizing) {
+  } else if (isResizing) {
       const minSize = 20;
       let newWidth, newHeight, newX, newY;
 
       switch (selectedHandle) {
-        case 'nw':
-          newWidth = Math.max(originalElementState.width - dx, minSize);
-          newHeight = Math.max(originalElementState.height - dy, minSize);
-          newX = originalElementState.x + originalElementState.width - newWidth;
-          newY = originalElementState.y + originalElementState.height - newHeight;
-          
-          selectedElement.x = newX;
-          selectedElement.y = newY;
-          selectedElement.width = newWidth;
-          selectedElement.height = newHeight;
-          break;
+          case 'nw':
+              newWidth = Math.max(originalElementState.width - dx, minSize);
+              newHeight = Math.max(originalElementState.height - dy, minSize);
+              newX = originalElementState.x + originalElementState.width - newWidth;
+              newY = originalElementState.y + originalElementState.height - newHeight;
+              
+              selectedElement.x = newX;
+              selectedElement.y = newY;
+              selectedElement.width = newWidth;
+              selectedElement.height = newHeight;
+              break;
 
-        case 'ne':
-          newWidth = Math.max(originalElementState.width + dx, minSize);
-          newHeight = Math.max(originalElementState.height - dy, minSize);
-          newY = originalElementState.y + originalElementState.height - newHeight;
-          
-          selectedElement.y = newY;
-          selectedElement.width = newWidth;
-          selectedElement.height = newHeight;
-          break;
+          case 'ne':
+              newWidth = Math.max(originalElementState.width + dx, minSize);
+              newHeight = Math.max(originalElementState.height - dy, minSize);
+              newY = originalElementState.y + originalElementState.height - newHeight;
+              
+              selectedElement.y = newY;
+              selectedElement.width = newWidth;
+              selectedElement.height = newHeight;
+              break;
 
-        case 'se':
-          selectedElement.width = Math.max(originalElementState.width + dx, minSize);
-          selectedElement.height = Math.max(originalElementState.height + dy, minSize);
-          break;
+          case 'se':
+              selectedElement.width = Math.max(originalElementState.width + dx, minSize);
+              selectedElement.height = Math.max(originalElementState.height + dy, minSize);
+              break;
 
-        case 'sw':
-          newWidth = Math.max(originalElementState.width - dx, minSize);
-          newX = originalElementState.x + originalElementState.width - newWidth;
-          
-          selectedElement.x = newX;
-          selectedElement.width = newWidth;
-          selectedElement.height = Math.max(originalElementState.height + dy, minSize);
-          break;
+          case 'sw':
+              newWidth = Math.max(originalElementState.width - dx, minSize);
+              newX = originalElementState.x + originalElementState.width - newWidth;
+              
+              selectedElement.x = newX;
+              selectedElement.width = newWidth;
+              selectedElement.height = Math.max(originalElementState.height + dy, minSize);
+              break;
       }
-    }
+  }
 
-    redrawCanvas();
-  }, [redrawCanvas]);
+  redrawCanvas();
+}, [redrawCanvas]);
+
 
   const handleMouseUp = useCallback(() => {
     if (interactionStateRef.current.isMoving || interactionStateRef.current.isResizing) {
