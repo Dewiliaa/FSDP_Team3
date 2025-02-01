@@ -152,26 +152,17 @@ const Devices = () => {
   useEffect(() => {
     socket.on('device_list', (devices) => {
       setConnectedDevices(devices);
-      // Check and clear ads for any disconnected devices
+      // Check connection status but don't clear ads for disconnected devices
       devices.forEach(device => {
-        if (device.status === 'Disconnected' && deviceAds.has(device.socketId)) {
-          setDeviceAds(prev => {
-            const newDeviceAds = new Map(prev);
-            newDeviceAds.delete(device.socketId);
-            return newDeviceAds;
-          });
-          
-          // Reset any open display modals for the disconnected device
-          if (selectedDeviceForAd?.socketId === device.socketId) {
-            setSelectedDeviceForAd(null);
-            setIsDisplayConfirmModalOpen(false);
-          }
+        if (device.status === 'Connected') {
+          // Optional: Verify the ad is still active when device reconnects
+          fetchActiveAds();
         }
       });
     });
   
     return () => socket.off('device_list');
-  }, [deviceAds, selectedDeviceForAd]);
+  }, []);
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
@@ -255,11 +246,9 @@ const Devices = () => {
       
       setDeviceAds(prev => {
         const newDeviceAds = new Map(prev);
-        // Only remove ad for specific device
         if (deviceId !== 'all') {
           newDeviceAds.delete(deviceId);
         } else {
-          // Clear all ads only for global stop
           newDeviceAds.clear();
         }
         return newDeviceAds;
@@ -293,6 +282,18 @@ const Devices = () => {
     fetchGroups();
   
     return () => socket.off('groups_list');
+  }, []);
+
+  useEffect(() => {
+    fetchActiveAds();
+    
+    socket.on('connect', () => {
+      fetchActiveAds();
+    });
+
+    return () => {
+      socket.off('connect');
+    };
   }, []);
 
   const filteredDevices = connectedDevices.filter(device => 
@@ -433,19 +434,15 @@ const Devices = () => {
     }
   };
 
-  const confirmDisplayAd = () => {
+  const confirmDisplayAd = async () => {
     if (selectedAd && selectedDeviceForAd) {
       socket.emit('trigger_device_ad', {
         deviceId: selectedDeviceForAd.socketId,
         adUrl: selectedAd.url,
-        ad: selectedAd // Send full ad object
+        ad: selectedAd
       });
       
-      // Update device ads map
-      const newDeviceAds = new Map(deviceAds);
-      newDeviceAds.set(selectedDeviceForAd.socketId, selectedAd);
-      setDeviceAds(newDeviceAds);
-      
+      // State will be updated through the socket events
       setIsDisplayModalOpen(false);
       setSelectedDeviceForAd(null);
     } else {
@@ -470,13 +467,11 @@ const Devices = () => {
     });
   };
 
-  const confirmMultiDisplayAd = () => {
+  const confirmMultiDisplayAd = async () => {
     if (!selectedAd) {
       alert('Please select an ad to display');
       return;
     }
-  
-    const newDeviceAds = new Map(deviceAds);
   
     // For groups display
     if (!isDevicesSelected) {
@@ -490,7 +485,6 @@ const Devices = () => {
               adUrl: selectedAd.url,
               ad: selectedAd
             });
-            newDeviceAds.set(device.socketId, selectedAd);
           }
         });
       });
@@ -501,11 +495,9 @@ const Devices = () => {
           adUrl: selectedAd.url,
           ad: selectedAd
         });
-        newDeviceAds.set(deviceId, selectedAd);
       });
     }
   
-    setDeviceAds(newDeviceAds);
     setIsMultiDisplayModalOpen(false);
     setIsSelectMode(false);
     setSelectedDevices(new Set());
@@ -608,50 +600,63 @@ const handleGroupDisplay = (group) => {
  };
  
  const confirmRemoveGroup = async () => {
-  if (!groupToRemove) return;
-  
-  try {
-    await dynamoDb.delete({
-      TableName: 'TV_Groups',
-      Key: { tv_group_id: groupToRemove.tv_group_id }
-    }).promise();
+    if (!groupToRemove) return;
     
-    setGroups(prevGroups => 
-      prevGroups.filter(g => g.tv_group_id !== groupToRemove.tv_group_id)
-    );
-    
-    setIsRemoveGroupModalOpen(false);
-    setGroupToRemove(null);
-  } catch (error) {
-    console.error('Error removing group:', error);
-    alert('Failed to remove group. Please try again.');
-  }
- };
-
- const handleGroupSelection = (groupId) => {
-  if (!isSelectMode) return;
-  
-  const group = groups.find(g => g.tv_group_id === groupId);
-  const hasDisconnectedDevices = group.deviceIds.some(deviceId => {
-    const device = connectedDevices.find(d => d.deviceId === deviceId);
-    return !device || device.status === 'Disconnected';
-  });
-
-  if (hasDisconnectedDevices) {
-    alert('Cannot select this group - one or more devices are disconnected');
-    return;
-  }
-
-  setSelectedGroups(prev => {
-    const newSet = new Set(prev);
-    if (newSet.has(groupId)) {
-      newSet.delete(groupId);
-    } else {
-      newSet.add(groupId);
+    try {
+      await dynamoDb.delete({
+        TableName: 'TV_Groups',
+        Key: { tv_group_id: groupToRemove.tv_group_id }
+      }).promise();
+      
+      setGroups(prevGroups => 
+        prevGroups.filter(g => g.tv_group_id !== groupToRemove.tv_group_id)
+      );
+      
+      setIsRemoveGroupModalOpen(false);
+      setGroupToRemove(null);
+    } catch (error) {
+      console.error('Error removing group:', error);
+      alert('Failed to remove group. Please try again.');
     }
-    return newSet;
-  });
-};
+  };
+
+  const handleGroupSelection = (groupId) => {
+    if (!isSelectMode) return;
+    
+    const group = groups.find(g => g.tv_group_id === groupId);
+    const hasDisconnectedDevices = group.deviceIds.some(deviceId => {
+      const device = connectedDevices.find(d => d.deviceId === deviceId);
+      return !device || device.status === 'Disconnected';
+    });
+
+    if (hasDisconnectedDevices) {
+      alert('Cannot select this group - one or more devices are disconnected');
+      return;
+    }
+
+    setSelectedGroups(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
+
+  const fetchActiveAds = async () => {
+    try {
+      const result = await dynamoDb.scan({ TableName: 'ActiveAds' }).promise();
+      const newDeviceAds = new Map();
+      result.Items.forEach(item => {
+        newDeviceAds.set(item.deviceId, item.ad);
+      });
+      setDeviceAds(newDeviceAds);
+    } catch (error) {
+      console.error('Error fetching active ads:', error);
+    }
+  };
 
   return (
     <div className="devices">
