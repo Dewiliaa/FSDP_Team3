@@ -609,6 +609,82 @@ io.on('connection', (socket) => {
         // Broadcast the alert to all connected clients
         io.emit('schedule_alert', alertData);
     });
+
+    socket.on('sync_schedules', async () => {
+        try {
+            const currentTime = new Date().getTime();
+            const params = {
+                TableName: 'AdSchedules'
+            };
+            const result = await dynamoDB.scan(params).promise();
+            
+            // Filter and process active schedules
+            const activeSchedules = await Promise.all(
+                result.Items.filter(schedule => {
+                    const startTime = new Date(schedule.startDateTime).getTime();
+                    const endTime = new Date(schedule.endDateTime).getTime();
+                    
+                    // Remove completely expired schedules
+                    if (endTime < currentTime) {
+                        dynamoDB.delete({
+                            TableName: 'AdSchedules',
+                            Key: { scheduleId: schedule.scheduleId }
+                        }).promise().catch(console.error);
+                        return false;
+                    }
+    
+                    return endTime > currentTime;
+                }).map(async (schedule) => {
+                    const startTime = new Date(schedule.startDateTime).getTime();
+                    const endTime = new Date(schedule.endDateTime).getTime();
+    
+                    // Find the device
+                    const deviceParams = {
+                        TableName: 'Devices',
+                        Key: { deviceId: schedule.deviceId }
+                    };
+                    const deviceResult = await dynamoDB.get(deviceParams).promise();
+                    const currentDevice = deviceResult.Item;
+    
+                    // If current time is between start and end, and device is connected
+                    if (startTime <= currentTime && endTime > currentTime && 
+                        currentDevice && currentDevice.status === 'Connected') {
+                        // Trigger the ad
+                        io.to(currentDevice.socketId).emit('trigger_device_ad', {
+                            deviceId: currentDevice.socketId,
+                            adUrl: schedule.adUrl,
+                            ad: {
+                                id: schedule.adId,
+                                name: schedule.adName,
+                                url: schedule.adUrl,
+                                type: schedule.adType
+                            }
+                        });
+                    }
+    
+                    // If current time is past end time, stop the ad
+                    if (endTime <= currentTime) {
+                        if (currentDevice && currentDevice.status === 'Connected') {
+                            io.to(currentDevice.socketId).emit('stop_device_ad', currentDevice.socketId);
+                            
+                            // Remove the schedule
+                            dynamoDB.delete({
+                                TableName: 'AdSchedules',
+                                Key: { scheduleId: schedule.scheduleId }
+                            }).promise().catch(console.error);
+                        }
+                    }
+    
+                    return schedule;
+                })
+            );
+    
+            // Broadcast active schedules if needed
+            io.emit('active_schedules', activeSchedules);
+        } catch (error) {
+            console.error('Error syncing schedules:', error);
+        }
+    });
 });
 
 const startServer = async () => {
