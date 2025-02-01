@@ -57,7 +57,7 @@ app.post('/api/auth/login', async (req, res) => {
             region: process.env.REACT_APP_AWS_REGION,
             accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID ? 'Set' : 'Not Set'
         });
-        
+
         const result = await dynamoDB.get({
             TableName: 'Users',
             Key: { username }
@@ -77,8 +77,9 @@ app.post('/api/auth/login', async (req, res) => {
             role: user.role
         });
 
-        res.json({ 
+        res.json({
             token,
+            name: user.username, // Added name field for frontend
             user: {
                 username: user.username,
                 role: user.role
@@ -538,6 +539,11 @@ io.on('connection', (socket) => {
             console.error('Error creating group:', error);
             socket.emit('error', { message: 'Failed to create group' });
         }
+    });
+
+    socket.on('schedule_alert', (alertData) => {
+        // Broadcast the alert to all connected clients
+        io.emit('schedule_alert', alertData);
     });
 });
 
