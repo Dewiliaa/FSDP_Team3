@@ -124,7 +124,7 @@ const EditTemplate = () => {
     const { shapes, images, texts } = currentState.current;
     const { selectedElement } = interactionStateRef.current;
 
-    // 🔥 Merge all elements into a single list for proper layering
+    // ✅ Sort elements dynamically based on order of appearance in array
     const allElements = [...shapes, ...texts, ...images];
 
     allElements.forEach((element) => {
@@ -198,6 +198,7 @@ const EditTemplate = () => {
         });
     }
 }, []);
+
 
   // Add save functionality
   const saveToS3 = useCallback(async () => {
@@ -356,31 +357,15 @@ const EditTemplate = () => {
     const { selectedElement } = interactionStateRef.current;
     if (!selectedElement) return;
 
-    // Get the array that contains the selected element
-    let sourceArray;
-    switch (selectedElement.type) {
-        case 'shapes':
-            sourceArray = currentState.current.shapes;
-            break;
-        case 'texts':
-            sourceArray = currentState.current.texts;
-            break;
-        case 'images':
-            sourceArray = currentState.current.images;
-            break;
-        default:
-            return;
-    }
+    let sourceArray = currentState.current[selectedElement.type];
+    sourceArray = sourceArray.filter(el => el !== selectedElement);
+    sourceArray.push(selectedElement);
 
-    // Find and remove the element from its array
-    const elementIndex = sourceArray.indexOf(selectedElement);
-    if (elementIndex > -1) {
-        sourceArray.splice(elementIndex, 1);
-        // Add to the end of the array (top layer)
-        sourceArray.push(selectedElement);
-    }
-
-    console.log(`🚀 Bringing to front:`, selectedElement);
+    currentState.current = { ...currentState.current, [selectedElement.type]: [...sourceArray] };
+    
+    // ✅ Reset selected reference
+    interactionStateRef.current.selectedElement = selectedElement;
+    
     pushState();
     redrawCanvas();
 }, [pushState, redrawCanvas]);
@@ -389,34 +374,19 @@ const sendToBack = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
     if (!selectedElement) return;
 
-    // Get the array that contains the selected element
-    let sourceArray;
-    switch (selectedElement.type) {
-        case 'shapes':
-            sourceArray = currentState.current.shapes;
-            break;
-        case 'texts':
-            sourceArray = currentState.current.texts;
-            break;
-        case 'images':
-            sourceArray = currentState.current.images;
-            break;
-        default:
-            return;
-    }
+    let sourceArray = currentState.current[selectedElement.type];
+    sourceArray = sourceArray.filter(el => el !== selectedElement);
+    sourceArray.unshift(selectedElement);
 
-    // Find and remove the element from its array
-    const elementIndex = sourceArray.indexOf(selectedElement);
-    if (elementIndex > -1) {
-        sourceArray.splice(elementIndex, 1);
-        // Add to the beginning of the array (bottom layer)
-        sourceArray.unshift(selectedElement);
-    }
+    currentState.current = { ...currentState.current, [selectedElement.type]: [...sourceArray] };
+    
+    // ✅ Reset selected reference
+    interactionStateRef.current.selectedElement = selectedElement;
 
-    console.log(`📥 Sending to back:`, selectedElement);
     pushState();
     redrawCanvas();
 }, [pushState, redrawCanvas]);
+
   
   const toggleLock = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
