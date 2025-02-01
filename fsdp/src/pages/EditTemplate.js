@@ -353,9 +353,12 @@ const EditTemplate = () => {
     const type = selectedElement.type;
     const index = currentState.current[type].indexOf(selectedElement);
   
-    if (index >= 0) {
+    if (index !== -1) {
+      // Remove element from its position
       currentState.current[type].splice(index, 1);
-      currentState.current[type].push(selectedElement); // Add to the end
+      // Push it to the end (front)
+      currentState.current[type].push(selectedElement);
+      
       pushState();
       redrawCanvas();
     }
@@ -368,9 +371,12 @@ const EditTemplate = () => {
     const type = selectedElement.type;
     const index = currentState.current[type].indexOf(selectedElement);
   
-    if (index >= 0) {
+    if (index !== -1) {
+      // Remove element from its position
       currentState.current[type].splice(index, 1);
-      currentState.current[type].unshift(selectedElement); // Add to the beginning
+      // Add it at the start (back)
+      currentState.current[type].unshift(selectedElement);
+      
       pushState();
       redrawCanvas();
     }
