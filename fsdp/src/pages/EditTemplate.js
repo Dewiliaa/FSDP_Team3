@@ -1,13 +1,15 @@
 import React, { useState, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
+import AWS from '../aws-config';
+import LibraryPanel from './Librarypanel';
 
 
 const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const HANDLE_SIZE = 8;
 const RESIZE_HANDLES = ['nw', 'ne', 'se', 'sw'];
-//const [showLibrary, setShowLibrary] = useState(true);
+
 
 const DimensionModal = memo(({ dimensions, setDimensions, onSubmit }) => (
   <div className="dimension_modal">
@@ -105,9 +107,99 @@ const EditTemplate = () => {
   const stateHistory = useRef([]);
   const maxHistoryLength = 50;
   const [isSaving, setIsSaving] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(true);
 
   const currentState = useRef({shapes: [], images: [], texts: []
   });
+
+  const redrawCanvas = useCallback(() => {
+    if (!ctxRef.current) return;
+  
+    const ctx = ctxRef.current;
+    const canvas = canvasRef.current;
+  
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+    const { shapes, images, texts } = currentState.current;
+    const { selectedElement } = interactionStateRef.current;
+  
+    shapes.forEach((shape) => {
+      ctx.fillStyle = shape.color;
+      ctx.beginPath();
+      if (shape.shapeType === 'rectangle') {
+        ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+      } else if (shape.shapeType === 'circle') {
+        ctx.arc(
+          shape.x + shape.width / 2,
+          shape.y + shape.height / 2,
+          shape.width / 2,
+          0,
+          2 * Math.PI
+        );
+        ctx.fill();
+      }
+      ctx.closePath();
+    });
+  
+    texts.forEach((text) => {
+      ctx.font = `${text.fontSize}px ${text.font}`;
+      ctx.fillStyle = text.color;
+      ctx.fillText(text.text, text.x, text.y + text.height);
+    });
+  
+    images.forEach((image) => {
+      if (image.img) {
+        ctx.drawImage(image.img, image.x, image.y, image.width, image.height);
+      }
+    });
+  
+    if (selectedElement) {
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(
+        selectedElement.x,
+        selectedElement.y,
+        selectedElement.width,
+        selectedElement.height
+      );
+  
+      RESIZE_HANDLES.forEach((handle) => {
+        let handleX, handleY;
+  
+        switch (handle) {
+          case 'nw':
+            handleX = selectedElement.x;
+            handleY = selectedElement.y;
+            break;
+          case 'ne':
+            handleX = selectedElement.x + selectedElement.width;
+            handleY = selectedElement.y;
+            break;
+          case 'se':
+            handleX = selectedElement.x + selectedElement.width;
+            handleY = selectedElement.y + selectedElement.height;
+            break;
+          case 'sw':
+            handleX = selectedElement.x;
+            handleY = selectedElement.y + selectedElement.height;
+            break;
+          default:
+            return;
+        }
+  
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(
+          handleX - HANDLE_SIZE / 2,
+          handleY - HANDLE_SIZE / 2,
+          HANDLE_SIZE,
+          HANDLE_SIZE
+        );
+      });
+    }
+  }, []);
+  
+  
 
   // Add save functionality
   const saveToS3 = useCallback(async () => {
@@ -185,76 +277,25 @@ const EditTemplate = () => {
     }
   }, [currentStateIndex]);
 
-  const redrawCanvas = useCallback(() => {
-    if (!ctxRef.current) return;
-
-    const ctx = ctxRef.current;
-    const canvas = canvasRef.current;
-
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const { shapes, images, texts } = currentState.current;
-    const { selectedElement } = interactionStateRef.current;
-
-    shapes.forEach((shape) => {
-      ctx.fillStyle = shape.color;
-      if (shape.shapeType === 'rectangle') {
-        ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
-      } else if (shape.shapeType === 'circle') {
-        ctx.beginPath();
-        ctx.arc(
-          shape.x + shape.width / 2,
-          shape.y + shape.height / 2,
-          shape.width / 2,
-          0,
-          2 * Math.PI
-        );
-        ctx.fill();
-      }
-    });
-
-    texts.forEach((text) => {
-      ctx.font = `${text.fontSize}px ${text.font}`;
-      ctx.fillStyle = text.color;
-      ctx.fillText(text.text, text.x, text.y + text.height);
-    });
-
-    images.forEach((image) => {
-      if (image.img) {
-        ctx.drawImage(image.img, image.x, image.y, image.width, image.height);
-      }
-    });
-
-    if (selectedElement) {
-      ctx.strokeStyle = 'blue';
-      ctx.strokeRect(
-        selectedElement.x,
-        selectedElement.y,
-        selectedElement.width,
-        selectedElement.height
-      );
-
-      RESIZE_HANDLES.forEach((handle) => {
-        let handleX, handleY;
-        if (handle === 'nw') {
-          handleX = selectedElement.x;
-          handleY = selectedElement.y;
-        } else if (handle === 'ne') {
-          handleX = selectedElement.x + selectedElement.width;
-          handleY = selectedElement.y;
-        } else if (handle === 'se') {
-          handleX = selectedElement.x + selectedElement.width;
-          handleY = selectedElement.y + selectedElement.height;
-        } else if (handle === 'sw') {
-          handleX = selectedElement.x;
-          handleY = selectedElement.y + selectedElement.height;
-        }
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(handleX - HANDLE_SIZE / 2, handleY - HANDLE_SIZE / 2, HANDLE_SIZE, HANDLE_SIZE);
-      });
-    }
-  }, []);
+  const handleImageSelect = useCallback((imageData) => {
+    const img = new Image();
+    img.onload = () => {
+      const aspectRatio = img.width / img.height;
+      const newImage = {
+        type: 'images',
+        img,
+        src: img.src,
+        x: 50,
+        y: 50,
+        width: 100,
+        height: 100 / aspectRatio,
+      };
+      currentState.current.images.push(newImage);
+      redrawCanvas();
+    };
+    img.src = imageData.url;
+  }, [redrawCanvas]);
+  
 
   const changeFontSize = useCallback((action) => {
     const { selectedElement } = interactionStateRef.current;
@@ -552,6 +593,7 @@ const EditTemplate = () => {
 
   return (
     <div className="template_editor">
+      {/* Canvas Dimension Modal */}
       {showDimensionModal && (
         <DimensionModal
           dimensions={dimensions}
@@ -562,7 +604,8 @@ const EditTemplate = () => {
           }}
         />
       )}
-
+  
+      {/* Toolbar Section */}
       <Toolbar
         onAddShape={(shapeType) => {
           const shape = {
@@ -579,6 +622,7 @@ const EditTemplate = () => {
           pushState();
           redrawCanvas();
         }}
+  
         onImageUpload={(e) => {
           const file = e.target.files[0];
           if (file) {
@@ -601,6 +645,7 @@ const EditTemplate = () => {
             img.src = URL.createObjectURL(file);
           }
         }}
+  
         newText={newText}
         setNewText={setNewText}
         onAddText={() => {
@@ -622,6 +667,7 @@ const EditTemplate = () => {
             setNewText('');
           }
         }}
+  
         currentColor={currentColor}
         setCurrentColor={setCurrentColor}
         onUndo={undo}
@@ -634,15 +680,18 @@ const EditTemplate = () => {
         selectedFont={currentFont}
         selectedElement={interactionStateRef.current.selectedElement}
       />
-       
-      <button
-        className="save-button"
-        onClick={saveToS3}
-        disabled={isSaving}
-        >
-          {isSaving ? 'Saving...' : 'Save Ad'}
-        </button>
-
+  
+      {/* Save Button */}
+      <button className="save-button" onClick={saveToS3} disabled={isSaving}>
+        {isSaving ? 'Saving...' : 'Save Ad'}
+      </button>
+  
+      {/* Toggle Button for Library Panel */}
+      <button className="toggle-library-button" onClick={() => setShowLibrary(!showLibrary)}>
+        {showLibrary ? 'Hide Library' : 'Show Library'}
+      </button>
+  
+      {/* Canvas Container */}
       <div
         className="canvas_container"
         onMouseDown={handleMouseDown}
@@ -652,30 +701,24 @@ const EditTemplate = () => {
       >
         <canvas ref={canvasRef} />
       </div>
-
+  
+      {/* Library Panel - Only visible when toggled */}
+      {showLibrary && <LibraryPanel onImageSelect={handleImageSelect} />}
+  
+      {/* Layer Control Buttons */}
       <div className="layer-tools">
-      <button
-        onClick={bringToFront}
-        disabled={!interactionStateRef.current.selectedElement}
-      >
-        Bring to Front
-      </button>
-      <button
-        onClick={sendToBack}
-        disabled={!interactionStateRef.current.selectedElement}
-      >
-        Send to Back
-      </button>
-      <button
-        onClick={toggleLock}
-        disabled={!interactionStateRef.current.selectedElement}
-      >
-        {interactionStateRef.current.selectedElement?.locked ? 'Unlock' : 'Lock'}
-      </button>
-    </div>
-
+        <button onClick={bringToFront} disabled={!interactionStateRef.current.selectedElement}>
+          Bring to Front
+        </button>
+        <button onClick={sendToBack} disabled={!interactionStateRef.current.selectedElement}>
+          Send to Back
+        </button>
+        <button onClick={toggleLock} disabled={!interactionStateRef.current.selectedElement}>
+          {interactionStateRef.current.selectedElement?.locked ? 'Unlock' : 'Lock'}
+        </button>
+      </div>
     </div>
   );
-};
+}  
 
 export default EditTemplate;
