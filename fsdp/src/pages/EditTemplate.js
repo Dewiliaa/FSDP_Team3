@@ -290,25 +290,33 @@ const EditTemplate = () => {
     }
   }, [currentStateIndex]);
 
-  const handleImageSelect = useCallback((imageData) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // 🔥 FIX CORS
-    img.onload = () => {
-      const aspectRatio = img.width / img.height;
-      const newImage = {
-        type: "images",
-        img,
-        src: img.src,
-        x: 100,
-        y: 100,
-        width: 100,
-        height: 100 / aspectRatio,
+  const handleImageSelect = useCallback(async (imageData) => {
+    try {
+      const response = await fetch(imageData.url, { mode: "cors" });
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+  
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // ✅ Fix CORS
+      img.onload = () => {
+        const aspectRatio = img.width / img.height;
+        const newImage = {
+          type: "images",
+          img,
+          src: blobUrl, // ✅ Use blob URL instead of direct S3 URL
+          x: 100,
+          y: 100,
+          width: 100,
+          height: 100 / aspectRatio,
+        };
+        currentState.current.images.push(newImage);
+        pushState();
+        redrawCanvas();
       };
-      currentState.current.images.push(newImage);
-      pushState();
-      redrawCanvas();
-    };
-    img.src = imageData.url;
+      img.src = blobUrl; // ✅ Use blob URL
+    } catch (error) {
+      console.error("🚨 Error loading image as blob:", error);
+    }
   }, [pushState, redrawCanvas]);
   
 
@@ -612,26 +620,38 @@ const EditTemplate = () => {
     redrawCanvas();
   }, [pushState, redrawCanvas]);
 
-  const handleDrop = useCallback((e) => {
+  const handleDrop = useCallback(async (e) => {
     e.preventDefault();
-  
+    
     try {
-      const imageData = JSON.parse(e.dataTransfer.getData("application/json"));
-      
-      if (!imageData || !imageData.url) {
-        console.error("🚨 Invalid drop data:", imageData);
+      const data = e.dataTransfer.getData("application/json");
+      if (!data) {
+        console.error("🚨 No data received in drag event!");
         return;
       }
   
+      const imageData = JSON.parse(data);
+      if (!imageData.url) {
+        console.error("🚨 Invalid image data:", imageData);
+        return;
+      }
+  
+      console.log("Dropped image:", imageData);
+  
+      // ✅ Fetch image as a blob to avoid CORS issue
+      const response = await fetch(imageData.url, { mode: "cors" });
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+  
       const img = new Image();
-      img.crossOrigin = "anonymous"; // ✅ Fix CORS
+      img.crossOrigin = "anonymous"; // ✅ Fix CORS issue
       img.onload = () => {
         const aspectRatio = img.width / img.height;
         const newImage = {
           type: "images",
           img,
-          src: img.src,
-          x: 100, // Drop position (adjust as needed)
+          src: blobUrl, // ✅ Use blob URL instead of direct S3 URL
+          x: 100, // Adjust drop position
           y: 100,
           width: 100,
           height: 100 / aspectRatio,
@@ -642,7 +662,7 @@ const EditTemplate = () => {
         redrawCanvas();
       };
   
-      img.src = imageData.url;
+      img.src = blobUrl; // ✅ Use blob URL
     } catch (error) {
       console.error("🚨 Error handling dropped image:", error);
     }
@@ -755,14 +775,17 @@ const EditTemplate = () => {
   
       {/* Canvas Container */}
       <div
-  className="canvas_container"
-  onMouseDown={handleMouseDown}
-  onMouseMove={handleMouseMove}
-  onMouseUp={handleMouseUp}
-  onMouseLeave={handleMouseUp}
-  onDragOver={(e) => e.preventDefault()}  // ✅ Allows drag-over on canvas
-  onDrop={handleDrop}                     // ✅ Calls handleDrop when image is dropped
->
+      className="canvas_container"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={handleDrop} 
+    >
   <canvas ref={canvasRef} />
 </div>
   
