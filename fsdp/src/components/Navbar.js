@@ -1,11 +1,11 @@
-import { useState } from "react";
+
 import { SidebarData } from "./SidebarData";
 import companyLogo from "../assets/company-logo.png";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-function Navbar() {
-  const [isOpen, setIsOpen] = useState(true);
+// In Navbar.js
 
+const Navbar = ({ isOpen, setIsOpen }) => {
   return (
     <>
       <nav className={`sidebar ${isOpen ? "expanded" : "collapsed"}`}>
@@ -16,7 +16,7 @@ function Navbar() {
             className="toggle-button"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <ChevronLeft /> : <ChevronRight />}
+            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
           </button>
         </div>
 
@@ -39,24 +39,16 @@ function Navbar() {
       </nav>
 
       <style>{`
-        /* Reset any default margins and paddings */
-        body {
-          margin: 0;
-          padding: 0;
-        }
-
         .sidebar {
           position: fixed;
           left: 0;
           top: 0;
           bottom: 0;
           width: 240px;
-          background-color: #2c3e50;
+          background-color: #1e2a38;
           color: white;
-          transition: width 0.3s ease;
+          transition: all 0.3s ease;
           z-index: 1000;
-          margin: 0;
-          padding: 0;
         }
 
         .sidebar.collapsed {
@@ -66,21 +58,23 @@ function Navbar() {
         .sidebar-header {
           display: flex;
           align-items: center;
-          padding: 12px;
+          padding: 20px 16px;
           position: relative;
-          margin: 0;
+          background-color: #1e2a38;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .logo {
           width: 32px;
           height: 32px;
           object-fit: contain;
-          margin: 0;
+          flex-shrink: 0;
         }
 
         .company-name {
           margin-left: 12px;
-          font-size: 16px;
+          font-size: 18px;
+          font-weight: 500;
           white-space: nowrap;
           overflow: hidden;
           opacity: 1;
@@ -95,12 +89,12 @@ function Navbar() {
 
         .toggle-button {
           position: absolute;
-          right: -12px;
+          right: -20px;
           top: 50%;
           transform: translateY(-50%);
-          width: 24px;
-          height: 24px;
-          background: #2c3e50;
+          width: 40px;
+          height: 40px;
+          background: #1e2a38;
           border: none;
           border-radius: 50%;
           color: white;
@@ -109,31 +103,33 @@ function Navbar() {
           align-items: center;
           justify-content: center;
           z-index: 1001;
-          padding: 0;
-          margin: 0;
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
 
         .nav-list {
           list-style: none;
-          padding: 0;
+          padding: 8px 0;
           margin: 0;
         }
 
         .nav-item {
           display: flex;
           align-items: center;
-          padding: 12px;
+          padding: 12px 16px;
           cursor: pointer;
           transition: background-color 0.2s;
-          margin: 0;
+          color: #a4b4cb;
         }
 
         .nav-item:hover {
-          background-color: #34495e;
+          background-color: #2c3e50;
+          color: white;
         }
 
         .nav-item.active {
-          background-color: #34495e;
+          background-color: #2c3e50;
+          color: white;
+          border-left: 3px solid #3498db;
         }
 
         .icon {
@@ -142,11 +138,12 @@ function Navbar() {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin: 0;
+          flex-shrink: 0;
         }
 
         .title {
           margin-left: 12px;
+          font-size: 16px;
           white-space: nowrap;
           overflow: hidden;
           opacity: 1;
@@ -159,25 +156,38 @@ function Navbar() {
           margin: 0;
         }
 
-        /* Styles for the main content */
-        #root {
-          padding: 0;
-          margin: 0;
-        }
+        @media screen and (max-width: 700px) {
+          .sidebar {
+            transform: translateX(0);
+            width: 240px;
+          }
+          
+          .sidebar.collapsed {
+            transform: translateX(-240px);
+          }
 
-        main {
-          margin-left: 240px;
-          margin-top: 0;
-          padding: 0;
-          transition: margin-left 0.3s ease;
-        }
+          .collapsed .company-name,
+          .collapsed .title {
+            opacity: 1;
+            width: auto;
+            margin-left: 12px;
+          }
 
-        main.collapsed {
-          margin-left: 60px;
+          .toggle-button {
+            right: -20px;
+          }
+
+          .sidebar .toggle-button {
+            transform: translateY(-50%);
+          }
+
+          .sidebar.collapsed .toggle-button {
+            transform: translateY(-50%) translateX(240px);
+            right: -40px;
+          }
         }
       `}</style>
     </>
   );
-}
-
+};
 export default Navbar;

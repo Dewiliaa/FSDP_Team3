@@ -3,32 +3,52 @@ import MapComponent from '../components/MapComponent';
 import StatisticsCard from '../components/StatisticsCard';
 import AlertCard from '../components/AlertCard';
 
+// In Dashboard.js
+
 const Dashboard = ({ isNavExpanded }) => {
     return (
         <div className={`dashboard-container ${isNavExpanded ? 'nav-expanded' : 'nav-collapsed'}`}>
-            <h2 className="dashboard-title">Dashboard</h2>
+            <div className="dashboard-header">
+                <h2 className="dashboard-title">Dashboard</h2>
+            </div>
 
             <div className="dashboard-content">
-                <div className="map-section">
-                    <MapComponent />
-                </div>
+                <div className="content-wrapper">
+                    <div className="map-section">
+                        <MapComponent />
+                    </div>
 
-                <div className="cards-section">
-                    <div className="cards-row">
-                        <StatisticsCard />
-                        <AlertCard />
+                    <div className="cards-section">
+                        <div className="cards-row">
+                            <StatisticsCard />
+                            <AlertCard />
+                        </div>
                     </div>
                 </div>
             </div>
 
             <style>{`
                 .dashboard-container {
-                    transition: margin-left 0.3s ease;
+                    transition: all 0.3s ease;
                     box-sizing: border-box;
                     min-height: 100vh;
                     display: flex;
                     flex-direction: column;
-                    padding: 20px 0;
+                    padding: 24px;
+                    background: #f5f6fa;
+                }
+
+                .dashboard-header {
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    margin-bottom: 24px;
+                }
+
+                .dashboard-title {
+                    margin: 0;
+                    font-size: 28px;
+                    color: #2c3e50;
                 }
 
                 .nav-expanded {
@@ -41,77 +61,71 @@ const Dashboard = ({ isNavExpanded }) => {
                     width: calc(100% - 60px);
                 }
 
-                .dashboard-title {
-                    text-align: center;
-                    margin: 0 0 20px 0;
-                    font-size: 24px;
-                    padding: 0 20px;
+                .dashboard-content {
+                    flex: 1;
+                    display: flex;
+                    justify-content: center;
                 }
 
-                .dashboard-content {
+                .content-wrapper {
+                    width: 100%;
+                    max-width: 1400px;
                     display: flex;
                     flex-direction: column;
-                    width: 100%;
-                    align-items: center;
+                    gap: 24px;
                 }
 
                 .map-section {
-                    width: 90%; /* Center the map with 90% width */
-                    max-width: 1000px; /* Optional: Limit the map's max width */
-                    height: 65vh; /* Fixed height for the map */
-                    border-radius: 8px;
-                    overflow: visible;
-                    position: relative;
-                    margin-bottom: 20px;
+                    width: 100%;
+                    height: 75vh; /* Increased height */
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    overflow: hidden; /* Ensure map controls don't overflow */
+                }
+
+                .map-section > div {
+                    height: 100%;
+                    width: 100%;
                 }
 
                 .cards-section {
-                    width: 90%; /* Ensure the cards section is the same width as the map */
-                    max-width: 1000px; /* Optional: Limit the cards' max width */
-                    margin-top: 30px; /* Add some space above the cards */
-                    margin-bottom: 20px;
+                    width: 100%;
+                    margin-top: 24px;
                 }
 
                 .cards-row {
                     display: flex;
-                    justify-content: space-between;
-                    gap: 20px;
+                    gap: 24px;
                 }
 
                 .cards-row > div {
-                    width: 48%; /* Allow both cards to take up nearly half of the row */
+                    flex: 1;
+                    min-width: 0;
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    padding: 20px;
                 }
 
-                /* Responsive layout for large screens */
-                @media (min-width: 768px) {
+                @media screen and (max-width: 768px) {
+                    .dashboard-container {
+                        padding: 16px;
+                        margin-left: 0;
+                        width: 100%;
+                    }
+
+                    .nav-expanded, .nav-collapsed {
+                        margin-left: 0;
+                        width: 100%;
+                    }
+
+                    .dashboard-title {
+                        font-size: 24px;
+                    }
+
                     .map-section {
-                        width: 70%; /* Map takes up 70% of the width on large screens */
-                        height: 65vh;
-                    }
-
-                    .cards-section {
-                        width: 70%; /* Cards also take up the same width as map */
-                    }
-
-                    .cards-row {
-                        display: flex;
-                        justify-content: space-between;
-                        gap: 20px;
-                    }
-
-                    .cards-row > div {
-                        width: 48%; /* Ensure cards sit side by side */
-                    }
-                }
-
-                /* For small screens, the layout becomes more compact */
-                @media (max-width: 768px) {
-                    .map-section {
-                        height: 50vh; /* Reduce the map size on small screens */
-                    }
-
-                    .cards-section {
-                        width: 100%; /* Full width for the cards */
+                        height: 60vh;
                     }
 
                     .cards-row {
@@ -119,20 +133,8 @@ const Dashboard = ({ isNavExpanded }) => {
                     }
 
                     .cards-row > div {
-                        width: 100%; /* Stack cards vertically on small screens */
+                        width: 100%;
                     }
-                }
-
-                /* Additional styles for map controls visibility */
-                .map-container {
-                    width: 100% !important;
-                    height: 100% !important;
-                }
-
-                .gm-style-cc,
-                .gmnoprint,
-                .gm-fullscreen-control {
-                    margin: 10px !important;
                 }
             `}</style>
         </div>

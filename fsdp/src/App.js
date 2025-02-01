@@ -10,7 +10,6 @@ import ChooseTemplate from './components/ChooseTemplate';
 import EditTemplate from './pages/EditTemplate';
 import Login from './pages/Login';
 import { ImageProvider } from './components/ImageContext';
-
 import Navbar from './components/Navbar';
 import ProfileDropdown from './components/ProfileDropdown';
 import './App.css';
@@ -61,6 +60,7 @@ function AppContent() {
     const [isAuthenticated, setIsAuthenticated] = useState(
         localStorage.getItem('isAuthenticated') === 'true'
     );
+    const [isNavExpanded, setIsNavExpanded] = useState(true);
     const location = useLocation();
 
     useEffect(() => {
@@ -71,7 +71,7 @@ function AppContent() {
         <div className="App">
             {location.pathname !== '/' && location.pathname !== '/login' && (
                 <>
-                    <Navbar />
+                    <Navbar isOpen={isNavExpanded} setIsOpen={setIsNavExpanded} />
                     <ProfileDropdown setIsAuthenticated={setIsAuthenticated} />
                 </>
             )}
@@ -86,7 +86,7 @@ function AppContent() {
                     path="/dashboard"
                     element={
                         <ProtectedRoute>
-                            <Dashboard />
+                            <Dashboard isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -94,7 +94,7 @@ function AppContent() {
                     path="/adManagement"
                     element={
                         <ProtectedRoute>
-                            <ManageAds />
+                            <ManageAds isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -102,7 +102,7 @@ function AppContent() {
                     path="/adTemplate"
                     element={
                         <ProtectedRoute>
-                            <ChooseTemplate />
+                            <ChooseTemplate isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -110,7 +110,7 @@ function AppContent() {
                     path="/library"
                     element={
                         <ProtectedRoute>
-                            <Library />
+                            <Library isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -118,7 +118,7 @@ function AppContent() {
                     path="/scheduling"
                     element={
                         <ProtectedRoute>
-                            <Scheduling />
+                            <Scheduling isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -126,7 +126,7 @@ function AppContent() {
                     path="/devices"
                     element={
                         <ProtectedRoute>
-                            <Devices />
+                            <Devices isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -134,7 +134,7 @@ function AppContent() {
                     path="/edit-template"
                     element={
                         <ProtectedRoute>
-                            <EditTemplate />
+                            <EditTemplate isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
@@ -142,7 +142,7 @@ function AppContent() {
                     path="/canva"
                     element={
                         <ProtectedRoute>
-                            <CanvaPage />
+                            <CanvaPage isNavExpanded={isNavExpanded} />
                         </ProtectedRoute>
                     }
                 />
