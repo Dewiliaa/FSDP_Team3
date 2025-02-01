@@ -170,6 +170,36 @@ const createDevicesTable = async () => {
     }
 };
 
+const createActiveAdsTable = async () => {
+    const dynamodb = new AWS.DynamoDB();
+    
+    const params = {
+        TableName: 'ActiveAds',
+        KeySchema: [
+            { AttributeName: 'deviceId', KeyType: 'HASH' }  // Partition key
+        ],
+        AttributeDefinitions: [
+            { AttributeName: 'deviceId', AttributeType: 'S' }
+        ],
+        ProvisionedThroughput: {
+            ReadCapacityUnits: 5,
+            WriteCapacityUnits: 5
+        }
+    };
+
+    try {
+        await dynamodb.createTable(params).promise();
+        console.log('ActiveAds table created successfully');
+    } catch (error) {
+        if (error.code === 'ResourceInUseException') {
+            console.log('ActiveAds table already exists');
+        } else {
+            console.error('Error creating ActiveAds table:', error);
+            throw error;
+        }
+    }
+};
+
 const getDeviceInfo = (userAgent) => {
     const info = {
         browser: 'Unknown',
@@ -281,6 +311,18 @@ io.on('connection', (socket) => {
     
             if (result.Items && result.Items.length > 0) {
                 const existingDevice = result.Items[0];
+
+                const activeAd = await dynamoDB.get({
+                    TableName: 'ActiveAds',
+                    Key: { deviceId: existingDevice.deviceId }
+                }).promise();
+
+                io.emit('connection_alert', {
+                    deviceName: existingDevice.name,
+                    status: 'reconnected',
+                    activeAd: activeAd.Item ? activeAd.Item.ad.name : null
+                });
+    
                 const updatedDevice = {
                     ...existingDevice,
                     socketId: socket.id,
@@ -371,11 +413,26 @@ io.on('connection', (socket) => {
     
             if (deviceEntry) {
                 const [deviceId, device] = deviceEntry;
-                
-                // Update DynamoDB
+    
+                // Check if device had an active ad
+                const activeAd = await dynamoDB.get({
+                    TableName: 'ActiveAds',
+                    Key: { deviceId }
+                }).promise();
+    
+                if (activeAd.Item) {
+                    // Emit alert about interrupted ad
+                    io.emit('ad_interruption_alert', {
+                        deviceName: device.name,
+                        adName: activeAd.Item.ad.name,
+                        reason: `Connection lost: ${reason}`
+                    });
+                }
+    
+                // Update device status
                 await dynamoDB.update({
                     TableName: 'Devices',
-                    Key: { deviceId: deviceId },
+                    Key: { deviceId },
                     UpdateExpression: 'SET #status = :status, lastSeen = :lastSeen',
                     ExpressionAttributeNames: {
                         '#status': 'status'
@@ -389,24 +446,18 @@ io.on('connection', (socket) => {
                 // Update in-memory status
                 device.status = 'Disconnected';
                 registeredDevices.set(deviceId, device);
-  
-                // Clear any active ads for the disconnected device
-                io.emit('ad_stopped', { deviceId: socket.id });
-                io.emit('device_ad_update', { deviceId: socket.id, ad: null });
-                
+    
+                // Emit connection alert
+                io.emit('connection_alert', {
+                    deviceName: device.name,
+                    status: 'disconnected',
+                    activeAd: activeAd.Item ? activeAd.Item.ad.name : null
+                });
+    
                 io.emit('device_list', Array.from(registeredDevices.values()));
             }
-    
-            // Clean up connected devices
-            const connectedEntry = Array.from(connectedDevices.entries()).find(
-                ([_, device]) => device.socketId === socket.id
-            );
-            if (connectedEntry) {
-                connectedDevices.delete(connectedEntry[0]);
-                io.emit('available_devices', Array.from(connectedDevices.values()));
-            }
         } catch (error) {
-            console.error('Error updating disconnect status:', error);
+            console.error('Error handling device disconnect:', error);
         }
     });
 
@@ -441,36 +492,49 @@ io.on('connection', (socket) => {
       io.emit('ad_stopped', { deviceId: 'all' });
     });
 
-    socket.on('trigger_device_ad', ({ deviceId, adUrl, ad }) => {
+    socket.on('trigger_device_ad', async ({ deviceId, adUrl, ad }) => {
         if (socket.user.role !== 'admin') {
             socket.emit('error', { message: 'Admin access required' });
             return;
         }
-        io.to(deviceId).emit('display_ad', adUrl);
-        io.emit('device_ad_update', { deviceId, ad });
+        
+        try {
+            // Store the active ad in DynamoDB
+            await dynamoDB.put({
+                TableName: 'ActiveAds',
+                Item: {
+                    deviceId,
+                    ad,
+                    startTime: new Date().toISOString()
+                }
+            }).promise();
+    
+            io.to(deviceId).emit('display_ad', adUrl);
+            io.emit('device_ad_update', { deviceId, ad });
+        } catch (error) {
+            console.error('Error storing active ad:', error);
+        }
     });
 
-    socket.on('stop_device_ad', (deviceId) => {
-      if (socket.user.role !== 'admin') {
-        socket.emit('error', { message: 'Admin access required' });
-        return;
-      }
+    socket.on('stop_device_ad', async (deviceId) => {
+        if (socket.user.role !== 'admin') {
+            socket.emit('error', { message: 'Admin access required' });
+            return;
+        }
     
-      try {
-        // Send stop signal to specific device
-        io.to(deviceId).emit('display_ad', null);
-        
-        // Notify all clients that the ad has been stopped
-        io.emit('ad_stopped', { deviceId });
-        
-        // Update device ad tracking
-        io.emit('device_ad_update', { deviceId, ad: null });
-        
-        console.log(`Ad stopped for device: ${deviceId}`);
-      } catch (error) {
-        console.error('Error stopping device ad:', error);
-        socket.emit('error', { message: 'Failed to stop ad' });
-      }
+        try {
+            // Remove the active ad from DynamoDB
+            await dynamoDB.delete({
+                TableName: 'ActiveAds',
+                Key: { deviceId }
+            }).promise();
+    
+            io.to(deviceId).emit('display_ad', null);
+            io.emit('ad_stopped', { deviceId });
+            io.emit('device_ad_update', { deviceId, ad: null });
+        } catch (error) {
+            console.error('Error removing active ad:', error);
+        }
     });
 
     socket.on('display_ad', (adMediaPath) => {
@@ -551,6 +615,7 @@ const startServer = async () => {
     try {
         await createDevicesTable();
         await createTVGroupsTable();
+        await createActiveAdsTable();
         await initializeDevices();
         server.listen(3001, () => {
             console.log('SERVER IS RUNNING ON PORT 3001');
