@@ -56,7 +56,7 @@ const Login = ({ setIsAuthenticated }) => {
         setError('');
 
         try {
-            const response = await fetch(config.apiBaseUrl + '/api/auth/validate', {
+            const response = await fetch(config.apiBaseUrl + '/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
