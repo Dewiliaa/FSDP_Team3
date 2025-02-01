@@ -7,7 +7,7 @@ import { FaUpload, FaTrash, FaEye } from 'react-icons/fa';
 const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-const Library = () => {
+const Library = ({ isNavExpanded }) => {
     const [mediaFiles, setMediaFiles] = useState([]);
     const [previewMedia, setPreviewMedia] = useState(null);  // Used for preview
     const [mediaType, setMediaType] = useState('All');
@@ -55,12 +55,32 @@ const Library = () => {
 
     // Handle file selection and reset states for category and file name
     const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        setSelectedFile(file);
-        setFileName('');
-        setCategory('');
-        setFilePreview(URL.createObjectURL(file)); // Set the file preview URL for images
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setFileName('');
+            setCategory('');
+            // Only create object URL if file exists
+            const objectUrl = URL.createObjectURL(file);
+            setFilePreview(objectUrl);
+            
+            // Clean up the object URL when component unmounts or file changes
+            return () => {
+                if (objectUrl) {
+                    URL.revokeObjectURL(objectUrl);
+                }
+            };
+        }
     };
+
+    // Make sure to clean up object URL when unmounting
+    useEffect(() => {
+        return () => {
+            if (filePreview) {
+                URL.revokeObjectURL(filePreview);
+            }
+        };
+    }, [filePreview]);
 
     // Upload file to S3 and save metadata in DynamoDB
     const uploadFileToS3 = async (file, category, name) => {
@@ -152,7 +172,8 @@ const Library = () => {
     );
 
     return (
-        <div className="library-page">
+        <div className={`library-page ${isNavExpanded ? 'nav-expanded' : 'nav-collapsed'}`}>
+            <div className="header-container"></div>
             <header className="library-header">
                 <h1>Media Library</h1>
                 <div className="upload-container">
@@ -250,25 +271,27 @@ const Library = () => {
             </div>
 
             {/* Preview Modal */}
-            {previewMedia && (
+{previewMedia && (
     <div className="preview-modal" onClick={() => setPreviewMedia(null)}>
         <div className="preview-content" onClick={(e) => e.stopPropagation()}>
-            <p>Preview:</p>
-            {previewMedia.type.startsWith('image') && (
-                <img src={previewMedia.url} alt="Preview" className="preview-media" />
-            )}
-            {previewMedia.type.startsWith('video') && (
-                <video src={previewMedia.url} controls autoPlay className="preview-media" />
-            )}
-            {previewMedia.type.startsWith('audio') && (
-                <audio src={previewMedia.url} controls autoPlay className="preview-media" />
-            )}
-            <button className="close-button" onClick={() => setPreviewMedia(null)}>Close Preview</button>
+            <p>{previewMedia.name}</p>
+            <div className="preview-media-container">
+                {previewMedia.type === 'image' && (
+                    <img src={previewMedia.url} alt={previewMedia.name} className="preview-media" />
+                )}
+                {previewMedia.type === 'video' && (
+                    <video src={previewMedia.url} controls autoPlay className="preview-media" />
+                )}
+                {previewMedia.type === 'audio' && (
+                    <audio src={previewMedia.url} controls autoPlay className="preview-media" />
+                )}
+            </div>
+            <button className="close-button" onClick={() => setPreviewMedia(null)}>Close</button>
         </div>
     </div>
 )}
 
-    </div>
+        </div>
 )};
 
 export default Library;
