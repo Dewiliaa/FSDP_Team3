@@ -1,166 +1,253 @@
-/* ManageAds.css */
-
 .manage-ads {
-    padding: 20px;
-    max-width: 700px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
+    padding: 0 4rem 4rem 6rem; /* Added left padding for navbar */
+    min-height: 10vh;
+    background-color: #f8f9fa;
+    box-sizing: border-box;
+}
+
+/* Header Section */
+.manage-ads-header {
+    background-color: #ffa500;
+    align-items: center;
+    margin: 0 -2rem 2rem -4rem;
+    padding: 4rem 4rem 1.5rem 4rem; /* Increased top padding significantly */
+    display: flex;
+    flex-direction: column; /* Stack items in mobile */
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 100%;
+    overflow: hidden;
+    flex-wrap: wrap;
 }
 
 .page-title {
-    font-size: 1.75rem;
-    margin-bottom: 20px;
-    color: #333;
-    text-align: center;
+    font-size: 2rem;
+    color: white;
+    margin: 0;
 }
 
-.search-container {
+/* Desktop layout for header */
+@media (min-width: 770px) {
+    .manage-ads-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2.5rem 4rem 1.5rem 4rem;
+    }
+}
+
+.page-title {
+    font-size: 2rem;
+    color: white;
+    margin: 0;
+}
+
+.create-button {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.create-button:hover {
+    background-color: #1976d2;
+}
+
+/* Search Section */
+.search-container {
+    margin-left: 1rem;
+    margin-bottom: 2rem;
+    max-width: 90%;
 }
 
 .search-input {
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.search-button {
-    padding: 10px;
-    background-color: #6a4fe7;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.search-button:hover {
-    background-color: #5a3ecf;
-}
-
-.create-ad-button {
     width: 100%;
-    padding: 12px;
-    margin-bottom: 20px;
-    background-color: #6a4fe7;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
     font-size: 1rem;
-    transition: background-color 0.3s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.create-ad-button:hover {
-    background-color: #5a3ecf;
+.search-input:focus {
+    outline: none;
+    border-color: #2196f3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
-.create-options {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 5px;
-}
-
-.template-button, .upload-button {
-    width: 100%;
-    padding: 10px;
-    background-color: #6a4fe7;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.template-button:hover, .upload-button:hover {
-    background-color: #5a3ecf;
-}
-
-.preview-image {
-    width: 100%;
-    max-height: 200px;
-    object-fit: cover;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-.file-name-input {
-    padding: 10px;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.ad-gallery {
+/* Default: Single column (Mobile-first) */
+.ads-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 1rem 0;
 }
 
-.ad-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    text-align: center;
+/* 2 columns for smaller screens (starting at 480px) */
+@media (min-width: 480px) {
+    .ads-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 3 columns for tablets and small desktops */
+@media (min-width: 800px) {
+    .ads-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* 4 columns for large desktops */
+@media (min-width: 1100px) {
+    .ads-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+
+.ad-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
 }
 
-.ad-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.ad-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.ad-image {
+.ad-media-container {
+    position: relative;
+    aspect-ratio: 16/9;
+    background-color: #f5f5f5;
+    overflow: hidden;
+}
+
+.ad-media {
     width: 100%;
-    height: 100px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 5px;
-    margin-bottom: 10px;
 }
 
-.ad-name {
-    font-size: 1rem;
+.ad-content {
+    padding: 1rem;
+}
+
+.ad-title {
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
     color: #333;
-    margin: 5px 0;
 }
 
-.ad-buttons {
+.ad-actions {
     display: flex;
-    gap: 10px;
+    gap: 0.5rem;
 }
 
-.edit-button, .delete-button {
-    padding: 8px;
+.action-button {
+    flex: 1;
+    padding: 0.5rem;
     border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    color: #fff;
+    border-radius: 6px;
     font-size: 0.9rem;
-}
-
-.edit-button {
-    background-color: #4caf50;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
 }
 
 .delete-button {
-    background-color: #f44336;
-}
-
-.edit-button:hover {
-    background-color: #43a047;
+    background-color: #ffebee;
+    color: #f44336;
 }
 
 .delete-button:hover {
-    background-color: #e53935;
+    background-color: #ffcdd2;
 }
+
+.edit-button {
+    background-color: #e3f2fd;
+    color: #2196f3;
+}
+
+.edit-button:hover {
+    background-color: #bbdefb;
+}
+
+/* Responsive adjustments */
+@media (max-width: 700px) {
+    .manage-ads {
+        padding: 0 1rem 1rem 3rem;
+    }
+
+    .manage-ads-header {
+        margin: 0 -1rem 1.5rem -3rem;
+        padding: 1rem 2rem;
+    }
+
+    .ads-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* Upload Modal Styles */
+.upload-modal {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.upload-title {
+    font-size: 1.5rem;
+    color: #333;
+    margin: 0;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.upload-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.upload-preview {
+    aspect-ratio: 16/9;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.create-button{
+    margin-top: 1.5rem; /* Adjust as needed */
+}
+    
 
