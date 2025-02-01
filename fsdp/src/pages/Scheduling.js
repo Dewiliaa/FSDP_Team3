@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CalendarComponent from '../components/CalendarComponent';
 import AWS from '../aws-config';
 import io from 'socket.io-client';
@@ -27,6 +27,7 @@ const Scheduling = () => {
     const [connectedDevices, setConnectedDevices] = useState([]);
     const [startTime, setStartTime] = useState("12:00");
     const [endTime, setEndTime] = useState("12:00");
+    const timeoutRef = useRef({});
 
     // Load existing schedules from DynamoDB
     useEffect(() => {
@@ -117,7 +118,7 @@ const Scheduling = () => {
 
     const handleScheduleClick = async () => {
         if (!validateSchedule()) return;
-
+    
         const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
         const startDateTime = new Date(`${selectedRange[0].toDateString()} ${startTime}`);
         const endDateTime = new Date(`${selectedRange[1].toDateString()} ${endTime}`);
@@ -136,33 +137,131 @@ const Scheduling = () => {
             endDateTime: endDateTime.toISOString(),
             status: 'scheduled'
         };
-
+    
         try {
+            // Clean up any existing timeouts for this schedule
+            if (timeoutRef.current[scheduleData.scheduleId]) {
+                clearTimeout(timeoutRef.current[scheduleData.scheduleId].start);
+                clearTimeout(timeoutRef.current[scheduleData.scheduleId].end);
+            }
+    
             // Store in DynamoDB
             await dynamoDb.put({
                 TableName: 'AdSchedules',
                 Item: scheduleData
             }).promise();
-
+    
             // Set up display timeouts
             const startDelay = startDateTime.getTime() - new Date().getTime();
-            setTimeout(() => {
-                socket.emit('trigger_device_ad', {
-                    deviceId: device.socketId,
-                    adUrl: selectedAdDetails.url,
-                    ad: selectedAdDetails
-                });
+            const startTimeout = setTimeout(async () => {
+                try {
+                    // Check device connection status before displaying
+                    const params = {
+                        TableName: 'Devices',
+                        Key: { deviceId: selectedDevice }
+                    };
+                    const deviceResult = await dynamoDb.get(params).promise();
+                    const currentDevice = deviceResult.Item;
+    
+                    if (!currentDevice || currentDevice.status === 'Disconnected') {
+                        // Device is disconnected, emit alert and remove schedule
+                        socket.emit('schedule_alert', {
+                            adName: selectedAdDetails.name,
+                            deviceName: device.name,
+                            scheduledTime: startDateTime
+                        });
+    
+                        // Remove the failed schedule from DynamoDB
+                        await dynamoDb.delete({
+                            TableName: 'AdSchedules',
+                            Key: { scheduleId: scheduleData.scheduleId }
+                        }).promise();
+    
+                        // Update local state
+                        setScheduledAds(prev => prev.filter(s => s.scheduleId !== scheduleData.scheduleId));
+                        return;
+                    }
+    
+                    // Device is connected, proceed with display
+                    socket.emit('trigger_device_ad', {
+                        deviceId: currentDevice.socketId,
+                        adUrl: selectedAdDetails.url,
+                        ad: {
+                            id: selectedAdDetails.id,
+                            name: selectedAdDetails.name,
+                            url: selectedAdDetails.url,
+                            type: selectedAdDetails.type
+                        }
+                    });
+                    
+                    // Emit device_ad_update to update the UI
+                    socket.emit('device_ad_update', { 
+                        deviceId: currentDevice.socketId, 
+                        ad: {
+                            id: selectedAdDetails.id,
+                            name: selectedAdDetails.name,
+                            url: selectedAdDetails.url,
+                            type: selectedAdDetails.type
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error starting scheduled ad:', error);
+                }
             }, startDelay);
-
+    
             const endDelay = endDateTime.getTime() - new Date().getTime();
-            setTimeout(() => {
-                socket.emit('stop_device_ad', device.socketId);
+    
+            // Store timeouts in ref
+            timeoutRef.current[scheduleData.scheduleId] = {
+                start: startTimeout,
+                end: null // Will be set below
+            };
+            const endTimeout = setTimeout(async () => {
+                // Store end timeout
+                if (timeoutRef.current[scheduleData.scheduleId]) {
+                    timeoutRef.current[scheduleData.scheduleId].end = endTimeout;
+                }
+                try {
+                    // Get latest device socket ID
+                    const params = {
+                        TableName: 'Devices',
+                        Key: { deviceId: selectedDevice }
+                    };
+                    const deviceResult = await dynamoDb.get(params).promise();
+                    const currentDevice = deviceResult.Item;
+    
+                    if (currentDevice && currentDevice.status === 'Connected') {
+                        // Emit stop events to update Devices page
+                        socket.emit('stop_device_ad', currentDevice.socketId);
+                        socket.emit('device_ad_update', { 
+                            deviceId: currentDevice.socketId, 
+                            ad: null 
+                        });
+                        socket.emit('ad_stopped', { deviceId: currentDevice.socketId });
+                    }
+                    
+                    // Remove schedule from DynamoDB
+                    await dynamoDb.delete({
+                        TableName: 'AdSchedules',
+                        Key: { scheduleId: scheduleData.scheduleId }
+                    }).promise();
+    
+                    // Update local state
+                    setScheduledAds(prev => prev.filter(s => s.scheduleId !== scheduleData.scheduleId));
+                } catch (error) {
+                    console.error('Error stopping scheduled ad:', error);
+                } finally {
+                    // Clean up timeouts
+                    if (timeoutRef.current[scheduleData.scheduleId]) {
+                        delete timeoutRef.current[scheduleData.scheduleId];
+                    }
+                }
             }, endDelay);
-
+    
             // Update local state
             setScheduledAds(prev => [...prev, scheduleData]);
             alert("Ad scheduled successfully!");
-
+    
         } catch (error) {
             console.error("Error scheduling ad:", error);
             alert("Failed to schedule ad. Please try again.");
@@ -196,6 +295,17 @@ const Scheduling = () => {
 
         return () => clearInterval(interval);
     }, [scheduledAds]);
+
+    useEffect(() => {
+        return () => {
+            // Clear all timeouts on unmount
+            Object.values(timeoutRef.current).forEach(timeouts => {
+                if (timeouts.start) clearTimeout(timeouts.start);
+                if (timeouts.end) clearTimeout(timeouts.end);
+            });
+            timeoutRef.current = {};
+        };
+    }, []);
 
     return (
         <div className="scheduling">

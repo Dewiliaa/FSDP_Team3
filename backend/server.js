@@ -540,6 +540,11 @@ io.on('connection', (socket) => {
             socket.emit('error', { message: 'Failed to create group' });
         }
     });
+
+    socket.on('schedule_alert', (alertData) => {
+        // Broadcast the alert to all connected clients
+        io.emit('schedule_alert', alertData);
+    });
 });
 
 const startServer = async () => {
