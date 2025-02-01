@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import CalendarComponent from '../components/CalendarComponent'; // Import the calendar component
-import AWS from '../aws-config'; // Import AWS configuration
-import io from 'socket.io-client'; // Import socket.io-client
-import '../styles/Scheduling.css'; // Import styles
-import config from '../config'; // Import config
+import CalendarComponent from '../components/CalendarComponent';
+import AWS from '../aws-config';
+import io from 'socket.io-client';
+import '../styles/Scheduling.css';
+import config from '../config';
 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-// Initialize the socket connection
-const socket = io(config.apiBaseUrl, {
+const socket = io(config.socketUrl, {
     auth: {
-        token: localStorage.getItem('token') // Assuming token is stored in localStorage
+        token: localStorage.getItem('token')
     },
     transports: ['websocket', 'polling'],
     reconnection: true,
@@ -20,37 +19,51 @@ const socket = io(config.apiBaseUrl, {
 });
 
 const Scheduling = () => {
-    const [ads, setAds] = useState([]); // Store ads from the database
-    const [selectedRange, setSelectedRange] = useState([new Date(), new Date()]); // Date range for scheduling
-    const [selectedAd, setSelectedAd] = useState(""); // Store selected ad
-    const [selectedDevice, setSelectedDevice] = useState(""); // Store selected device
-    const [scheduledAds, setScheduledAds] = useState([]); // Store scheduled ads
-    const [connectedDevices, setConnectedDevices] = useState([]); // Store connected devices
-
-    // Add startTime and endTime state variables
+    const [ads, setAds] = useState([]);
+    const [selectedRange, setSelectedRange] = useState([new Date(), new Date()]);
+    const [selectedAd, setSelectedAd] = useState("");
+    const [selectedDevice, setSelectedDevice] = useState("");
+    const [scheduledAds, setScheduledAds] = useState([]);
+    const [connectedDevices, setConnectedDevices] = useState([]);
     const [startTime, setStartTime] = useState("12:00");
     const [endTime, setEndTime] = useState("12:00");
 
-    // Load schedules from localStorage
+    // Load existing schedules from DynamoDB
     useEffect(() => {
-        const savedSchedules = JSON.parse(localStorage.getItem("adSchedules")) || [];
-        setScheduledAds(savedSchedules);
+        const fetchSchedules = async () => {
+            try {
+                const params = {
+                    TableName: 'AdSchedules'
+                };
+                const result = await dynamoDb.scan(params).promise();
+                // Filter out past schedules
+                const currentTime = new Date().getTime();
+                const activeSchedules = result.Items.filter(schedule => 
+                    new Date(schedule.endDateTime).getTime() > currentTime
+                );
+                setScheduledAds(activeSchedules);
+            } catch (error) {
+                console.error("Error fetching schedules:", error);
+            }
+        };
+        fetchSchedules();
     }, []);
 
     // Fetch ads from DynamoDB
     useEffect(() => {
         const fetchAds = async () => {
             try {
-                const adsParams = { TableName: 'Ads' };
-                const adsData = await dynamoDb.scan(adsParams).promise();
-                const fetchedAds = adsData.Items.map(item => ({
+                const params = { TableName: 'Ads' };
+                const result = await dynamoDb.scan(params).promise();
+                const fetchedAds = result.Items.map(item => ({
                     id: item.ad_id,
                     name: item.name,
                     url: item.url,
+                    type: item.type
                 }));
                 setAds(fetchedAds);
                 if (fetchedAds.length > 0) {
-                    setSelectedAd(fetchedAds[0].id); // Set the first ad as default
+                    setSelectedAd(fetchedAds[0].id);
                 }
             } catch (error) {
                 console.error("Error fetching ads:", error);
@@ -59,135 +72,149 @@ const Scheduling = () => {
         fetchAds();
     }, []);
 
-    // Fetch connected devices from the server (device_list event)
     useEffect(() => {
-        socket.on('connect', () => {
-            console.log('Socket connected:', socket.id); // Confirm socket is connected
-        });
-
         socket.on('device_list', (devices) => {
-            console.log('Received device list:', devices); // Log received devices
             const connected = devices.filter(device => device.status === 'Connected');
-            console.log('Filtered connected devices:', connected); // Log filtered connected devices
-            setConnectedDevices(connected); // Update the connectedDevices state
-
-            // Automatically select the first device if only one is available
+            setConnectedDevices(connected);
             if (connected.length === 1 && !selectedDevice) {
-                setSelectedDevice(connected[0].deviceId); // Automatically select the device if it's the only one
+                setSelectedDevice(connected[0].deviceId);
             }
         });
 
         return () => {
             socket.off('device_list');
-            socket.off('connect');
         };
-    }, [selectedDevice]); // Re-run when selectedDevice changes
+    }, [selectedDevice]);
 
-    // Validate if the start time is valid (must be current time or later)
-    const validateStartTime = () => {
+    const validateSchedule = () => {
         const currentTime = new Date();
         const selectedStartDateTime = new Date(`${selectedRange[0].toDateString()} ${startTime}`);
+        const selectedEndDateTime = new Date(`${selectedRange[1].toDateString()} ${endTime}`);
         
         if (selectedStartDateTime < currentTime) {
-            alert("You cannot schedule an ad for a time in the past. Please select a time equal to or later than the current time.");
+            alert("Cannot schedule ads in the past.");
             return false;
         }
+        
+        if (selectedEndDateTime <= selectedStartDateTime) {
+            alert("End time must be after start time.");
+            return false;
+        }
+
+        if (!selectedDevice || !selectedAd) {
+            alert("Please select both a device and an ad.");
+            return false;
+        }
+
+        const device = connectedDevices.find(d => d.deviceId === selectedDevice);
+        if (!device || device.status !== 'Connected') {
+            alert("Selected device is not connected.");
+            return false;
+        }
+
         return true;
     };
 
-    const handleScheduleClick = () => {
-        console.log("Selected Ad:", selectedAd);
-        console.log("Selected Device:", selectedDevice);
-    
-        // Validate the start time
-        if (!validateStartTime()) {
-            return;
-        }
-    
-        if (!selectedDevice || !selectedAd) {
-            alert("Please select both a device and an ad.");
-            return;
-        }
-    
-        const selectedDeviceDetails = connectedDevices.find(device => device.deviceId === selectedDevice);
-        if (!selectedDeviceDetails || selectedDeviceDetails.status !== 'Connected') {
-            alert("Please select a connected device.");
-            return;
-        }
-    
+    const handleScheduleClick = async () => {
+        if (!validateSchedule()) return;
+
+        const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
         const startDateTime = new Date(`${selectedRange[0].toDateString()} ${startTime}`);
         const endDateTime = new Date(`${selectedRange[1].toDateString()} ${endTime}`);
-    
-        if (endDateTime <= startDateTime) {
-            alert("The end time must be after the start time.");
-            return;
-        }
-    
-        const selectedAdDetails = ads.find(ad => ad.id === selectedAd);
-    
-        const newSchedule = {
-            ad: selectedAdDetails.name,
-            device: selectedDevice,
+        const device = connectedDevices.find(d => d.deviceId === selectedDevice);
+        
+        const scheduleData = {
+            scheduleId: `schedule_${Date.now()}`,
+            deviceId: selectedDevice,
+            deviceSocketId: device.socketId,
+            deviceName: device.name,
+            adId: selectedAd,
+            adName: selectedAdDetails.name,
+            adUrl: selectedAdDetails.url,
+            adType: selectedAdDetails.type,
             startDateTime: startDateTime.toISOString(),
             endDateTime: endDateTime.toISOString(),
-            adUrl: selectedAdDetails.url,
-            startTime: startDateTime.toLocaleString(), // Added startTime to the scheduled ad data
-        };
-    
-        const updatedSchedules = [...scheduledAds, newSchedule];
-        setScheduledAds(updatedSchedules);
-        localStorage.setItem("adSchedules", JSON.stringify(updatedSchedules));
-    
-        // Emit the scheduled ad to devices immediately for testing
-        socket.emit('display_ad', {
-            adUrl: selectedAdDetails.url,
-            deviceId: selectedDevice,
-            ad: selectedAdDetails.name,
-            scheduledTime: startDateTime.toLocaleString(), // Send start time with the ad data
-        });
-    
-        alert("Ad scheduled and broadcasted immediately!");
-    
-        // Schedule the ad to appear at the right time
-        const delay = startDateTime - new Date(); // Calculate the delay in milliseconds
-        if (delay > 0) {
-            setTimeout(() => {
-                socket.emit('display_ad', {
-                    adUrl: selectedAdDetails.url,
-                    deviceId: selectedDevice,
-                    ad: selectedAdDetails.name,
-                    scheduledTime: startDateTime.toLocaleString(), // Send start time with the ad data
-                });
-                console.log(`Ad ${selectedAdDetails.name} is now displayed on device ${selectedDevice}`);
-            }, delay); // Emit the event when the time comes
-        }
-    };
-        
-    // Clear expired ads
-    useEffect(() => {
-        const clearExpiredAds = () => {
-            const currentTime = new Date().toISOString();
-            const filteredAds = scheduledAds.filter(ad => new Date(ad.endDateTime) > new Date(currentTime));
-            setScheduledAds(filteredAds);
-            localStorage.setItem("adSchedules", JSON.stringify(filteredAds));
+            status: 'scheduled'
         };
 
-        clearExpiredAds();  // Clear expired ads when the component mounts or the ad schedules are updated
-    }, [scheduledAds]);  // Re-run when scheduled ads change
+        try {
+            // Store in DynamoDB
+            await dynamoDb.put({
+                TableName: 'AdSchedules',
+                Item: scheduleData
+            }).promise();
+
+            // Set up display timeouts
+            const startDelay = startDateTime.getTime() - new Date().getTime();
+            setTimeout(() => {
+                socket.emit('trigger_device_ad', {
+                    deviceId: device.socketId,
+                    adUrl: selectedAdDetails.url,
+                    ad: selectedAdDetails
+                });
+            }, startDelay);
+
+            const endDelay = endDateTime.getTime() - new Date().getTime();
+            setTimeout(() => {
+                socket.emit('stop_device_ad', device.socketId);
+            }, endDelay);
+
+            // Update local state
+            setScheduledAds(prev => [...prev, scheduleData]);
+            alert("Ad scheduled successfully!");
+
+        } catch (error) {
+            console.error("Error scheduling ad:", error);
+            alert("Failed to schedule ad. Please try again.");
+        }
+    };
+
+    // Function to remove expired schedules
+    const removeExpiredSchedules = async (scheduleId) => {
+        try {
+            await dynamoDb.delete({
+                TableName: 'AdSchedules',
+                Key: { scheduleId }
+            }).promise();
+            
+            setScheduledAds(prev => prev.filter(schedule => schedule.scheduleId !== scheduleId));
+        } catch (error) {
+            console.error("Error removing expired schedule:", error);
+        }
+    };
+
+    // Clean up expired schedules
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const currentTime = new Date().getTime();
+            scheduledAds.forEach(schedule => {
+                if (new Date(schedule.endDateTime).getTime() < currentTime) {
+                    removeExpiredSchedules(schedule.scheduleId);
+                }
+            });
+        }, 60000); // Check every minute
+
+        return () => clearInterval(interval);
+    }, [scheduledAds]);
 
     return (
         <div className="scheduling">
             <h2 className="page-title">Ad Scheduling</h2>
             <div className="scheduling-calendar">
-                <CalendarComponent onDateTimeRangeChange={(dateRange, start, end) => {
-                    setSelectedRange(dateRange);
-                    setStartTime(start);
-                    setEndTime(end);
-                }} />
+                <CalendarComponent 
+                    onDateTimeRangeChange={(dateRange, start, end) => {
+                        setSelectedRange(dateRange);
+                        setStartTime(start);
+                        setEndTime(end);
+                    }} 
+                />
                 <div className="selection-container">
                     <label>
                         Select Ad
-                        <select value={selectedAd} onChange={(e) => setSelectedAd(e.target.value)}>
+                        <select 
+                            value={selectedAd} 
+                            onChange={(e) => setSelectedAd(e.target.value)}
+                        >
                             {ads.map((ad) => (
                                 <option key={ad.id} value={ad.id}>
                                     {ad.name}
@@ -197,7 +224,10 @@ const Scheduling = () => {
                     </label>
                     <label>
                         Select Device
-                        <select value={selectedDevice} onChange={(e) => setSelectedDevice(e.target.value)}>
+                        <select 
+                            value={selectedDevice} 
+                            onChange={(e) => setSelectedDevice(e.target.value)}
+                        >
                             {connectedDevices.length > 0 ? (
                                 connectedDevices.map((device) => (
                                     <option key={device.deviceId} value={device.deviceId}>
@@ -205,13 +235,19 @@ const Scheduling = () => {
                                     </option>
                                 ))
                             ) : (
-                                <option>No devices available</option>
+                                <option value="">No devices available</option>
                             )}
                         </select>
                     </label>
                 </div>
                 <div className="button-container">
-                    <button onClick={handleScheduleClick} className="schedule-button">Schedule</button>
+                    <button 
+                        onClick={handleScheduleClick} 
+                        className="schedule-button"
+                        disabled={!selectedDevice || !selectedAd}
+                    >
+                        Schedule
+                    </button>
                 </div>
             </div>
 
@@ -219,12 +255,13 @@ const Scheduling = () => {
                 <h3>Scheduled Ads</h3>
                 {scheduledAds.length > 0 ? (
                     <ul>
-                        {scheduledAds.map((ad, index) => (
-                            <li key={index} className="scheduled-ad-item">
-                                <strong>{ad.ad}</strong> on <em>{ad.device}</em> from{" "}
-                                {new Date(ad.startDateTime).toLocaleString()} to{" "}
-                                {new Date(ad.endDateTime).toLocaleString()}<br />
-                                <strong>Start Time:</strong> {ad.startTime}  {/* Display the start time */}
+                        {scheduledAds.map((schedule) => (
+                            <li key={schedule.scheduleId} className="scheduled-ad-item">
+                                <strong>{schedule.adName}</strong> on <em>{schedule.deviceName}</em>
+                                <br />
+                                From: {new Date(schedule.startDateTime).toLocaleString()}
+                                <br />
+                                To: {new Date(schedule.endDateTime).toLocaleString()}
                             </li>
                         ))}
                     </ul>
