@@ -20,11 +20,22 @@
 .manage-ads-header {
     background-color: #ffa500;
     margin: -24px -24px 24px -24px;
-    padding: 40px 24px 24px 24px; /* Increased top padding to avoid logout button */
+    padding: 24px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;  /* Changed to column to stack title and button */
+    align-items: flex-start;
+    gap: 32px;  /* Add space between title and button */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Keep responsive behavior */
+@media screen and (max-width: 768px) {
+    .manage-ads-header {
+        padding: 56px 16px 16px 16px; /* Also adjusted mobile padding */
+        flex-direction: column;
+        gap: 16px;
+        align-items: flex-start;
+    }
 }
 
 .page-title {
@@ -253,5 +264,6 @@
 
     .search-container {
         max-width: 100%;
+        overflow: hidden;
     }
 }
