@@ -7,7 +7,7 @@ import '../styles/ManageAds.css';
 const s3 = new AWS.S3();
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-const ManageAds = () => {
+const ManageAds = ({ isNavExpanded }) => {
     const [ads, setAds] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateOptions, setShowCreateOptions] = useState(false);
@@ -134,8 +134,9 @@ const ManageAds = () => {
     const filteredAds = ads.filter(ad =>
         ad.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
     return (
-        <div className="manage-ads">
+        <div className={`manage-ads ${isNavExpanded ? 'nav-expanded' : 'nav-collapsed'}`}>
             {/* Header Section */}
             <div className="manage-ads-header">
                 <h1 className="page-title">Manage Ads</h1>
@@ -287,5 +288,6 @@ const ManageAds = () => {
         </div>
     );
 };
+
 
 export default ManageAds;
