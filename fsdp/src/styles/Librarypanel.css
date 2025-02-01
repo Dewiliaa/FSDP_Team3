@@ -1,16 +1,18 @@
 .library-panel {
-  width: 300px;
-  height: 100vh; /* Fixed height */
+  width: 350px; /* Increase width from default */
+  height: calc(100vh - 60px); /* Ensure it doesn’t overflow */
   border-left: 1px solid #ddd;
   background: #f8f9fa;
   display: flex;
   flex-direction: column;
-  position: fixed; /* Keep it fixed on the right */
-  right: 0; /* Anchored to the right */
+  position: fixed;
+  right: 0;
   top: 0;
-  overflow-y: auto; /* Allows scrolling */
-  z-index: 1000; /* Ensures it stays on top */
+  overflow-y: auto;
+  z-index: 1000;
+  padding: 20px;
 }
+
 
 /* Header section */
 .library-header {
@@ -45,12 +47,11 @@
   color: #666;
 }
 
-.filter-select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
+/* Ensure filters and search bar adjust to wider panel */
+.library-panel .filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* Library Content */
@@ -77,12 +78,12 @@
   font-size: 1.5rem;
 }
 
-/* Media Grid */
-.media-grid {
+/* Ensure the media grid inside the panel does not shrink */
+.library-panel .media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  padding: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly larger items */
+  gap: 15px;
+  padding: 15px;
   justify-content: center;
 }
 
@@ -108,36 +109,45 @@
   border-radius: 4px;
 }
 
-/* Media Name */
-.media-name {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 5px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  font-size: 12px;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
+
 
 /* Scrollbar Styling */
-.library-panel::-webkit-scrollbar {
-  width: 8px;
-}
-
-.library-panel::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.library-panel::-webkit-scrollbar-track {
+.library-panel {
+  width: 300px;
+  height: calc(100vh - 60px); /* Adjust to prevent blocking content */
+  border-left: 1px solid #ddd;
   background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 0;
+  top: 0;
+  overflow-y: auto;
+  z-index: 1000;
 }
+
+/* Scoped Media Grid - Only for Library Panel */
+.library-panel .media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  justify-content: center;
+}
+
+/* Adjust Library Panel Header */
+.library-panel .library-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
+}
+
+/* Ensure search bar input spans full width */
+.library-panel .search-bar input {
+  width: 95%;
+  margin: 5px auto;
+}
+
 
 /* Animation */
 @keyframes spin {

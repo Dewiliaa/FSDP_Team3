@@ -1,11 +1,15 @@
 .edit-template {
     padding: 20px;
 }
-.canvas-container {
+
+/* Ensure .canvas-container only affects the edit page */
+.edit-template .canvas-container {
     border: 1px solid #ccc;
     margin-bottom: 20px;
 }
-.controls {
+
+/* Ensure controls are only inside the editor */
+.edit-template .controls {
     display: flex;
     flex-direction: column;
     gap: 10px;
