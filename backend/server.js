@@ -109,28 +109,6 @@ const io = new Server(server, {
 let connectedDevices = new Map();
 let registeredDevices = new Map();
 
-// Ad scheduling endpoint
-app.post('/schedule-ad', async (req, res) => {
-    const { adUrl, deviceId, startDateTime, adName } = req.body;
-
-    // Calculate the delay (in milliseconds) until the scheduled time
-    const delay = new Date(startDateTime) - new Date();
-
-    if (delay > 0) {
-        // Schedule the ad to be sent to the device after the delay
-        setTimeout(() => {
-            io.to(deviceId).emit('display_ad', { 
-                adUrl, 
-                deviceId, 
-                ad: adName,
-                scheduledTime: new Date(startDateTime).toLocaleString()  // Include the scheduled time here
-            });
-            console.log(`Ad scheduled: ${adName} will be displayed on ${deviceId}`);
-        }, delay);
-    }
-
-    res.send({ message: 'Ad scheduled successfully' });
-});
 const createDevicesTable = async () => {
     const dynamodb = new AWS.DynamoDB();
     
@@ -495,23 +473,17 @@ io.on('connection', (socket) => {
     });
 
     socket.on('display_ad', (adMediaPath) => {
-        console.log('Received display_ad event:', adMediaPath);
-    
-        // Handle case where ad is stopped
-        if (!adMediaPath) {
-            // Emit both events for consistency
-            socket.emit('display_ad', null);  // Emit null to stop the ad
-            socket.broadcast.emit('ad_stopped', { deviceId: socket.id });  // Notify other devices that the ad is stopped
-        } else {
-            // Emit the display_ad event with adMediaPath and the startDateTime
-            const startDateTime = new Date().toISOString();  // For example, using the current time, or you can fetch the scheduled time
-            socket.emit('display_ad', {
-                adMediaPath: adMediaPath,    // Ad content (URL or video path)
-                startDateTime: startDateTime // Start time when the ad is scheduled
-            });
-        }
+      console.log('Received display_ad event:', adMediaPath);
+      
+      if (!adMediaPath) {
+        // If adMediaPath is null, emit both events for consistency
+        socket.emit('display_ad', null);
+        socket.broadcast.emit('ad_stopped', { deviceId: socket.id });
+      } else {
+        // Regular ad display logic
+        socket.emit('display_ad', adMediaPath);
+      }
     });
-    
     
     socket.on('remove_device', async (deviceId) => {
         if (socket.user.role !== 'admin') {

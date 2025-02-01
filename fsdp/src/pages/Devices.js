@@ -5,8 +5,8 @@ import AWS from '../aws-config';
 import '../styles/devices.css';
 import { FaEllipsisH, FaTabletAlt, FaPlus, FaBullhorn } from 'react-icons/fa';
 import { FaSearch } from 'react-icons/fa';
-import DeviceSwitch from '../components/DeviceSwitch';
 import config from '../config';
+import DeviceSwitch from '../components/DeviceSwitch';
 
 const socket = io(config.socketUrl, {
   auth: {
@@ -88,130 +88,48 @@ const Devices = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [liveAd, setLiveAd] = useState(''); // State for currently live ad
-  const [scheduledStartTime, setScheduledStartTime] = useState('');
   const isServerSite = window.location.hostname === 'localhost';
 
+  // In your useEffect where you set up device listeners
   useEffect(() => {
     console.log('Setting up ad display listeners, isServerSite:', isServerSite);
-
-    // Listening for the 'display_ad' event
-    socket.on('display_ad', (data) => {
-        console.log('Received display_ad event:', data);
-
-        if (!data || !data.adMediaPath) {
-            // If adMediaPath is null, stop the ad
-            setIsImageModalOpen(false);
-            setIsVideoModalOpen(false);
-            setSelectedAd(null);
-            setLiveAd('');
-            return;
+    
+    socket.on('display_ad', (adMediaPath) => {
+      console.log('Received display_ad event:', adMediaPath);
+      
+      if (adMediaPath === null) {
+        // Handle stopping the ad
+        setIsImageModalOpen(false);
+        setIsVideoModalOpen(false);
+        setSelectedAd(null);
+        setLiveAd('');
+        return;
+      }
+      
+      if (!isServerSite) {
+        const ad = ads.find(ad => ad.url === adMediaPath);
+        console.log('Matched ad:', ad);
+        if (ad) {
+          setSelectedAd(ad);
+          if (ad.type === 'image') {
+            setIsImageModalOpen(true);
+          } else if (ad.type === 'video') {
+            setIsVideoModalOpen(true);
+          }
+          setLiveAd(ad.name);
         }
-
-        if (!isServerSite) {
-            // Find the ad from the list based on the adMediaPath
-            const ad = ads.find(ad => ad.url === data.adMediaPath);
-            console.log('Matched ad:', ad);
-
-            if (ad) {
-                setSelectedAd(ad);
-
-                // Check if the ad is an image or video and open the respective modal
-                if (ad.type === 'image') {
-                    setIsImageModalOpen(true);
-                } else if (ad.type === 'video') {
-                    setIsVideoModalOpen(true);
-                }
-
-                setLiveAd(ad.name);
-
-                // Set the scheduled time for display
-                console.log('Scheduled Start Time:', data.scheduledTime);
-                setScheduledStartTime(data.scheduledTime);  // Store the scheduled time in state
-            }
-        }
+      }
     });
 
-    // Clean up the socket events when component unmounts
     socket.on('ad_confirmed', () => {
-        setIsAdConfirmModalOpen(false);
+      setIsAdConfirmModalOpen(false);
     });
 
     return () => {
-        socket.off('display_ad');
-        socket.off('ad_confirmed');
+      socket.off('display_ad');
+      socket.off('ad_confirmed');
     };
-}, [ads, isServerSite]);  // Properly initialize and include dependencies in the array
-
-// Image modal rendering part
-{isImageModalOpen && selectedAd && selectedAd.adMediaPath && (
-    <div className="full-screen-ad">
-        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
-        <img
-            src={selectedAd.adMediaPath}
-            alt={selectedAd.adName}
-            style={{
-                width: '100vw',
-                height: '100vh',
-                objectFit: 'cover',
-                backgroundColor: '#000',
-            }}
-            onClick={() => setIsImageModalOpen(false)}  // Close modal on click
-        />
-    </div>
-)}
-
-{isVideoModalOpen && selectedAd && selectedAd.adMediaPath && (
-    <div className="full-screen-ad">
-        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
-        <video
-            src={selectedAd.adMediaPath}
-            controls
-            autoPlay
-            loop
-            style={{
-                width: '100vw',
-                height: '100vh',
-                objectFit: 'cover',
-            }}
-            onClick={() => setIsVideoModalOpen(false)}  // Close modal on click
-        />
-    </div>
-)}
-
-{isVideoModalOpen && selectedAd && selectedAd.adMediaPath && (
-    <div className="full-screen-ad">
-        <h3>Scheduled Start Time: {scheduledStartTime}</h3>  {/* Display scheduled start time */}
-        <video
-            src={selectedAd.adMediaPath}
-            controls
-            autoPlay
-            loop
-            style={{
-                width: '100vw',
-                height: '100vh',
-                objectFit: 'cover',
-            }}
-            onClick={() => setIsVideoModalOpen(false)}  // Close modal on click
-        />
-    </div>
-)} 
-// Image modal rendering part
-{isImageModalOpen && selectedAd && selectedAd.adMediaPath && (
-    <div className="full-screen-ad">
-        <h3>Scheduled Time: {scheduledStartTime}</h3>  {/* Display the scheduled start time */}
-        <img
-            src={selectedAd.adMediaPath}
-            alt={selectedAd.adName}
-            style={{
-                width: '100vw',
-                height: '100vh',
-                objectFit: 'cover',
-                backgroundColor: '#000',
-            }}
-            onClick={() => setIsImageModalOpen(false)}  // Close modal on click
-        />
-    </div>
-)}
+  }, [ads, isServerSite]);
 
   // Rest of your existing component code stays exactly the same
 
