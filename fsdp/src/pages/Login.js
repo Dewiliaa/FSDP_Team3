@@ -64,15 +64,18 @@ const Login = ({ setIsAuthenticated }) => {
                 body: JSON.stringify({ username, password }),
             });
     
-            const responseText = await response.text(); // Get the raw response text
-            console.log('Response:', responseText); // Log it to see if it's HTML or JSON
+            const responseText = await response.text();
+            console.log('Response:', responseText);
     
             if (response.ok) {
-                const data = JSON.parse(responseText); // Parse the correct JSON response
-                const { token } = data;
+                const data = JSON.parse(responseText);
+                const { token, name, user } = data;
     
-                // Save the token and username if 'remember me' is selected
+                // Save all necessary user information
                 localStorage.setItem('token', token);
+                localStorage.setItem('userName', name || user.username);
+                localStorage.setItem('userRole', user.role);
+                
                 if (rememberMe) {
                     localStorage.setItem('rememberedUsername', username);
                 }

@@ -9,18 +9,20 @@ function ProfileDropdown({ setIsAuthenticated }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get username from localStorage
-    const storedUsername = localStorage.getItem('currentUsername');
+    // Get username from localStorage - use userName key consistently
+    const storedUsername = localStorage.getItem('userName');
     if (storedUsername) {
       setUsername(storedUsername);
     }
   }, []);
 
   const handleSignout = () => {
+    // Clear all user-related data
     localStorage.removeItem('token');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('rememberedUsername');
-    localStorage.removeItem('currentUsername'); // Clear username on logout
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     setIsAuthenticated(false);
     navigate('/login');
   };
@@ -51,7 +53,7 @@ function ProfileDropdown({ setIsAuthenticated }) {
         }}
       >
         <CgProfile size={24} />
-        <span>{username}</span>
+        <span>{username || 'User'}</span>
       </div>
 
       {isOpen && (

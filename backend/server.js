@@ -57,7 +57,7 @@ app.post('/api/auth/login', async (req, res) => {
             region: process.env.REACT_APP_AWS_REGION,
             accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID ? 'Set' : 'Not Set'
         });
-        
+
         const result = await dynamoDB.get({
             TableName: 'Users',
             Key: { username }
@@ -77,8 +77,9 @@ app.post('/api/auth/login', async (req, res) => {
             role: user.role
         });
 
-        res.json({ 
+        res.json({
             token,
+            name: user.username, // Added name field for frontend
             user: {
                 username: user.username,
                 role: user.role
