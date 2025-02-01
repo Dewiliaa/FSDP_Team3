@@ -31,7 +31,7 @@ const Login = ({ setIsAuthenticated }) => {
 
     const validateToken = async (token) => {
         try {
-            const response = await fetch('http://192.168.1.97:3001/api/auth/validate', {
+            const response = await fetch(config.apiBaseUrl +'/api/auth/validate', {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -54,38 +54,37 @@ const Login = ({ setIsAuthenticated }) => {
         e.preventDefault();
         setIsLoading(true);
         setError('');
-
+    
         try {
-            const response = await fetch('http://192.168.1.97:3001/api/auth/login', {
+            const response = await fetch(config.apiBaseUrl + '/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password }),
             });
-
-            const data = await response.json();
-
+    
+            const responseText = await response.text(); // Get the raw response text
+            console.log('Response:', responseText); // Log it to see if it's HTML or JSON
+    
             if (response.ok) {
-                // Store the JWT token
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('currentUsername', username);
-                
-                // Handle "Remember Me"
+                const data = JSON.parse(responseText); // Parse the correct JSON response
+                const { token } = data;
+    
+                // Save the token and username if 'remember me' is selected
+                localStorage.setItem('token', token);
                 if (rememberMe) {
                     localStorage.setItem('rememberedUsername', username);
-                } else {
-                    localStorage.removeItem('rememberedUsername');
                 }
-
+    
                 setIsAuthenticated(true);
                 navigate('/dashboard');
             } else {
-                setError(data.message || 'Login failed');
+                setError('Login failed');
             }
         } catch (error) {
-            console.error('Login error:', error);
-            setError('An error occurred during login');
+            console.error('Login failed:', error);
+            setError('An error occurred during login.');
         } finally {
             setIsLoading(false);
         }
