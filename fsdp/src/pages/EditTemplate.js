@@ -204,50 +204,63 @@ const EditTemplate = () => {
   // Add save functionality
   const saveToS3 = useCallback(async () => {
     try {
-      setIsSaving(true);
-      const canvas = canvasRef.current;
-      
-      // Convert canvas to blob
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      
-      // Generate unique filename
-      const filename = `ad_${Date.now()}.png`;
-      
-      // S3 upload parameters
-      const params = {
-        Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
-        Key: `media/${filename}`,
-        Body: blob,
-        ContentType: 'image/png',
-        ACL: 'public-read'
+        setIsSaving(true);
+        const canvas = canvasRef.current;
+
+        // Convert canvas to blob
+        const blob = await new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Canvas toBlob failed!"));
+            }, 'image/png');
+        });
+
+        if (!blob) throw new Error("Blob creation failed!");
+
+        // Generate unique filename
+        const filename = `ad_${Date.now()}.png`;
+
+        // S3 upload parameters
+        const params = {
+          Bucket: "mediastorage-bytefsdp",
+          Key: `media/${filename}`,
+          Body: blob,
+          ContentType: "image/png",
+          ACL: "public-read" // 🔥 Make public
       };
-
-      // Upload to S3
-      const data = await s3.upload(params).promise();
-
-      // Save metadata to DynamoDB
-      const dynamoParams = {
-        TableName: 'Ads',
-        Item: {
-          ad_id: data.Key,
-          name: filename,
-          type: 'image',
-          uploadDate: new Date().toISOString(),
-          url: data.Location,
-        },
-      };
-
-      await dynamoDb.put(dynamoParams).promise();
       
-      alert('Ad saved successfully!');
+
+        console.log("Uploading to S3...", params);
+
+        // Upload to S3
+        const data = await s3.upload(params).promise();
+        console.log("S3 Upload Success:", data);
+
+        // Save metadata to DynamoDB
+        const dynamoParams = {
+            TableName: "Ads",
+            Item: {
+                ad_id: data.Key,
+                name: filename,
+                type: "image",
+                uploadDate: new Date().toISOString(),
+                url: data.Location,
+            },
+        };
+
+        await dynamoDb.put(dynamoParams).promise();
+        console.log("DynamoDB Save Success:", dynamoParams);
+
+        alert("Ad saved successfully!");
     } catch (error) {
-      console.error('Error saving ad:', error);
-      alert('Error saving ad. Please try again.');
+        console.error("❌ Error saving ad:", error);
+        alert("Error saving ad. Please check the console.");
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  }, []);
+}, []);
 
+  
   const interactionStateRef = useRef({
     isMoving: false,
     isResizing: false,
@@ -279,22 +292,24 @@ const EditTemplate = () => {
 
   const handleImageSelect = useCallback((imageData) => {
     const img = new Image();
+    img.crossOrigin = "anonymous"; // 🔥 FIX CORS
     img.onload = () => {
       const aspectRatio = img.width / img.height;
       const newImage = {
-        type: 'images',
+        type: "images",
         img,
         src: img.src,
-        x: 50,
-        y: 50,
+        x: 100,
+        y: 100,
         width: 100,
         height: 100 / aspectRatio,
       };
       currentState.current.images.push(newImage);
+      pushState();
       redrawCanvas();
     };
     img.src = imageData.url;
-  }, [redrawCanvas]);
+  }, [pushState, redrawCanvas]);
   
 
   const changeFontSize = useCallback((action) => {
@@ -591,6 +606,42 @@ const EditTemplate = () => {
     redrawCanvas();
   }, [pushState, redrawCanvas]);
 
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+  
+    try {
+      const imageData = JSON.parse(e.dataTransfer.getData("application/json"));
+      
+      if (!imageData || !imageData.url) {
+        console.error("🚨 Invalid drop data:", imageData);
+        return;
+      }
+  
+      const img = new Image();
+      img.crossOrigin = "anonymous"; // ✅ Fix CORS
+      img.onload = () => {
+        const aspectRatio = img.width / img.height;
+        const newImage = {
+          type: "images",
+          img,
+          src: img.src,
+          x: 100, // Drop position (adjust as needed)
+          y: 100,
+          width: 100,
+          height: 100 / aspectRatio,
+        };
+  
+        currentState.current.images.push(newImage);
+        pushState();
+        redrawCanvas();
+      };
+  
+      img.src = imageData.url;
+    } catch (error) {
+      console.error("🚨 Error handling dropped image:", error);
+    }
+  }, [pushState, redrawCanvas]);
+  
   return (
     <div className="template_editor">
       {/* Canvas Dimension Modal */}
@@ -626,26 +677,31 @@ const EditTemplate = () => {
         onImageUpload={(e) => {
           const file = e.target.files[0];
           if (file) {
-            const img = new Image();
-            img.onload = () => {
-              const aspectRatio = img.width / img.height;
-              const newImage = {
-                type: 'images',
-                img,
-                src: img.src,
-                x: 50,
-                y: 50,
-                width: 100,
-                height: 100 / aspectRatio,
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = new Image();
+              img.crossOrigin = "anonymous"; // 🔹 Allow CORS
+              img.onload = () => {
+                const aspectRatio = img.width / img.height;
+                const newImage = {
+                  type: 'images',
+                  img,
+                  src: img.src,
+                  x: 50,
+                  y: 50,
+                  width: 100,
+                  height: 100 / aspectRatio,
+                };
+                currentState.current.images.push(newImage);
+                pushState();
+                redrawCanvas();
               };
-              currentState.current.images.push(newImage);
-              pushState();
-              redrawCanvas();
+              img.src = event.target.result;
             };
-            img.src = URL.createObjectURL(file);
+            reader.readAsDataURL(file);
           }
         }}
-  
+        
         newText={newText}
         setNewText={setNewText}
         onAddText={() => {
@@ -693,14 +749,16 @@ const EditTemplate = () => {
   
       {/* Canvas Container */}
       <div
-        className="canvas_container"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        <canvas ref={canvasRef} />
-      </div>
+  className="canvas_container"
+  onMouseDown={handleMouseDown}
+  onMouseMove={handleMouseMove}
+  onMouseUp={handleMouseUp}
+  onMouseLeave={handleMouseUp}
+  onDragOver={(e) => e.preventDefault()}  // ✅ Allows drag-over on canvas
+  onDrop={handleDrop}                     // ✅ Calls handleDrop when image is dropped
+>
+  <canvas ref={canvasRef} />
+</div>
   
       {/* Library Panel - Only visible when toggled */}
       {showLibrary && <LibraryPanel onImageSelect={handleImageSelect} />}

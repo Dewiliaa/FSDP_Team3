@@ -46,9 +46,14 @@ const LibraryPanel = ({ onImageSelect }) => {
   };
 
   const handleDragStart = (e, image) => {
-    e.dataTransfer.setData('application/json', JSON.stringify(image));
+    console.log("Dragging image:", image); // ✅ Debugging log
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({ url: image.url, name: image.name })
+    );
   };
-
+  
+  
   const filteredFiles = mediaFiles.filter(file => {
     const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = selectedFilter === 'all' || file.type === selectedFilter;
