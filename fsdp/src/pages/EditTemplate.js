@@ -114,92 +114,90 @@ const EditTemplate = () => {
 
   const redrawCanvas = useCallback(() => {
     if (!ctxRef.current) return;
-  
+
     const ctx = ctxRef.current;
     const canvas = canvasRef.current;
-  
+
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
+
     const { shapes, images, texts } = currentState.current;
     const { selectedElement } = interactionStateRef.current;
-  
-    shapes.forEach((shape) => {
-      ctx.fillStyle = shape.color;
-      ctx.beginPath();
-      if (shape.shapeType === 'rectangle') {
-        ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
-      } else if (shape.shapeType === 'circle') {
-        ctx.arc(
-          shape.x + shape.width / 2,
-          shape.y + shape.height / 2,
-          shape.width / 2,
-          0,
-          2 * Math.PI
-        );
-        ctx.fill();
-      }
-      ctx.closePath();
-    });
-  
-    texts.forEach((text) => {
-      ctx.font = `${text.fontSize}px ${text.font}`;
-      ctx.fillStyle = text.color;
-      ctx.fillText(text.text, text.x, text.y + text.height);
-    });
-  
-    images.forEach((image) => {
-      if (image.img) {
-        ctx.drawImage(image.img, image.x, image.y, image.width, image.height);
-      }
-    });
-  
-    if (selectedElement) {
-      ctx.strokeStyle = 'blue';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        selectedElement.x,
-        selectedElement.y,
-        selectedElement.width,
-        selectedElement.height
-      );
-  
-      RESIZE_HANDLES.forEach((handle) => {
-        let handleX, handleY;
-  
-        switch (handle) {
-          case 'nw':
-            handleX = selectedElement.x;
-            handleY = selectedElement.y;
-            break;
-          case 'ne':
-            handleX = selectedElement.x + selectedElement.width;
-            handleY = selectedElement.y;
-            break;
-          case 'se':
-            handleX = selectedElement.x + selectedElement.width;
-            handleY = selectedElement.y + selectedElement.height;
-            break;
-          case 'sw':
-            handleX = selectedElement.x;
-            handleY = selectedElement.y + selectedElement.height;
-            break;
-          default:
-            return;
+
+    // 🔥 Merge all elements into a single list for proper layering
+    const allElements = [...shapes, ...texts, ...images];
+
+    allElements.forEach((element) => {
+        if (element.type === 'shapes') {
+            ctx.fillStyle = element.color;
+            ctx.beginPath();
+            if (element.shapeType === 'rectangle') {
+                ctx.fillRect(element.x, element.y, element.width, element.height);
+            } else if (element.shapeType === 'circle') {
+                ctx.arc(
+                    element.x + element.width / 2,
+                    element.y + element.height / 2,
+                    element.width / 2,
+                    0,
+                    2 * Math.PI
+                );
+                ctx.fill();
+            }
+            ctx.closePath();
+        } else if (element.type === 'texts') {
+            ctx.font = `${element.fontSize}px ${element.font}`;
+            ctx.fillStyle = element.color;
+            ctx.fillText(element.text, element.x, element.y + element.height);
+        } else if (element.type === 'images' && element.img) {
+            ctx.drawImage(element.img, element.x, element.y, element.width, element.height);
         }
-  
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(
-          handleX - HANDLE_SIZE / 2,
-          handleY - HANDLE_SIZE / 2,
-          HANDLE_SIZE,
-          HANDLE_SIZE
+    });
+
+    // Draw selection box around selected element
+    if (selectedElement) {
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+            selectedElement.x,
+            selectedElement.y,
+            selectedElement.width,
+            selectedElement.height
         );
-      });
+
+        RESIZE_HANDLES.forEach((handle) => {
+            let handleX, handleY;
+
+            switch (handle) {
+                case 'nw':
+                    handleX = selectedElement.x;
+                    handleY = selectedElement.y;
+                    break;
+                case 'ne':
+                    handleX = selectedElement.x + selectedElement.width;
+                    handleY = selectedElement.y;
+                    break;
+                case 'se':
+                    handleX = selectedElement.x + selectedElement.width;
+                    handleY = selectedElement.y + selectedElement.height;
+                    break;
+                case 'sw':
+                    handleX = selectedElement.x;
+                    handleY = selectedElement.y + selectedElement.height;
+                    break;
+                default:
+                    return;
+            }
+
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(
+                handleX - HANDLE_SIZE / 2,
+                handleY - HANDLE_SIZE / 2,
+                HANDLE_SIZE,
+                HANDLE_SIZE
+            );
+        });
     }
-  }, []);
-  
-  
+}, []);
 
   // Add save functionality
   const saveToS3 = useCallback(async () => {
@@ -358,38 +356,67 @@ const EditTemplate = () => {
     const { selectedElement } = interactionStateRef.current;
     if (!selectedElement) return;
 
-    const type = selectedElement.type;
-    if (!currentState.current[type]) return;
+    // Get the array that contains the selected element
+    let sourceArray;
+    switch (selectedElement.type) {
+        case 'shapes':
+            sourceArray = currentState.current.shapes;
+            break;
+        case 'texts':
+            sourceArray = currentState.current.texts;
+            break;
+        case 'images':
+            sourceArray = currentState.current.images;
+            break;
+        default:
+            return;
+    }
 
-    // Remove from the list
-    currentState.current[type] = currentState.current[type].filter(el => el !== selectedElement);
-    
-    // Push it to the front (last element in array)
-    currentState.current[type].push(selectedElement);
+    // Find and remove the element from its array
+    const elementIndex = sourceArray.indexOf(selectedElement);
+    if (elementIndex > -1) {
+        sourceArray.splice(elementIndex, 1);
+        // Add to the end of the array (top layer)
+        sourceArray.push(selectedElement);
+    }
 
-    console.log("🚀 Bringing to front:", selectedElement);
+    console.log(`🚀 Bringing to front:`, selectedElement);
     pushState();
     redrawCanvas();
 }, [pushState, redrawCanvas]);
-  
+
 const sendToBack = useCallback(() => {
-  const { selectedElement } = interactionStateRef.current;
-  if (!selectedElement) return;
+    const { selectedElement } = interactionStateRef.current;
+    if (!selectedElement) return;
 
-  const type = selectedElement.type;
-  if (!currentState.current[type]) return;
+    // Get the array that contains the selected element
+    let sourceArray;
+    switch (selectedElement.type) {
+        case 'shapes':
+            sourceArray = currentState.current.shapes;
+            break;
+        case 'texts':
+            sourceArray = currentState.current.texts;
+            break;
+        case 'images':
+            sourceArray = currentState.current.images;
+            break;
+        default:
+            return;
+    }
 
-  // Remove from the list
-  currentState.current[type] = currentState.current[type].filter(el => el !== selectedElement);
-  
-  // Add it to the start (first element in array)
-  currentState.current[type].unshift(selectedElement);
+    // Find and remove the element from its array
+    const elementIndex = sourceArray.indexOf(selectedElement);
+    if (elementIndex > -1) {
+        sourceArray.splice(elementIndex, 1);
+        // Add to the beginning of the array (bottom layer)
+        sourceArray.unshift(selectedElement);
+    }
 
-  console.log("📥 Sending to back:", selectedElement);
-  pushState();
-  redrawCanvas();
+    console.log(`📥 Sending to back:`, selectedElement);
+    pushState();
+    redrawCanvas();
 }, [pushState, redrawCanvas]);
-
   
   const toggleLock = useCallback(() => {
     const { selectedElement } = interactionStateRef.current;
