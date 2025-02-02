@@ -94,5 +94,5 @@ Ng Jing Zhan Garrett (S10257347K)
 - Resize ads that are displayed properly
 
 ### Public Server (Done by Garrett):
-- Hosted app on ec2 with elastic ip attached (Emitting ad from public ip server does not work unexpectedly.)
+- Hosted app on ec2 with elastic ip attached. Elastic IP: 52.65.65.69:3000
 - App can be accessed from users with different networks and can view real time updates, connections and ad displays
