@@ -143,65 +143,41 @@ const EditTemplate = () => {
     onChangeFontSize,
     onChangeFont,
     selectedFont,
-    selectedElement,
-    bringToFront,
-    sendToBack,
-    toggleLock
+    selectedElement
   }) => {
-    const textInputRef = useRef(null); // ✅ Reference to the input field
+    const textInputRef = useRef(null);
   
-    // 🔄 Ensure text input retains focus
     useEffect(() => {
       if (textInputRef.current) {
         textInputRef.current.focus();
       }
-    }, [newText]); // ✅ Reapply focus when newText updates
-  
-    const handleAddText = useCallback(() => {
-      if (newText.trim()) {
-        onAddText(); 
-        setNewText(''); // ✅ Clear input field
-        setTimeout(() => textInputRef.current?.focus(), 10); // ✅ Restore focus
-      }
-    }, [newText, onAddText, setNewText]);
+    }, [newText]);
   
     return (
       <div className="toolbar">
         {/* Shape Buttons */}
         <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
         <button onClick={() => onAddShape('circle')}>Add Circle</button>
-        
+  
         {/* Image Upload */}
         <label>
           <IoIosImage /> Add Image
           <input type="file" accept="image/*" onChange={onImageUpload} />
         </label>
   
-        {/* Text Input and Controls */}
+        {/* Text Input */}
         <div className="text-tools">
           <input
-            ref={textInputRef} // ✅ Attach ref for persistent focus
+            ref={textInputRef}
             type="text"
             placeholder="Enter text"
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
           />
-          <button onClick={handleAddText}>Add Text</button>
-          <button 
-            onClick={() => onChangeFontSize('increase')}
-            disabled={!selectedElement || selectedElement.type !== 'texts'}
-          >
-            A+
-          </button>
-          <button 
-            onClick={() => onChangeFontSize('decrease')}
-            disabled={!selectedElement || selectedElement.type !== 'texts'}
-          >
-            A-
-          </button>
+          <button onClick={onAddText}>Add Text</button>
         </div>
   
-        {/* Font Selection */}
+        {/* Font Picker */}
         <div className="font-picker">
           <label>
             Font:
@@ -215,7 +191,7 @@ const EditTemplate = () => {
           </label>
         </div>
   
-        {/* Color Picker */}
+        {/* 🎨 Color Picker */}
         <div className="color-picker">
           <label>
             Color:
@@ -223,6 +199,8 @@ const EditTemplate = () => {
               type="color"
               value={currentColor}
               onChange={(e) => setCurrentColor(e.target.value)}
+              onClick={(e) => e.stopPropagation()} 
+              onWheel={(e) => e.stopPropagation()} 
             />
           </label>
         </div>
@@ -231,13 +209,6 @@ const EditTemplate = () => {
         <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
         <button onClick={onRedo} disabled={redoDisabled}>Redo</button>
         <button onClick={onDelete}>Delete</button>
-  
-        {/* Layer Controls */}
-        <button onClick={bringToFront} disabled={!selectedElement}>Bring to Front</button>
-        <button onClick={sendToBack} disabled={!selectedElement}>Send to Back</button>
-        <button onClick={toggleLock} disabled={!selectedElement}>
-          {selectedElement?.locked ? 'Unlock' : 'Lock'}
-        </button>
       </div>
     );
   });
