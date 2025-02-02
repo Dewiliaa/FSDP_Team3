@@ -59,7 +59,7 @@ Name 4:
 - connection to connected devices
   
 ### Devices Page (Done by Aaron, Garrett):
-### Aaron
+#### Aaron
 - Allow tracking of actual devices to be added
 - Add device can add an actual device's details to be stored as data in DynamoDB and used for later
 - Devices are fetched and displayed in containers that have dropdown buttons and a currently displaying box showing an ad if an ad is being displayed
