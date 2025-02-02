@@ -5,7 +5,7 @@ Aaron Lua Siang Kian (S10258287K)
 
 Lavaniya D/O Rajamoorthi (S10262519C)
 
-Name 3:
+Evan Goh (S102583831G)
 
 Name 4:
 
@@ -25,7 +25,7 @@ Name 4:
 
 ### Login Page (Done by Evan, Garrett):
 #### Evan
-- created the login button + login page
+- created the front end for login button + login page
 - added the remember me + eye icon ( show password )
 - added password logic to this page 
 
