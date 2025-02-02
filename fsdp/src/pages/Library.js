@@ -173,125 +173,167 @@ const Library = ({ isNavExpanded }) => {
 
     return (
         <div className={`library-page ${isNavExpanded ? 'nav-expanded' : 'nav-collapsed'}`}>
-            <div className="header-container"></div>
-            <header className="library-header">
+            {/* Header */}
+            <div className="library-header">
                 <h1>Media Library</h1>
-                <div className="upload-container">
-                    <label htmlFor="file-upload" className="upload-label">
-                        <FaUpload /> Upload Media
-                    </label>
+                <label className="upload-button">
+                    <FaUpload size={16} />
+                    Upload Media
                     <input
                         type="file"
-                        id="file-upload"
                         onChange={handleFileUpload}
                         accept="image/*, video/*, audio/*"
                         hidden
                     />
-                </div>
-            </header>
-
-            {/* Category Selection Modal */}
+                </label>
+            </div>
+    
+            {/* Upload Modal */}
             {selectedFile && (
                 <div className="category-modal">
-                    <p>Enter a name for your file:</p>
-                    <input
-                        type="text"
-                        value={fileName}
-                        onChange={(e) => setFileName(e.target.value)}
-                        placeholder="Enter file name"
-                        className="file-name-input"
-                    />
-                    <p>Choose a category for your file:</p>
-                    <select
-                        value={category}
-                        onChange={(e) => setCategory(e.target.value)}
-                        className="category-dropdown"
-                    >
-                        <option value="" disabled>Select Category</option>
-                        <option value="file">Save as File</option>
-                        <option value="ads">Save as Ad</option>
-                    </select>
-
-                    {/* File preview below the Select Category */}
+                    <h3>Upload Details</h3>
+                    
+                    <div className="form-group">
+                        <label className="form-label">File Name:</label>
+                        <input
+                            type="text"
+                            value={fileName}
+                            onChange={(e) => setFileName(e.target.value)}
+                            placeholder="Enter file name"
+                            className="file-name-input"
+                        />
+                    </div>
+    
+                    <div className="form-group">
+                        <label className="form-label">Category:</label>
+                        <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className="category-select"
+                        >
+                            <option value="" disabled>Select Category</option>
+                            <option value="file">Save as File</option>
+                            <option value="ads">Save as Ad</option>
+                        </select>
+                    </div>
+    
                     {filePreview && (
                         <div className="file-preview">
-                            <p>File Preview:</p>
+                            <h4>File Preview</h4>
                             {selectedFile.type.startsWith('image') && (
-                                <img src={filePreview} alt="Preview" className="preview-image" />
+                                <img src={filePreview} alt="Preview" />
                             )}
                             {selectedFile.type.startsWith('video') && (
-                                <video src={filePreview} controls className="preview-video" />
+                                <video src={filePreview} controls />
                             )}
                             {selectedFile.type.startsWith('audio') && (
-                                <audio src={filePreview} controls className="preview-audio" />
+                                <audio src={filePreview} controls />
                             )}
                         </div>
                     )}
-
-                    <button className="upload-confirm-button" onClick={handleCategorySelection}>Upload</button>
+    
+                    <button className="upload-confirm-button" onClick={handleCategorySelection}>
+                        Upload File
+                    </button>
                 </div>
             )}
 
-            {/* Filter Section */}
+            {/* Filters */}
             <div className="filter-container">
-                <label>Filter by Type:</label>
-                <select value={mediaType} onChange={(e) => setMediaType(e.target.value)} className="media-type-dropdown">
-                    <option value="All">All</option>
-                    <option value="Image">Images</option>
-                    <option value="Video">Videos</option>
-                    <option value="Audio">Audio</option>
-                </select>
-
-                <label>Filter by Category:</label>
-                <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="category-dropdown">
-                    <option value="All">All</option>
-                    <option value="file">File</option>
-                    <option value="ads">Ad</option>
-                </select>
+                <div className="filter-group">
+                    <div className="filter-label">Filter by Type:</div>
+                    <select 
+                        value={mediaType} 
+                        onChange={(e) => setMediaType(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="All">All Types</option>
+                        <option value="Image">Images</option>
+                        <option value="Video">Videos</option>
+                        <option value="Audio">Audio</option>
+                    </select>
+                </div>
+    
+                <div className="filter-group">
+                    <div className="filter-label">Filter by Category:</div>
+                    <select 
+                        value={filterCategory} 
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="All">All Categories</option>
+                        <option value="file">Files</option>
+                        <option value="ads">Ads</option>
+                    </select>
+                </div>
             </div>
-
+    
             {/* Media Grid */}
             <div className="media-grid">
                 {filteredFiles.map((file) => (
                     <div key={file.id} className="media-card">
                         <div className="media-preview">
-                            {file.type === 'image' && <img src={file.url} alt={file.name} />}
-                            {file.type === 'video' && <video src={file.url} controls />}
-                            {file.type === 'audio' && <audio src={file.url} controls />}
+                            {file.type === 'image' && (
+                                <img src={file.url} alt={file.name} />
+                            )}
+                            {file.type === 'video' && (
+                                <video src={file.url} />
+                            )}
+                            {file.type === 'audio' && (
+                                <audio src={file.url} controls />
+                            )}
                         </div>
                         <div className="media-info">
-                            <p className="media-name">{file.name}</p>
+                            <div className="media-name">{file.name}</div>
                             <div className="media-actions">
-                                <button onClick={() => setPreviewMedia(file)}><FaEye /> Preview</button>
-                                <button onClick={() => handleDelete(file.id, file.category)}><FaTrash /> Delete</button>
+                                <button 
+                                    onClick={() => setPreviewMedia(file)} 
+                                    className="action-button preview-button"
+                                >
+                                    <FaEye size={14} />
+                                    Preview
+                                </button>
+                                <button 
+                                    onClick={() => handleDelete(file.id, file.category)} 
+                                    className="action-button delete-button"
+                                >
+                                    <FaTrash size={14} />
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
-
+    
             {/* Preview Modal */}
-{previewMedia && (
-    <div className="preview-modal" onClick={() => setPreviewMedia(null)}>
-        <div className="preview-content" onClick={(e) => e.stopPropagation()}>
-            <p>{previewMedia.name}</p>
-            <div className="preview-media-container">
-                {previewMedia.type === 'image' && (
-                    <img src={previewMedia.url} alt={previewMedia.name} className="preview-media" />
-                )}
-                {previewMedia.type === 'video' && (
-                    <video src={previewMedia.url} controls autoPlay className="preview-media" />
-                )}
-                {previewMedia.type === 'audio' && (
-                    <audio src={previewMedia.url} controls autoPlay className="preview-media" />
-                )}
-            </div>
-            <button className="close-button" onClick={() => setPreviewMedia(null)}>Close</button>
+            {previewMedia && (
+                <div className="preview-modal" onClick={() => setPreviewMedia(null)}>
+                    <div className="preview-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="preview-header">
+                            <h3 className="preview-title">{previewMedia.name}</h3>
+                            <button 
+                                className="preview-close"
+                                onClick={() => setPreviewMedia(null)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                        <div className="preview-body">
+                            {previewMedia.type === 'image' && (
+                                <img src={previewMedia.url} alt={previewMedia.name} className="preview-media" />
+                            )}
+                            {previewMedia.type === 'video' && (
+                                <video src={previewMedia.url} controls autoPlay className="preview-media" />
+                            )}
+                            {previewMedia.type === 'audio' && (
+                                <audio src={previewMedia.url} controls autoPlay className="preview-media" />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
-    </div>
-)}
-
-        </div>
-)};
-
+    );
+}
 export default Library;
