@@ -22,18 +22,18 @@ const ManageAds = ({ isNavExpanded }) => {
             const params = { TableName: 'Ads' };
             try {
                 const data = await dynamoDb.scan(params).promise();
-                console.log("ManageAds - Raw DynamoDB Items:", data.Items);
+                console.log("ManageAds - Complete DynamoDB data:", JSON.stringify(data.Items, null, 2));
                 const retrievedAds = data.Items.map(ad => {
-                    console.log("ManageAds - Processing URL:", ad.url);
-                    console.log("ManageAds - Processing Type:", ad.type);
-                    return {
+                    const processedAd = {
                         id: ad.ad_id,
                         name: ad.name,
-                        type: ad.type.split('/')[0], // Make sure type is being processed correctly
+                        type: ad.type.split('/')[0],
                         url: ad.url
                     };
+                    console.log("ManageAds - Fully processed ad:", JSON.stringify(processedAd, null, 2));
+                    return processedAd;
                 });
-                console.log("ManageAds - Final processed ads:", retrievedAds);
+                console.log("ManageAds - All processed ads:", JSON.stringify(retrievedAds, null, 2));
                 setAds(retrievedAds);
             } catch (error) {
                 console.error("Error fetching ads:", error);
@@ -47,10 +47,27 @@ const ManageAds = ({ isNavExpanded }) => {
         if (file) {
             setSelectedFile(file);
             setFileName(file.name);
-            setPreviewUrl(URL.createObjectURL(file));
+            const objectUrl = URL.createObjectURL(file);
+            setPreviewUrl(objectUrl);
             setPreviewType(file.type.split('/')[0]);
+            
+            // Clean up previous objectUrl if it exists
+            return () => {
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                }
+            };
         }
     };
+
+    // Cleanup objectUrl when component unmounts or previewUrl changes
+    useEffect(() => {
+        return () => {
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+            }
+        };
+    }, [previewUrl]);
 
     const uploadAdToS3 = async () => {
         if (!selectedFile || !fileName) {
@@ -62,7 +79,7 @@ const ManageAds = ({ isNavExpanded }) => {
             Bucket: process.env.REACT_APP_S3_BUCKET_NAME,
             Key: `media/${Date.now()}_${selectedFile.name}`,
             Body: selectedFile,
-            ACL: 'public-read',  // Add this line
+            ACL: 'public-read',
             ContentType: selectedFile.type,
         };
     
@@ -81,7 +98,7 @@ const ManageAds = ({ isNavExpanded }) => {
                 Item: {
                     ad_id: newAd.id,
                     name: newAd.name,
-                    type: newAd.type,
+                    type: selectedFile.type,
                     url: newAd.url,
                     uploadDate: new Date().toISOString(),
                 },
@@ -97,6 +114,9 @@ const ManageAds = ({ isNavExpanded }) => {
     };
 
     const resetUploadState = () => {
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+        }
         setSelectedFile(null);
         setFileName('');
         setPreviewUrl(null);
@@ -137,19 +157,19 @@ const ManageAds = ({ isNavExpanded }) => {
 
     return (
         <div className={`manage-ads ${isNavExpanded ? 'nav-expanded' : 'nav-collapsed'}`}>
-            {/* Header Section */}
-            <div className="manage-ads-header">
-                <h1 className="page-title">Manage Ads</h1>
-                <button 
-                    className="create-button"
-                    onClick={() => setShowCreateOptions(!showCreateOptions)}
-                >
-                    <Plus size={20} />
-                    Create New Ad
-                </button>
+            <div className="header-container">
+                <div className="manage-ads-header">
+                    <h1 className="page-title">Manage Ads</h1>
+                    <button 
+                        className="create-button"
+                        onClick={() => setShowCreateOptions(!showCreateOptions)}
+                    >
+                        <Plus size={20} />
+                        Create New Ad
+                    </button>
+                </div>
             </div>
-
-            {/* Search Section */}
+    
             <div className="search-container">
                 <input
                     type="text"
@@ -159,8 +179,7 @@ const ManageAds = ({ isNavExpanded }) => {
                     className="search-input"
                 />
             </div>
-
-            {/* Upload Modal */}
+    
             {showCreateOptions && (
                 <div className="upload-modal">
                     <div className="upload-header">
@@ -181,29 +200,21 @@ const ManageAds = ({ isNavExpanded }) => {
                             <Pencil size={20} />
                             Create from canvas
                         </button>
-
+    
                         <div className="upload-section">
                             <h3>Or Upload Media</h3>
                             
                             {previewUrl && (
                                 <div className="upload-preview">
                                     {previewType === 'image' && (
-                                        <img
-                                            src={previewUrl}
-                                            alt="Preview"
-                                            className="ad-media"
-                                        />
+                                        <img src={previewUrl} alt="Preview" />
                                     )}
                                     {previewType === 'video' && (
-                                        <video
-                                            src={previewUrl}
-                                            controls
-                                            className="ad-media"
-                                        />
+                                        <video src={previewUrl} controls />
                                     )}
                                 </div>
                             )}
-
+    
                             <input
                                 type="text"
                                 placeholder="Ad name"
@@ -211,7 +222,7 @@ const ManageAds = ({ isNavExpanded }) => {
                                 onChange={(e) => setFileName(e.target.value)}
                                 className="search-input"
                             />
-
+    
                             <label className="create-button" style={{ justifyContent: 'center' }}>
                                 <Upload size={20} />
                                 Choose File
@@ -222,7 +233,7 @@ const ManageAds = ({ isNavExpanded }) => {
                                     style={{ display: 'none' }}
                                 />
                             </label>
-
+    
                             <button
                                 onClick={uploadAdToS3}
                                 className="create-button"
@@ -235,59 +246,43 @@ const ManageAds = ({ isNavExpanded }) => {
                 </div>
             )}
 
-            {/* Ads Grid */}
-            <div className="ads-grid">
-                {filteredAds.map((ad) => (
-                    <div key={ad.id} className="ad-card">
-                        <div className="ad-media-container">
-                            {ad.type === 'image' && (
-                                <img
-                                    src={ad.url}
-                                    alt={ad.name}
-                                    className="ad-media"
-                                />
-                            )}
-                            {ad.type === 'video' && (
-                                <video
-                                    src={ad.url}
-                                    controls
-                                    className="ad-media"
-                                />
-                            )}
-                            {ad.type === 'audio' && (
-                                <audio
-                                    src={ad.url}
-                                    controls
-                                    className="ad-media"
-                                />
-                            )}
-                        </div>
-                        
-                        <div className="ad-content">
-                            <h3 className="ad-title">{ad.name}</h3>
-                            <div className="ad-actions">
-                                <button
-                                    onClick={() => deleteAd(ad.id)}
-                                    className="action-button delete-button"
-                                >
-                                    <Trash2 size={16} />
-                                    Delete
-                                </button>
-                                <button
-                                    onClick={() => handleEditAd(ad)}
-                                    className="action-button edit-button"
-                                >
-                                    <Pencil size={16} />
-                                    Edit
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
+<div className="media-grid">  {/* Changed from ads-grid to media-grid */}
+    {filteredAds.map((ad) => (
+        <div key={ad.id} className="media-card">  {/* Changed from ad-card to media-card */}
+            <div className="media-preview">
+                {ad.type === 'image' && (
+                    <img src={ad.url} alt={ad.name} />
+                )}
+                {ad.type === 'video' && (
+                <video src={ad.url} controls />  // Added controls prop
+)}
+                {ad.type === 'audio' && (
+                    <audio src={ad.url} controls />
+                )}
+            </div>
+            <div className="media-info">  {/* Changed from ad-content to media-info */}
+                <div className="media-name">{ad.name}</div>  {/* Changed from ad-title to media-name */}
+                <div className="media-actions">  {/* Changed from ad-actions to media-actions */}
+                    <button
+                        onClick={() => deleteAd(ad.id)}
+                        className="action-button delete-button"
+                    >
+                        <Trash2 size={16} />
+                        Delete
+                    </button>
+                    <button
+                        onClick={() => handleEditAd(ad)}
+                        className="action-button edit-button"
+                    >
+                        <Pencil size={16} />
+                        Edit
+                    </button>
+                </div>
             </div>
         </div>
+    ))}
+</div>
+        </div>
     );
-};
-
-
+}
 export default ManageAds;
