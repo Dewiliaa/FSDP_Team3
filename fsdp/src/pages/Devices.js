@@ -16,7 +16,9 @@ const socket = io(config.socketUrl, {
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000
+  reconnectionDelayMax: 5000,
+  secure: false,
+  rejectUnauthorized: false
 });
 
 socket.on('connect', () => {
