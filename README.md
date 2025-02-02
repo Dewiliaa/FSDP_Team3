@@ -25,9 +25,9 @@ Name 4:
 
 ### Login Page (Done by Evan, Garrett):
 #### Evan
-- created the front end for login button + login page
-- added the remember me + eye icon ( show password )
-- added password logic to this page 
+- Created the front end for login button + login page
+- Added the remember me + eye icon ( show password )
+- Added password logic to this page 
 
 #### Garrett
 - Implemented JWT for login
@@ -41,7 +41,8 @@ Name 4:
 ### Manage Ads Page (Done by Dewi, Lavaniya):
 
 ### Ad Creation Page (Done by Dewi, Lavaniya):
--Lavaniya(added s3 button and library panel, some parts of template editor)
+#### Lavaniya
+- Added s3 button and library panel, some parts of template editor
 
 ### Library Page (Done by Garrett, Aaron):
 #### Aaron
@@ -54,9 +55,9 @@ Name 4:
 
 ### Scheduling Page (Done by Evan, Aaron):
 #### Evan 
-- fetching the stored ads from the dynamoDB
-- fetching the connected devices from the devices page
-- connection to connected devices
+- Fetching the stored ads from the dynamoDB
+- Fetching the connected devices from the devices page
+- Connection to connected devices
   
 ### Devices Page (Done by Aaron, Garrett):
 ### Aaron
