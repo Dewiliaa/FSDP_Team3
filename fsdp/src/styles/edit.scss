@@ -1,328 +1,362 @@
+// Variables
+$primary-color: #3b82f6;
+$primary-hover: #2563eb;
+$secondary-color: #64748b;
+$background-color: #f8fafc;
+$surface-color: #ffffff;
+$border-color: #e2e8f0;
+$text-primary: #1e293b;
+$text-secondary: #475569;
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 20px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$border-radius: 12px;
+$transition: all 0.3s ease-in-out;
+
 .template_editor {
-    width: 100vw;
-    height: 100vh;
-    background-color: #f0f2f5;
+
+  background-color: $background-color;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  // Toolbar Styling
+  .toolbar {
+    width: 100%;
+    max-width: 1200px;
+    background-color: $surface-color;
+    padding: 1.5rem;
+    border-radius: $border-radius;
+    box-shadow: $shadow-md;
+    margin-bottom: 2rem;
     display: flex;
-    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
-    padding: 20px;
-    box-sizing: border-box;
-  
-    // Toolbar
-    .toolbar {
-      width: 100%;
-      max-width: 800px;
-      background-color: white;
-      padding: 15px 25px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, $primary-color, transparent);
+      opacity: 0.2;
+    }
+
+    button,
+    label,
+    .text-tools {
+      margin-bottom: 10px;
+    }
+
+    // Ensuring buttons don't overlap by improving the button layout
+    button {
+      padding: 0.875rem 1.5rem;
+      background-color: $surface-color;
+      border: 1px solid $border-color;
+      border-radius: $border-radius;
+      color: $text-primary;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: $transition;
+      min-width: 120px;
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 15px;
-      flex-wrap: wrap;
-  
-      button {
-        padding: 10px 20px;
-        background-color: #f5f7fa;
-        border: 1px solid #e4e7eb;
-        border-radius: 6px;
-        color: #4a5568;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-width: 120px;
-        text-align: center;
-  
+      justify-content: center;
+      gap: 0.75rem;
+
+      &:hover {
+        background-color: $background-color;
+        border-color: $primary-color;
+        transform: translateY(-2px);
+        box-shadow: $shadow-sm;
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
         &:hover {
-          background-color: #edf2f7;
-          border-color: #cbd5e0;
+          transform: none;
+          box-shadow: none;
         }
-  
+      }
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      background-color: $surface-color;
+      border: 1px solid $border-color;
+      border-radius: $border-radius;
+      color: $text-primary;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: $transition;
+
+      &:hover {
+        background-color: $background-color;
+        border-color: $primary-color;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      svg {
+        width: 1.5rem;
+        height: 1.5rem;
+        color: $primary-color;
+      }
+    }
+
+    .text-tools {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex: 1;
+      min-width: 300px;
+      max-width: 600px;
+      justify-content: space-between;
+
+      input[type="text"] {
+        flex: 1;
+        padding: 0.75rem 1.25rem;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        font-size: 1rem;
+        transition: $transition;
+
         &:focus {
           outline: none;
-          box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-        }
-  
-        &:focus-visible {
-          outline: 2px solid #4a90e2;
-          outline-offset: 1px;
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
         }
       }
-  
-      label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 10px 20px;
-        background-color: #f5f7fa;
-        border: 1px solid #e4e7eb;
-        border-radius: 6px;
-        color: #4a5568;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        min-width: 120px;
-  
+
+      button {
+        background-color: $primary-color;
+        color: white;
+        border: none;
+        min-width: auto;
+        padding: 0.75rem 1.25rem;
+        border-radius: $border-radius;
+
         &:hover {
-          background-color: #edf2f7;
-          border-color: #cbd5e0;
-        }
-  
-        input[type="file"] {
-          display: none;
-  
-          &::-webkit-file-upload-button,
-          &::file-selector-button {
-            visibility: hidden;
-            display: none;
-          }
-        }
-  
-        svg {
-          width: 18px;
-          height: 18px;
+          background-color: $primary-hover;
         }
       }
-  
-      .text-tools {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        max-width: 400px;
-  
-        input[type="text"] {
-          padding: 10px 15px;
-          border: 1px solid #e4e7eb;
-          border-radius: 6px;
-          font-size: 14px;
-          width: 100%;
-          max-width: 250px;
-  
-          &:focus {
-            outline: none;
-            border-color: #4a90e2;
-            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-          }
-  
-          &:focus-visible {
-            outline: 2px solid #4a90e2;
-            outline-offset: 1px;
-          }
+    }
+
+    .color-picker {
+      position: relative;
+
+      input[type="color"] {
+        -webkit-appearance: none;
+        width: 3rem;
+        height: 2.75rem;
+        padding: 0;
+        border: 1px solid $border-color;
+        border-radius: $border-radius;
+        cursor: pointer;
+        background: none;
+
+        &::-webkit-color-swatch-wrapper {
+          padding: 0;
+          border-radius: $border-radius;
         }
-  
-        button {
-          background-color: #4a90e2;
-          color: white;
+
+        &::-webkit-color-swatch {
           border: none;
-          min-width: 100px;
-  
-          &:hover {
-            background-color: #357abd;
-          }
+          border-radius: calc($border-radius - 1px);
         }
-      }
-  
-      .color-picker {
-        input[type="color"] {
-          appearance: none;
-          width: 50px;
-          height: 30px;
-          border: 1px solid #e4e7eb;
-          border-radius: 4px;
-          cursor: pointer;
-  
-          &::-webkit-color-swatch-wrapper {
-            padding: 0;
-          }
-  
-          &::-webkit-color-swatch,
-          &::-moz-color-swatch {
-            border: none;
-            border-radius: 3px;
-          }
-        }
-      }
-    }
-  
-    // Canvas Container
-    .canvas_container {
-      width: 100%;
-      max-width: 1200px;
-      flex: 1;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      user-select: none;
-      touch-action: none;
-  
-      canvas {
-        box-shadow: 0 0 0 1px #e4e7eb;
-        cursor: crosshair;
-        max-width: 100%;
-        max-height: 100%;
-      }
-    }
-  
-    // Dimension Modal
-    .dimension_modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-  
-      form {
-        background-color: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        width: 400px;
-  
-        h2 {
-          margin-bottom: 20px;
-          color: #333;
-          font-size: 24px;
-          text-align: center;
-        }
-  
-        label {
-          display: block;
-          margin-bottom: 15px;
-          color: #555;
-          font-size: 14px;
-  
-          input {
-            width: 100%;
-            padding: 8px 12px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-  
-            &:focus {
-              outline: none;
-              border-color: #4a90e2;
-              box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
-            }
-          }
-        }
-  
-        button {
-          width: 100%;
-          padding: 12px;
-          background-color: #4a90e2;
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 16px;
-          cursor: pointer;
-          transition: background-color 0.2s ease;
-  
-          &:hover {
-            background-color: #357abd;
-          }
-        }
-      }
-    }
-  
-    // Responsive Design
-    @media (max-width: 768px) {
-      padding: 10px;
-  
-      .toolbar {
-        padding: 15px;
-        flex-direction: column;
-        align-items: stretch;
-  
-        button,
-        label {
-          width: 100%;
-        }
-  
-        .text-tools {
-          flex-direction: column;
-          max-width: 100%;
-  
-          input[type="text"] {
-            max-width: 100%;
-          }
-  
-          button {
-            width: 100%;
-          }
-        }
-      }
-  
-      .dimension_modal form {
-        width: 90%;
-        max-width: 400px;
-        margin: 0 20px;
       }
     }
   }
-  
-  .template_editor_container {
+
+  // Enhanced Canvas Container
+  .canvas_container {
+    background-color: $surface-color;
+    border-radius: $border-radius;
+    box-shadow: $shadow-lg;
+    padding: 3rem;
     display: flex;
-    height: 100vh;
+    justify-content: center;
+    align-items: center;
     overflow: hidden;
     position: relative;
-  
-    .template_editor {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-  
-      .canvas_container {
-        flex: 1;
-        position: relative;
-        overflow: auto;
-        background: #f0f0f0;
-  
-        canvas {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          background: white;
-          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+    // Set canvas size to take full container space
+    canvas {
+      box-shadow: $shadow-md;
+      border-radius: 6px;
+      max-width: 100%;
+      max-height: 100%;
+      transition: $transition;
+    }
+  }
+
+  // Fixed Dimension Modal Styling
+  .dimension_modal {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    form {
+      background-color: $surface-color;
+      padding: 2.5rem;
+      border-radius: $border-radius;
+      box-shadow: $shadow-lg;
+      width: 450px;
+      animation: modalSlideIn 0.4s ease-out;
+
+      h2 {
+        margin-bottom: 1.5rem;
+        color: $text-primary;
+        font-size: 1.75rem;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 1.5rem;
+        color: $text-secondary;
+        font-size: 1rem;
+
+        input {
+          width: 100%;
+          padding: 1rem 1.25rem;
+          margin-top: 0.5rem;
+          border: 1px solid $border-color;
+          border-radius: $border-radius;
+          font-size: 1rem;
+          transition: $transition;
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+          }
+        }
+      }
+
+      button {
+        width: 100%;
+        padding: 1rem;
+        background-color: $primary-color;
+        color: white;
+        border: none;
+        border-radius: $border-radius;
+        font-size: 1.125rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: $transition;
+
+        &:hover {
+          background-color: $primary-hover;
+          transform: translateY(-2px);
+        }
+
+        &:active {
+          transform: translateY(0);
         }
       }
     }
-  
-    .toggle-library-button {
-      position: absolute;
-      right: 300px;
-      top: 50%;
-      transform: translateY(-50%) rotate(-90deg);
-      transform-origin: right center;
-      padding: 0.5rem 1rem;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      cursor: pointer;
-      z-index: 100;
-  
-      &:hover {
-        background: #e9ecef;
+  }
+
+  // Layer Control Tools
+  .layer-tools {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: 1.25rem;
+    background-color: $surface-color;
+    border-radius: $border-radius;
+    box-shadow: $shadow-sm;
+
+    button {
+      padding: 0.75rem 1.25rem;
+      background-color: $surface-color;
+      border: 1px solid $border-color;
+      border-radius: $border-radius;
+      color: $text-primary;
+      font-size: 1rem;
+      transition: $transition;
+
+      &:hover:not(:disabled) {
+        background-color: $background-color;
+        border-color: $primary-color;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
     }
   }
-  
+}
+
+// Animations
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .template_editor {
+    padding: 1rem;
+
+    .toolbar {
+      padding: 1rem;
+      gap: 1rem;
+
+      button,
+      label {
+        width: 100%;
+      }
+
+      .text-tools {
+        flex-direction: column;
+        max-width: 100%;
+        width: 100%;
+      }
+    }
+
+    .dimension_modal form {
+      width: 90%;
+      margin: 0 1rem;
+      max-width: 380px;
+    }
+
+    .canvas_container {
+      padding: 1rem;
+    }
+  }
+}
