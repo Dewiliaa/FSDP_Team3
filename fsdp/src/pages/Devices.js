@@ -87,7 +87,6 @@ const Devices = () => {
   const [selectedAd, setSelectedAd] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [liveAd, setLiveAd] = useState(''); // State for currently live ad
   const IsServerSite = localStorage.getItem('role') === 'admin' || 
                     sessionStorage.getItem('role') === 'admin' ||
                     window.location.hostname === 'localhost';
@@ -104,7 +103,6 @@ const Devices = () => {
         setIsImageModalOpen(false);
         setIsVideoModalOpen(false);
         setSelectedAd(null);
-        setLiveAd('');
         return;
       }
       
@@ -118,7 +116,6 @@ const Devices = () => {
           } else if (ad.type === 'video') {
             setIsVideoModalOpen(true);
           }
-          setLiveAd(ad.name);
         }
       }
     });
@@ -670,21 +667,6 @@ const handleGroupDisplay = (group) => {
 
   return (
     <div className="devices">
-      {/* Live Ad Banner - Display only on localhost, above media section */}
-      {IsServerSite && liveAd && (
-        <div className="live-ad-banner" style={{
-          width: '100%',
-          backgroundColor: '#333',
-          color: 'white',
-          textAlign: 'center',
-          padding: '10px',
-          fontWeight: 'bold',
-          marginBottom: '10px', // Adds space below the banner
-        }}>
-          Currently Live: {liveAd}
-        </div>
-      )}
-
       <h2 className="page-title">{isDevicesSelected ? 'Devices' : 'Groups'}</h2>
 
       <div className="switch-container">
