@@ -41,8 +41,11 @@ Name 4:
 - Shows statistics of Ad Display Times and Devices Used for the day
 - Shows alerts when a device disconnects/reconnects
 
-### Manage Ads Page (Done by Dewi, Lavaniya):
-
+### Manage Ads Page (Done by Dewi, Lavaniya, Garrett):
+#### Garrett
+- Implement DynamoDB to store the ads as metadata
+- Allow for display of current ads on page
+  
 ### Ad Creation Page (Done by Dewi, Lavaniya):
 #### Lavaniya
 - Added s3 button and library panel, some parts of template editor
