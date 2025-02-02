@@ -304,7 +304,7 @@ const Devices = () => {
   }, []);
 
   const filteredDevices = connectedDevices.filter(device => 
-    device.name.toLowerCase().includes(searchQuery.toLowerCase())
+    device && device.name && device.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // All Ads Functions
