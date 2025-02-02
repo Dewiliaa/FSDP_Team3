@@ -88,7 +88,9 @@ const Devices = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [liveAd, setLiveAd] = useState(''); // State for currently live ad
-  const IsServerSite = window.location.hostname === 'localhost';
+  const IsServerSite = localStorage.getItem('role') === 'admin' || 
+                    sessionStorage.getItem('role') === 'admin' ||
+                    window.location.hostname === 'localhost';
 
   // In your useEffect where you set up device listeners
   useEffect(() => {
@@ -166,23 +168,31 @@ const Devices = () => {
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
-      const params = { TableName: 'Ads' };
+        const params = { TableName: 'Ads' };
 
-      try {
-        const data = await dynamoDb.scan(params).promise();
-        setAds(data.Items.map(ad => ({
-          id: ad.ad_id,
-          name: ad.name,
-          url: ad.url,
-          type: ad.type,
-        })));
-      } catch (error) {
-        console.error("Error fetching ads from DynamoDB:", error);
-      }
+        try {
+            const data = await dynamoDb.scan(params).promise();
+            console.log("Raw DynamoDB ads data:", JSON.stringify(data.Items, null, 2));
+            
+            const processedAds = data.Items.map(ad => {
+                console.log("Processing ad:", JSON.stringify(ad, null, 2));  // More detailed logging
+                return {
+                    id: ad.ad_id,
+                    name: ad.name,
+                    url: ad.url,
+                    type: ad.type,  // Let's see the raw type before processing
+                };
+            });
+            
+            console.log("Final processed ads:", JSON.stringify(processedAds, null, 2));
+            setAds(processedAds);
+        } catch (error) {
+            console.error("Error fetching ads from DynamoDB:", error);
+        }
     };
 
     fetchAdsFromDynamoDB();
-  }, []);
+}, []);
 
   useEffect(() => {
     // Set up heartbeat
