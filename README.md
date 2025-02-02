@@ -45,6 +45,8 @@ Name 4:
 #### Garrett
 - Implement DynamoDB to store the ads as metadata
 - Allow for display of current ads on page
+#### Lavaniya
+- Did some of the buttons and styling
   
 ### Ad Creation Page (Done by Dewi, Lavaniya):
 #### Lavaniya
