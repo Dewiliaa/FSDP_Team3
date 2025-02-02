@@ -7,7 +7,7 @@ Lavaniya D/O Rajamoorthi (S10262519C)
 
 Evan Goh (S102583831G)
 
-Name 4:
+Dewi
 
 ---
 ## Sample Accounts
@@ -83,4 +83,6 @@ Name 4:
 - Assistance in allowing the ability to show ads
 - Resize ads that are displayed properly
 
-
+### Public Server (Done by Garrett):
+- Hosted app on ec2 with elastic ip attached (Devices Page doesn't work on the public server for unexpected reasons)
+- App can be accessed from users with different networks and can view real time updates, connections and ad displays
