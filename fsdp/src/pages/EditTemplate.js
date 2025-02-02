@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { IoIosImage } from 'react-icons/io';
 import '../styles/edit.scss';
 import AWS from '../aws-config';
@@ -127,64 +127,120 @@ const EditTemplate = () => {
   ));
 
   // Toolbar Component for adding shapes, text, colors, and images
-  const Toolbar = memo(({ onAddShape, onImageUpload, newText, setNewText, onAddText, currentColor, setCurrentColor, onUndo, onRedo, undoDisabled, redoDisabled, onDelete, onChangeFontSize, onChangeFont, selectedFont, selectedElement, bringToFront, sendToBack, toggleLock }) => (
-    <div className="toolbar">
-      <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
-      <button onClick={() => onAddShape('circle')}>Add Circle</button>
-      <label>
-        <IoIosImage /> Add Image
-        <input type="file" accept="image/*" onChange={onImageUpload} />
-      </label>
-      <div className="text-tools">
-        <input
-          type="text"
-          placeholder="Enter text"
-          value={newText}
-          onChange={(e) => setNewText(e.target.value)}
-        />
-        <button onClick={onAddText}>Add Text</button>
-        <button 
-          onClick={() => onChangeFontSize('increase')}
-          disabled={!selectedElement || selectedElement.type !== 'texts'}
-        >
-          A+
-        </button>
-        <button 
-          onClick={() => onChangeFontSize('decrease')}
-          disabled={!selectedElement || selectedElement.type !== 'texts'}
-        >
-          A-
-        </button>
-      </div>
-
-      <div className="font-picker">
+  const Toolbar = memo(({
+    onAddShape,
+    onImageUpload,
+    newText,
+    setNewText,
+    onAddText,
+    currentColor,
+    setCurrentColor,
+    onUndo,
+    onRedo,
+    undoDisabled,
+    redoDisabled,
+    onDelete,
+    onChangeFontSize,
+    onChangeFont,
+    selectedFont,
+    selectedElement,
+    bringToFront,
+    sendToBack,
+    toggleLock
+  }) => {
+    const textInputRef = useRef(null); // ✅ Reference to the input field
+  
+    // 🔄 Ensure text input retains focus
+    useEffect(() => {
+      if (textInputRef.current) {
+        textInputRef.current.focus();
+      }
+    }, [newText]); // ✅ Reapply focus when newText updates
+  
+    const handleAddText = useCallback(() => {
+      if (newText.trim()) {
+        onAddText(); 
+        setNewText(''); // ✅ Clear input field
+        setTimeout(() => textInputRef.current?.focus(), 10); // ✅ Restore focus
+      }
+    }, [newText, onAddText, setNewText]);
+  
+    return (
+      <div className="toolbar">
+        {/* Shape Buttons */}
+        <button onClick={() => onAddShape('rectangle')}>Add Rectangle</button>
+        <button onClick={() => onAddShape('circle')}>Add Circle</button>
+        
+        {/* Image Upload */}
         <label>
-          Font:
-          <select value={selectedFont} onChange={(e) => onChangeFont(e.target.value)}>
-            <option value="Arial">Arial</option>
-            <option value="Verdana">Verdana</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Georgia">Georgia</option>
-          </select>
+          <IoIosImage /> Add Image
+          <input type="file" accept="image/*" onChange={onImageUpload} />
         </label>
-      </div>
-
-      <div className="color-picker">
-        <label>
-          Color:
+  
+        {/* Text Input and Controls */}
+        <div className="text-tools">
           <input
-            type="color"
-            value={currentColor}
-            onChange={(e) => setCurrentColor(e.target.value)}
+            ref={textInputRef} // ✅ Attach ref for persistent focus
+            type="text"
+            placeholder="Enter text"
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
           />
-        </label>
+          <button onClick={handleAddText}>Add Text</button>
+          <button 
+            onClick={() => onChangeFontSize('increase')}
+            disabled={!selectedElement || selectedElement.type !== 'texts'}
+          >
+            A+
+          </button>
+          <button 
+            onClick={() => onChangeFontSize('decrease')}
+            disabled={!selectedElement || selectedElement.type !== 'texts'}
+          >
+            A-
+          </button>
+        </div>
+  
+        {/* Font Selection */}
+        <div className="font-picker">
+          <label>
+            Font:
+            <select value={selectedFont} onChange={(e) => onChangeFont(e.target.value)}>
+              <option value="Arial">Arial</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Times New Roman">Times New Roman</option>
+              <option value="Courier New">Courier New</option>
+              <option value="Georgia">Georgia</option>
+            </select>
+          </label>
+        </div>
+  
+        {/* Color Picker */}
+        <div className="color-picker">
+          <label>
+            Color:
+            <input
+              type="color"
+              value={currentColor}
+              onChange={(e) => setCurrentColor(e.target.value)}
+            />
+          </label>
+        </div>
+  
+        {/* Undo/Redo/Delete */}
+        <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
+        <button onClick={onRedo} disabled={redoDisabled}>Redo</button>
+        <button onClick={onDelete}>Delete</button>
+  
+        {/* Layer Controls */}
+        <button onClick={bringToFront} disabled={!selectedElement}>Bring to Front</button>
+        <button onClick={sendToBack} disabled={!selectedElement}>Send to Back</button>
+        <button onClick={toggleLock} disabled={!selectedElement}>
+          {selectedElement?.locked ? 'Unlock' : 'Lock'}
+        </button>
       </div>
-      <button onClick={onUndo} disabled={undoDisabled}>Undo</button>
-      <button onClick={onRedo} disabled={redoDisabled}>Redo</button>
-      <button onClick={onDelete}>Delete</button>
-    </div>
-  ));
+    );
+  });
 
   // Define pushState, initializeCanvas, undo, redo, deleteSelected, changeFontSize, handleFontChange, saveToS3, handleImageSelect
   const pushState = useCallback(() => {
