@@ -88,11 +88,13 @@ const Devices = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [liveAd, setLiveAd] = useState(''); // State for currently live ad
-  const isServerSite = window.location.hostname === 'localhost';
+  const IsServerSite = localStorage.getItem('role') === 'admin' || 
+                    sessionStorage.getItem('role') === 'admin' ||
+                    window.location.hostname === 'localhost';
 
   // In your useEffect where you set up device listeners
   useEffect(() => {
-    console.log('Setting up ad display listeners, isServerSite:', isServerSite);
+    console.log('Setting up ad display listeners, isServerSite:', IsServerSite);
     
     socket.on('display_ad', (adMediaPath) => {
       console.log('Received display_ad event:', adMediaPath);
@@ -106,7 +108,7 @@ const Devices = () => {
         return;
       }
       
-      if (!isServerSite) {
+      if (!IsServerSite) {
         const ad = ads.find(ad => ad.url === adMediaPath);
         console.log('Matched ad:', ad);
         if (ad) {
@@ -129,7 +131,7 @@ const Devices = () => {
       socket.off('display_ad');
       socket.off('ad_confirmed');
     };
-  }, [ads, isServerSite]);
+  }, [ads, IsServerSite]);
 
   // Rest of your existing component code stays exactly the same
 
@@ -166,23 +168,31 @@ const Devices = () => {
 
   useEffect(() => {
     const fetchAdsFromDynamoDB = async () => {
-      const params = { TableName: 'Ads' };
+        const params = { TableName: 'Ads' };
 
-      try {
-        const data = await dynamoDb.scan(params).promise();
-        setAds(data.Items.map(ad => ({
-          id: ad.ad_id,
-          name: ad.name,
-          url: ad.url,
-          type: ad.type,
-        })));
-      } catch (error) {
-        console.error("Error fetching ads from DynamoDB:", error);
-      }
+        try {
+            const data = await dynamoDb.scan(params).promise();
+            console.log("Raw DynamoDB ads data:", JSON.stringify(data.Items, null, 2));
+            
+            const processedAds = data.Items.map(ad => {
+                console.log("Processing ad:", JSON.stringify(ad, null, 2));  // More detailed logging
+                return {
+                    id: ad.ad_id,
+                    name: ad.name,
+                    url: ad.url,
+                    type: ad.type,  // Let's see the raw type before processing
+                };
+            });
+            
+            console.log("Final processed ads:", JSON.stringify(processedAds, null, 2));
+            setAds(processedAds);
+        } catch (error) {
+            console.error("Error fetching ads from DynamoDB:", error);
+        }
     };
 
     fetchAdsFromDynamoDB();
-  }, []);
+}, []);
 
   useEffect(() => {
     // Set up heartbeat
@@ -254,7 +264,7 @@ const Devices = () => {
         return newDeviceAds;
       });
   
-      if (!isServerSite && socket.id === deviceId) {
+      if (!IsServerSite && socket.id === deviceId) {
         setIsImageModalOpen(false);
         setIsVideoModalOpen(false);
         setSelectedAd(null);
@@ -262,7 +272,7 @@ const Devices = () => {
     });
   
     return () => socket.off('ad_stopped');
-  }, [isServerSite]);
+  }, [IsServerSite]);
 
   useEffect(() => {
     socket.on('groups_list', (newGroups) => {
@@ -661,7 +671,7 @@ const handleGroupDisplay = (group) => {
   return (
     <div className="devices">
       {/* Live Ad Banner - Display only on localhost, above media section */}
-      {isServerSite && liveAd && (
+      {IsServerSite && liveAd && (
         <div className="live-ad-banner" style={{
           width: '100%',
           backgroundColor: '#333',

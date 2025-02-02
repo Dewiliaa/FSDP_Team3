@@ -352,3 +352,17 @@
         font-size: 24px;
     }
 }
+
+.media-preview {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    position: relative;
+}
+
+.media-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+

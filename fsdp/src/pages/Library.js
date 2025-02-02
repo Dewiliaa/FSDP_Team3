@@ -27,27 +27,37 @@ const Library = ({ isNavExpanded }) => {
                     dynamoDb.scan(mediaParams).promise(),
                     dynamoDb.scan(adsParams).promise()
                 ]);
-
+                
+                console.log("Library - Complete Ads data:", adsData);
+                console.log("Library - Complete Media data:", mediaData);
+    
                 const mediaFilesFromDB = [
-                    ...mediaData.Items.map(item => ({
-                        id: item.img_id,
-                        name: item.name,
-                        type: item.type,
-                        url: item.url,
-                        category: 'file'
-                    })),
-                    ...adsData.Items.map(item => ({
-                        id: item.ad_id,
-                        name: item.name,
-                        type: item.type,
-                        url: item.url,
-                        category: 'ads'
-                    }))
+                    ...mediaData.Items.map(item => {
+                        console.log("Library - Processing media item:", item);
+                        return {
+                            id: item.img_id,
+                            name: item.name,
+                            type: item.type,
+                            url: item.url,
+                            category: 'file'
+                        };
+                    }),
+                    ...adsData.Items.map(item => {
+                        console.log("Library - Processing ad item:", item);
+                        return {
+                            id: item.ad_id,
+                            name: item.name,
+                            type: item.type,
+                            url: item.url,
+                            category: 'ads'
+                        };
+                    })
                 ];
-
+    
+                console.log("Library - Final processed items:", mediaFilesFromDB);
                 setMediaFiles(mediaFilesFromDB);
             } catch (error) {
-                console.error('Error fetching media files from DynamoDB:', error);
+                console.error('Error fetching media files:', error);
             }
         };
         fetchMediaFiles();
@@ -277,7 +287,7 @@ const Library = ({ isNavExpanded }) => {
                                 <img src={file.url} alt={file.name} />
                             )}
                             {file.type === 'video' && (
-                                <video src={file.url} />
+                                <video src={file.url} controls />
                             )}
                             {file.type === 'audio' && (
                                 <audio src={file.url} controls />
