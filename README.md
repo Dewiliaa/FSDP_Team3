@@ -7,7 +7,9 @@ Lavaniya D/O Rajamoorthi (S10262519C)
 
 Evan Goh (S102583831G)
 
-Name 4:
+Dewi
+
+Ng Jing Zhan Garrett (S10257347K)
 
 ---
 ## Sample Accounts
@@ -16,6 +18,9 @@ Name 4:
 
 ### User Account (No ability to display Ads):
 - user : user1234
+
+## To be able to run fully working server through code:
+- Change the IP link in the file config.js to current network ip to work
 
 ## Functions
 ### Front Page (Done by Evan):
@@ -38,8 +43,15 @@ Name 4:
 - Shows statistics of Ad Display Times and Devices Used for the day
 - Shows alerts when a device disconnects/reconnects
 
-### Manage Ads Page (Done by Dewi, Lavaniya):
-
+### Manage Ads Page (Done by Dewi, Lavaniya, Garrett):
+#### Garrett
+- Implement DynamoDB to store the ads as metadata
+- Allow for display of current ads on page
+- Implemented responsive view and styling
+  
+#### Lavaniya
+- Did some of the buttons and styling
+  
 ### Ad Creation Page (Done by Dewi, Lavaniya):
 #### Lavaniya
 - Added s3 button and library panel, some parts of template editor
@@ -52,12 +64,18 @@ Name 4:
 #### Garrett
 - Allow images to be filtered as files or ads depeneding on the user
 - Allows images to be stored in DynamoDB for fetched ads to display as accordingly
+- Implemented responsive view and styling
 
 ### Scheduling Page (Done by Evan, Aaron):
 #### Evan 
 - Fetching the stored ads from the dynamoDB
 - Fetching the connected devices from the devices page
 - Connection to connected devices
+
+#### Aaron
+- Allow connected devices to be fetched and shown to be selected for scheduling a page that's fully functioning
+- Schedules an ad to be displayed on a device in a timeframe and stop displaying accordingly
+- Allow Ad Schedules to be stored and fetched to show ongoing or future scheduling incoming
   
 ### Devices Page (Done by Aaron, Garrett):
 #### Aaron
@@ -75,4 +93,6 @@ Name 4:
 - Assistance in allowing the ability to show ads
 - Resize ads that are displayed properly
 
-
+### Public Server (Done by Garrett):
+- Hosted app on ec2 with elastic ip attached (Emitting ad from public ip server does not work unexpectedly.
+- App can be accessed from users with different networks and can view real time updates, connections and ad displays
