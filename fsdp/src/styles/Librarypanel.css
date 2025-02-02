@@ -1,8 +1,8 @@
 .library-panel {
-  width: 350px; /* Increased width */
-  height: calc(100vh - 60px); /* Keeps it within view */
+  width: 350px; /* Increase width from default */
+  height: calc(100vh - 60px); /* Ensure it doesn’t overflow */
   border-left: 1px solid #ddd;
-  background: #f1f1f1; /* Slightly darker background */
+  background: #f8f9fa;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -11,67 +11,57 @@
   overflow-y: auto;
   z-index: 1000;
   padding: 20px;
-  box-shadow: -2px 0px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-  transition: transform 0.3s ease-in-out; /* For sliding effect */
 }
 
+
+/* Header section */
 .library-header {
-  padding: 1.2rem;
+  padding: 1rem;
   border-bottom: 1px solid #ddd;
-  background: #fff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: white;
 }
 
 .library-header h3 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: bold;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
 }
 
 .search-bar {
   position: relative;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .search-bar input {
   width: 100%;
-  padding: 0.6rem 2rem 0.6rem 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border 0.2s ease;
-}
-
-.search-bar input:focus {
-  border-color: #007bff; /* Highlight on focus */
+  padding: 0.5rem 2rem 0.5rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
 }
 
 .search-bar .search-icon {
   position: absolute;
-  right: 1rem;
+  right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
   color: #666;
 }
 
-.filter-select {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
-  margin-bottom: 1rem;
-  font-size: 1rem;
+/* Ensure filters and search bar adjust to wider panel */
+.library-panel .filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
+/* Library Content */
 .library-content {
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
 }
 
+/* Loading and Empty States */
 .loading-state,
 .empty-state {
   height: 100%;
@@ -85,57 +75,81 @@
 .spinner {
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
-.empty-state p {
-  font-size: 1.2rem;
-  color: #888;
-}
-
+/* Ensure the media grid inside the panel does not shrink */
 .library-panel .media-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 20px;
-  padding: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly larger items */
+  gap: 15px;
+  padding: 15px;
   justify-content: center;
 }
 
+/* Media Items */
 .media-item {
   position: relative;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 4px;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: move;
+  transition: transform 0.2s;
 }
 
 .media-item:hover {
-  transform: scale(1.05);
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1); /* Hover shadow */
+  transform: scale(1.02);
 }
 
 .media-item img {
   width: 100%;
   height: auto;
+  max-height: 120px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
-.media-name {
-  position: absolute;
-  bottom: 0;
-  left: 0;
+
+
+/* Scrollbar Styling */
+.library-panel {
+  width: 300px;
+  height: calc(100vh - 60px); /* Adjust to prevent blocking content */
+  border-left: 1px solid #ddd;
+  background: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
   right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 0.5rem;
-  text-align: center;
-  font-size: 0.9rem;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  top: 0;
+  overflow-y: auto;
+  z-index: 1000;
 }
 
+/* Scoped Media Grid - Only for Library Panel */
+.library-panel .media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+  padding: 15px;
+  justify-content: center;
+}
+
+/* Adjust Library Panel Header */
+.library-panel .library-header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background: white;
+}
+
+/* Ensure search bar input spans full width */
+.library-panel .search-bar input {
+  width: 95%;
+  margin: 5px auto;
+}
+
+
+/* Animation */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
