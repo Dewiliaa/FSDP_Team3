@@ -7,7 +7,7 @@ Lavaniya D/O Rajamoorthi (S10262519C)
 
 Evan Goh (S102583831G)
 
-Dewi
+Dewi Lia Virnanda (S10262440K)
 
 Ng Jing Zhan Garrett (S10257347K)
 
@@ -51,10 +51,20 @@ Ng Jing Zhan Garrett (S10257347K)
   
 #### Lavaniya
 - Did some of the buttons and styling
+
+### Dewi
+- Did the create template page.
+- Little help with DynamoDB.
   
 ### Ad Creation Page (Done by Dewi, Lavaniya):
 #### Lavaniya
 - Added s3 button and library panel, some parts of template editor
+  
+### Dewi
+- Added elements such as shapes, enter texts, able to change font and size, colors.
+- Added function buttons such as Undo, Redo, Delete, Bring to Front, Send to Back, and Lock.
+- Configure library panel CORs issue to drag and drop newly saved images in S3 buckets.
+- Styling for edit template page.
 
 ### Library Page (Done by Garrett, Aaron):
 #### Aaron
