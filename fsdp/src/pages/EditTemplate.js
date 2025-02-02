@@ -766,15 +766,16 @@ const EditTemplate = () => {
         selectedElement={interactionStateRef.current.selectedElement}
       />
 
-      {/* Save Button */}
-      <button className="save-button" onClick={saveToS3} disabled={isSaving}>
-        {isSaving ? 'Saving...' : 'Save Ad'}
-      </button>
+      <div className="parent-selector">
+        <button className="save-button" onClick={saveToS3} disabled={isSaving}>
+          {isSaving ? 'Saving...' : 'Save Ad'}
+        </button>
 
-      {/* Toggle Button for Library Panel */}
-      <button className="toggle-library-button" onClick={() => setShowLibrary(!showLibrary)}>
-        {showLibrary ? 'Hide Library' : 'Show Library'}
-      </button>
+        <button className="toggle-library-button" onClick={() => setShowLibrary(!showLibrary)}>
+          {showLibrary ? 'Hide Library' : 'Show Library'}
+        </button>
+      </div>
+
 
       {/* Canvas Section */}
       <div

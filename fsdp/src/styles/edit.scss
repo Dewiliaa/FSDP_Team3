@@ -1,9 +1,10 @@
 // Variables
-$primary-color: #3b82f6;
+$primary-color: #1e2a38;
 $primary-hover: #2563eb;
 $secondary-color: #64748b;
 $background-color: #f8fafc;
 $surface-color: #ffffff;
+$success-color: #CDEBC5;
 $border-color: #e2e8f0;
 $text-primary: #1e293b;
 $text-secondary: #475569;
@@ -22,6 +23,70 @@ $transition: all 0.3s ease-in-out;
   padding: 2rem;
   box-sizing: border-box;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  // Find the parent element and apply flex (modify selector as needed)
+  .parent-selector {
+    display: flex;
+    justify-content: flex-start; /* Aligns buttons to the left */
+    align-items: center;
+    gap: 16px; /* Space between buttons */
+    margin-bottom: 1rem;
+  }
+
+  // General Button Styling
+  .save-button,
+  .toggle-library-button {
+    background-color: $primary-color;
+    color: #ffffff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 140px;
+    box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.12);
+
+    &:hover {
+      background-color: darken($primary-color, 10%);
+      box-shadow: 0px 5px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background-color: lighten($primary-color, 15%);
+      box-shadow: none;
+    }
+  }
+
+  // Save Button - Success Style
+  .save-button {
+    background-color: $primary-color;
+
+    &:hover {
+      background-color: darken($success-color, 10%);
+    }
+  }
+
+  // Toggle Library Button - Secondary Style
+  .toggle-library-button {
+    background-color: $primary-color;
+
+    &:hover {
+      background-color: darken($secondary-color, 10%);
+    }
+  }
 
   // Toolbar Styling
   .toolbar {
