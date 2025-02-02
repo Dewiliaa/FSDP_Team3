@@ -70,4 +70,8 @@ Name 4:
 - Devices in Groups are stored as data in DynamoDB, fetched for displaying on screen
 - Select groups button to select groups to display an ad to
 
+#### Garrett
+- Assistance in allowing the ability to show ads
+- Resize ads that are displayed properly
+
 
