@@ -175,7 +175,19 @@ const EditTemplate = () => {
             onChange={(e) => setNewText(e.target.value)}
           />
           <button onClick={onAddText}>Add Text</button>
-        </div>
+          <button 
+          onClick={() => onChangeFontSize('increase')}
+          disabled={!selectedElement || selectedElement.type !== 'texts'}
+        >
+          A+
+        </button>
+        <button 
+          onClick={() => onChangeFontSize('decrease')}
+          disabled={!selectedElement || selectedElement.type !== 'texts'}
+        >
+          A-
+        </button>
+      </div>
   
         {/* Font Picker */}
         <div className="font-picker">
@@ -187,6 +199,7 @@ const EditTemplate = () => {
               <option value="Times New Roman">Times New Roman</option>
               <option value="Courier New">Courier New</option>
               <option value="Georgia">Georgia</option>
+              <option value="Helvetica">Helvetica</option>
             </select>
           </label>
         </div>
