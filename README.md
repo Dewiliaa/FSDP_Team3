@@ -19,9 +19,9 @@ Name 4:
 
 ## Functions
 ### Front Page (Done by Evan):
-- designed the whole front end in the front page
-- created a advert slider in the front page
-- created advertisments in canva to use for the front page
+- Designed the whole front end in the front page
+- Created a advert slider in the front page
+- Created advertisments in canva to use for the front page
 
 ### Login Page (Done by Evan, Garrett):
 #### Evan
