@@ -88,11 +88,11 @@ const Devices = () => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [liveAd, setLiveAd] = useState(''); // State for currently live ad
-  const isServerSite = window.location.hostname === 'localhost';
+  const IsServerSite = window.location.hostname === 'localhost';
 
   // In your useEffect where you set up device listeners
   useEffect(() => {
-    console.log('Setting up ad display listeners, isServerSite:', isServerSite);
+    console.log('Setting up ad display listeners, isServerSite:', IsServerSite);
     
     socket.on('display_ad', (adMediaPath) => {
       console.log('Received display_ad event:', adMediaPath);
@@ -106,7 +106,7 @@ const Devices = () => {
         return;
       }
       
-      if (!isServerSite) {
+      if (!IsServerSite) {
         const ad = ads.find(ad => ad.url === adMediaPath);
         console.log('Matched ad:', ad);
         if (ad) {
@@ -129,7 +129,7 @@ const Devices = () => {
       socket.off('display_ad');
       socket.off('ad_confirmed');
     };
-  }, [ads, isServerSite]);
+  }, [ads, IsServerSite]);
 
   // Rest of your existing component code stays exactly the same
 
@@ -254,7 +254,7 @@ const Devices = () => {
         return newDeviceAds;
       });
   
-      if (!isServerSite && socket.id === deviceId) {
+      if (!IsServerSite && socket.id === deviceId) {
         setIsImageModalOpen(false);
         setIsVideoModalOpen(false);
         setSelectedAd(null);
@@ -262,7 +262,7 @@ const Devices = () => {
     });
   
     return () => socket.off('ad_stopped');
-  }, [isServerSite]);
+  }, [IsServerSite]);
 
   useEffect(() => {
     socket.on('groups_list', (newGroups) => {
@@ -661,7 +661,7 @@ const handleGroupDisplay = (group) => {
   return (
     <div className="devices">
       {/* Live Ad Banner - Display only on localhost, above media section */}
-      {isServerSite && liveAd && (
+      {IsServerSite && liveAd && (
         <div className="live-ad-banner" style={{
           width: '100%',
           backgroundColor: '#333',
