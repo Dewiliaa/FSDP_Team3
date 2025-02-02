@@ -71,6 +71,11 @@ Ng Jing Zhan Garrett (S10257347K)
 - Fetching the stored ads from the dynamoDB
 - Fetching the connected devices from the devices page
 - Connection to connected devices
+
+#### Aaron
+- Allow connected devices to be fetched and shown to be selected for scheduling a page that's fully functioning
+- Schedules an ad to be displayed on a device in a timeframe and stop displaying accordingly
+- Allow Ad Schedules to be stored and fetched to show ongoing or future scheduling incoming
   
 ### Devices Page (Done by Aaron, Garrett):
 #### Aaron
