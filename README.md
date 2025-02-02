@@ -17,6 +17,9 @@ Name 4:
 ### User Account (No ability to display Ads):
 - user : user1234
 
+## To be able to run fully working server through code:
+- Change the IP link in the file config.js to current network ip to work
+
 ## Functions
 ### Front Page (Done by Evan):
 - designed the whole front end in the front page
