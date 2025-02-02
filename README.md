@@ -9,6 +9,8 @@ Evan Goh (S102583831G)
 
 Dewi
 
+Ng Jing Zhan Garrett (S10257347K)
+
 ---
 ## Sample Accounts
 ### Admin Account (Has ability to display Ads):
@@ -45,6 +47,8 @@ Dewi
 #### Garrett
 - Implement DynamoDB to store the ads as metadata
 - Allow for display of current ads on page
+- Implemented responsive view and styling
+  
 #### Lavaniya
 - Did some of the buttons and styling
   
@@ -60,6 +64,7 @@ Dewi
 #### Garrett
 - Allow images to be filtered as files or ads depeneding on the user
 - Allows images to be stored in DynamoDB for fetched ads to display as accordingly
+- Implemented responsive view and styling
 
 ### Scheduling Page (Done by Evan, Aaron):
 #### Evan 
@@ -84,5 +89,5 @@ Dewi
 - Resize ads that are displayed properly
 
 ### Public Server (Done by Garrett):
-- Hosted app on ec2 with elastic ip attached (Devices Page doesn't work on the public server for unexpected reasons)
+- Hosted app on ec2 with elastic ip attached (Emitting ad from public ip server does not work unexpectedly.
 - App can be accessed from users with different networks and can view real time updates, connections and ad displays
