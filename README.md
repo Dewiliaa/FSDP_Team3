@@ -54,7 +54,7 @@ Ng Jing Zhan Garrett (S10257347K)
 
 ### Dewi
 - Did the create template page.
-- Little help with DynamoDB.
+- Linked DynamoDB retrieved images from ManageAds to EditTemplate.
   
 ### Ad Creation Page (Done by Dewi, Lavaniya):
 #### Lavaniya
@@ -65,6 +65,7 @@ Ng Jing Zhan Garrett (S10257347K)
 - Added function buttons such as Undo, Redo, Delete, Bring to Front, Send to Back, and Lock.
 - Configure library panel CORs issue to drag and drop newly saved images in S3 buckets.
 - Styling for edit template page.
+- Resizing function for elements.
 
 ### Library Page (Done by Garrett, Aaron):
 #### Aaron
