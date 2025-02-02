@@ -3,7 +3,7 @@
 ## Members
 Aaron Lua Siang Kian (S10258287K)
 
-Name 2:
+Lavaniya D/O Rajamoorthi (S10262519C)
 
 Name 3:
 
@@ -27,6 +27,7 @@ Name 4:
 ### Manage Ads Page (Done by Dewi, Lavaniya):
 
 ### Ad Creation Page (Done by Dewi, Lavaniya):
+-Lavaniya(added s3 button and library panel, some parts of template editor)
 
 ### Library Page (Done by Garrett, Aaron):
 
